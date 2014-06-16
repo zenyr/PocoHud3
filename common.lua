@@ -3,7 +3,7 @@ require ('poco/3rdPartyLibrary.lua')
 if not deep_clone then return end
 function _pairs(t, f) -- pairs but sorted
   local a = {}
-  for n in pairs(t) do table.insert(a, n) end
+  for n in pairs(t or {}) do table.insert(a, n) end
   table.sort(a, f)
   local i = 0
   return function ()
@@ -14,9 +14,9 @@ function _pairs(t, f) -- pairs but sorted
   end
 end
 _ = {
-	F = function (n) -- ff
+	F = function (n,k) -- ff
 		if type(n) == 'number' then
-			return n >= 99.5 and tostring(math.floor(n)) or string.format("%.3g", n)
+			return n >= 99.5 and tostring(math.floor(n)) or string.format('%.'..(k or 2)..'g', n)
 		elseif type(n) == 'table' then
 			return zinspect(n):gsub('\n','')
 		else
@@ -68,7 +68,7 @@ _ = {
 		local masks = type(mask)=='string' and managers.slot:get_mask( mask ) or mask or managers.slot:get_mask( 'bullet_impact_targets' )
 		return World:raycast( "ray", from, to, "slot_mask", masks)
 	end,
-	G = function (path,fallback,origin)
+	G = function (path,fallback,origin) -- SafeGet
 		local from = origin or _G
 		local lPath = ''
 		for curr,delim in string.gmatch (path, "([%a_]+)([^%a_]*)") do
@@ -124,11 +124,12 @@ function TPocoBase:init()
 	if data then
 		self:import(data)
 	end
-	if self.OnInit then
-		self:OnInit()
+	if self.onInit and self:onInit() then
+		Poco:register(self.className..'_update',callback(self,self,'Update'))
+		self._resolution_changed_callback_id = managers.viewport:add_resolution_changed_func( callback( self, self, "onResolutionChanged" ) )
+	else
+		self:destroy()
 	end
-	Poco:register(self.className..'_update',callback(self,self,'Update'))
-	self._resolution_changed_callback_id = managers.viewport:add_resolution_changed_func( callback( self, self, "onResolutionChanged" ) )
 end
 function TPocoBase:onResolutionChanged()
 end
@@ -176,24 +177,48 @@ function TPoco:init()
 	end
 	_('Poco:Init')
 end
-function TPoco:Bind(key,downCbk,upCbk)
-	self.binds.down[key] = downCbk
-	self.binds.up[key] = upCbk
+function TPoco:Bind(sender,key,downCbk,upCbk)
+	local name = sender:name(1)
+	self.binds.down[key] = downCbk and {name,downCbk} or nil
+	self.binds.up[key] = upCbk and {name,upCbk} or nil
 end
 function TPoco:LoadOptions(key,obj)
 	local extOpt = io.open('poco\\'..key..'_config.lua','r')
+	local merge
+	merge = function (t1, t2)
+		for k, v in pairs(t2) do
+			if (type(v) == "table") and (type(t1[k] or false) == "table") then
+				merge(t1[k], t2[k])
+			else
+				t1[k] = v
+			end
+		end
+		return t1
+	end
 	if extOpt then
 		extOpt = loadstring(extOpt:read('*all'))()
-		for k,v in pairs(extOpt) do
-			obj[k] = v
-		end
+		obj = merge(obj,extOpt or {})
 	else
 		_('No config file found. (poco\\'..key..'_config.lua)')
+	end
+end
+function TPoco:UnBind(sender)
+	local name = sender:name(1)
+	for key,cbk in pairs(clone(self.binds.down)) do
+		if cbk[1]==name then
+			self.binds.down[key] = nil
+		end
+	end
+	for key,cbk in pairs(clone(self.binds.up)) do
+		if cbk[1]==name then
+			self.binds.up[key] = nil
+		end
 	end
 end
 function TPoco:AddOn(ancestor)
 	local name = ancestor.className
 	if self.addOns[name] then
+		self:UnBind(self.addOns[name])
 		self.addOns[name]:destroy()
 		self.addOns[name] = nil
 		return
@@ -208,14 +233,14 @@ function TPoco:AddOn(ancestor)
 end
 function TPoco:Update(t,dt)
 	if not managers.menu_component:input_focus() then
-		for key,cbk in pairs(self.binds.down) do
-			if cbk and self._kbd:pressed(key) then
-				cbk(t,dt)
+		for key,cbks in pairs(self.binds.down) do
+			if cbks and self._kbd:pressed(key) then
+				cbks[2](t,dt)
 			end
 		end
-		for key,cbk in pairs(self.binds.up) do
-			if cbk and self._kbd:released(key) then
-				cbk(t,dt)
+		for key,cbks in pairs(self.binds.up) do
+			if cbks and self._kbd:released(key) then
+				cbk[2](t,dt)
 			end
 		end
 	end
