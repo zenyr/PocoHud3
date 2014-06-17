@@ -7,7 +7,16 @@ return {
 		size = 70,
 		gap = 20,
 		align = 2, -- 1:left 2:center 3:right
-		style = 1, -- 1:horizontal 2:vertical
+		style = 1, -- 1:PocoHud style 2:Vanilla style
+	},
+	popup = {
+		size = 20,
+		damageDecay = 10,
+		myDamage = YES,
+		crewDamage = YES,
+		AIDamage = YES,
+		handsUp = YES,
+		dominated = YES,
 	},
 	clock = {
 
@@ -27,15 +36,7 @@ return {
 			minionLost = 4,
 			hostageChanged = 1,
 			downedWarning = 5,
-			replenish = 3,
+			replenish = 5,
 		}
 	},
-	popup = {
-		sizeCoefficient = 1,
-		myDamage = YES,
-		crewDamage = YES,
-		AIDamage = YES,
-		handsUp = YES,
-		dominated = YES,
-	}
 }

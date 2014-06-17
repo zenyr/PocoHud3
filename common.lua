@@ -15,8 +15,9 @@ function _pairs(t, f) -- pairs but sorted
 end
 _ = {
 	F = function (n,k) -- ff
+		k = k or 2
 		if type(n) == 'number' then
-			return n >= 99.5 and tostring(math.floor(n)) or string.format('%.'..(k or 2)..'g', n)
+			return n >= 99.5 and tostring(math.floor(n)) or string.format('%.'..k..'g', n):sub(1,k+2)
 		elseif type(n) == 'table' then
 			return zinspect(n):gsub('\n','')
 		else
