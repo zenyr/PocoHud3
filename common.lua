@@ -13,11 +13,40 @@ function _pairs(t, f) -- pairs but sorted
 		end
   end
 end
+local clr = function(bgr)
+	return Color(bgr%0x100,math.floor(bgr/0x100) % 0x100,math.floor(bgr/0x10000))
+end
+cl = {
+	Aqua				=clr(0xFFFF00),
+	Black				=clr(0x000000),
+	Blue				=clr(0xFF0000),
+	Cream				=clr(0xF0FBFF),
+	DkGray			=clr(0x808080),
+	Fuchsia			=clr(0xFF00FF),
+	Gray				=clr(0x808080),
+	Green				=clr(0x008000),
+	Lime				=clr(0x00FF00),
+	LtGray			=clr(0xC0C0C0),
+	Maroon			=clr(0x000080),
+	MedGray			=clr(0xA4A0A0),
+	MoneyGreen	=clr(0xC0DCC0),
+	Navy				=clr(0x800000),
+	Olive				=clr(0x008080),
+	Purple			=clr(0x800080),
+	Red					=clr(0x0000FF),
+	Silver			=clr(0xC0C0C0),
+	SkyBlue			=clr(0xF0CAA6),
+	Teal				=clr(0x808000),
+	White				=clr(0xFFFFFF),
+	Yellow			=clr(0x00FFFF),
+}
+
 _ = {
 	F = function (n,k) -- ff
 		k = k or 2
 		if type(n) == 'number' then
-			return n >= 99.5 and tostring(math.floor(n)) or string.format('%.'..k..'g', n):sub(1,k+2)
+			local r = string.format('%.'..k..'g', n):sub(1,k+2)
+			return r:find('e') and tostring(math.floor(n)) or r
 		elseif type(n) == 'table' then
 			return zinspect(n):gsub('\n','')
 		else
@@ -27,9 +56,14 @@ _ = {
 	S = function (...) -- toStr
 		local a,b = clone({...}) , {}
 		for k,v in pairs(a) do
-			b[k] = _.F(v)
+			b[#b+1] = _.F(v)
 		end
-		return table.concat(b,' ')
+		local r,err = pcall(table.concat,b,' ')
+		if r then
+			return err
+		else
+			return '_.s Err: '..zinspect(b):gsub('\n','')
+		end
 	end,
 	C = function (name,message,color) -- Chat
 		if not message then
@@ -152,11 +186,10 @@ function TPocoBase:lastError()
 	return self._lastError or ''
 end
 
-function TPocoBase:destroy()
+function TPocoBase:destroy(...)
 	managers.viewport:remove_resolution_changed_func(self._resolution_changed_callback_id)
-	if self.onDestroy then self:onDestroy() end
+	if self.onDestroy then self:onDestroy(...) end
 	self.dead = true
-	self:export()
 	Poco:unRegister(self.className..'_update',callback(self,self,'Update'))
 end
 ----------
@@ -218,16 +251,15 @@ function TPoco:UnBind(sender)
 end
 function TPoco:AddOn(ancestor)
 	local name = ancestor.className
-	if self.addOns[name] then
-		self:UnBind(self.addOns[name])
-		self.addOns[name]:destroy()
+	local addOn = self.addOns[name]
+	if addOn then
+		self:UnBind(addOn)
+		addOn:export()
+		addOn:destroy()
 		self.addOns[name] = nil
 		return
 	else
 		local addon = ancestor:new()
-		if addon.import then
-			addon:import()
-		end
 		self.addOns[name] = addon
 		return addon
 	end
