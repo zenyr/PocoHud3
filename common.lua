@@ -1,6 +1,7 @@
 require ('poco/3rdPartyLibrary.lua')
 -- Poco Common Library V2 --
 if not deep_clone then return end
+local inGame = CopDamage ~= nil
 function _pairs(t, f) -- pairs but sorted
   local a = {}
   for n in pairs(t or {}) do table.insert(a, n) end
@@ -177,8 +178,8 @@ function TPocoBase:name(inner)
 end
 function TPocoBase:Update(t,dt)
 end
-function TPocoBase:err(msg)
-	local di = debug.getinfo(2)
+function TPocoBase:err(msg,deeper)
+	local di = debug.getinfo(3+(deeper or 0))
 	managers.menu_component:post_event( "zoom_in")
 	self._lastError = _.s(msg,di and di.short_src..':'..di.currentline or '@?')
 end
@@ -190,7 +191,7 @@ function TPocoBase:destroy(...)
 	managers.viewport:remove_resolution_changed_func(self._resolution_changed_callback_id)
 	if self.onDestroy then self:onDestroy(...) end
 	self.dead = true
-	Poco:unRegister(self.className..'_update',callback(self,self,'Update'))
+	Poco:unregister(self.className..'_update',callback(self,self,'Update'))
 end
 ----------
 TPoco = class()
@@ -199,6 +200,9 @@ function TPoco:init()
 	self.funcs = {}
 	self.save = {}
 	self.binds = {down={},up={}}
+	if inGame then
+		self.pnl = managers.hud._workspace:panel():panel({ name = "poco_sheet" , layer = 50000})
+	end
 	self._kbd = Input:keyboard()
 	if not setup._update then
 		setup._update = setup.update
@@ -273,7 +277,7 @@ function TPoco:Update(t,dt)
 		end
 		for key,cbks in pairs(self.binds.up) do
 			if cbks and self._kbd:released(key) then
-				cbk[2](t,dt)
+				cbks[2](t,dt)
 			end
 		end
 	end
@@ -287,16 +291,15 @@ function TPoco:register(key,func)
 		self.funcs[key] = func
 	end
 end
-function TPoco:unRegister(key,func)
-	if self.funcs[key] then
-		self.funcs[key] = nil
-	end
+function TPoco:unregister(key)
+	self.funcs[key] = nil
 end
 function TPoco:destroy()
 	for k,v in pairs(self.addOns) do
 		v:destroy()
 	end
 	self.dead = true
+	managers.hud._workspace:remove(self.pnl)
 	setup.update = setup._update
 	setup._update = nil
 	_('Poco:destroy')

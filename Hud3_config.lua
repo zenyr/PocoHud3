@@ -4,7 +4,7 @@ return {
 	buff = {
 		show = YES,
 		left = 10,
-		top  = 23,
+		top  = 22,
 		maxFPS = 30,
 		size = 70, -- ignored by vanilla style
 		gap = 10,
@@ -23,14 +23,18 @@ return {
 	},
 	float = {
 		show = YES,
+		border = NO,
 		size = 15,
 		margin = 3,
+		keepOnScreen = YES,
+		keepOnScreenMargin = {2,15}, -- Margin Percent
 		maxOpacity = 0.9,
 		unit = YES,
 		drills = YES,
 	},
-	clock = {
-
+	info = {
+		size = 14,
+		clock = YES,
 	},
 	minion = {
 		show = YES
@@ -38,19 +42,21 @@ return {
 	chat = {
 		readThreshold = 2,
 		serverSendThreshold = 3,
-		clientSendThreshold = 9,
+		clientSendThreshold = 5,
+		midgameAnnounce = 50,
 		index = {
-			midStat = 2,
-			endStat = 3,
+			midStat = 3,
+			endStat = 4,
 			dominated = 4,
 			converted = 4,
 			minionLost = 4,
 			minionShot = 4,
 			hostageChanged = 1,
+			outofAmmo = 4,
 			custody = 5,
+			downed = 2,
 			downedWarning = 5,
 			replenished = 5,
-			ping = 1,
 		}
 	},
 }
