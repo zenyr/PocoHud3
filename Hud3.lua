@@ -65,6 +65,10 @@ local O = {
 		}
 	},
 }
+local _BAGS = {}
+_BAGS['8f59e19e1e45a05e']='Ammo'
+_BAGS['43ed278b1faf89b3']='Med'
+_BAGS['a163786a6ddb0291']='Body'
 local FONT =  tweak_data.hud_present.title_font or tweak_data.hud_players.name_font or "fonts/font_eroded" or 'core/fonts/system_font'
 local clGood =  Color( 255, 146, 208, 80 ) / 255
 local clBad =  Color( 255, 255, 192, 0 ) / 255
@@ -324,6 +328,7 @@ local _drillNames = {
 	votingmachine2 = 'Voting Machine', hack_suburbia = 'Hacking',
 	digitalgui = 'Timelock', drill = 'Drill', huge_lance = 'The Beast',
 }
+local __n = {}
 function TFloat:draw(t)
 	if not alive(self.unit) or (self.temp and (t-self.lastT>0.5)) and not self.dead then
 		self.dead = true
@@ -437,6 +442,14 @@ function TFloat:draw(t)
 					table.insert(txts,{_.s(self.owner:_time(dGUI._timer)),cl.White})
 				end
 			end
+		end
+		if category == 2 then -- Deadsimple text
+			local name = self.tag and self.tag.text
+			if name and pDist < 1000 then
+				table.insert(txts,{name,cl.White})
+			end
+			self.bg:set_visible(false)
+			prog = 0
 		end
 		if prog > 0 then
 			self.pie:set_current(prog)
@@ -611,7 +624,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head)
 				if apid and apid > 0 and (apid ~= _lastAttkpid or now()-_lastAttk > 5) then
 					_lastAttk = now()
 					_lastAttkpid = apid
-					self:Chat('minionShot',_.s(self:_name(apid),'attacked',(i==apid and 'own' or self:_name(pid)..'\'s'),'minion by',_.f(rDamage*10)))
+					self:Chat('minionShot',_.s(self:_name(apid),'attacked',(i==apid and 'own' or self:_name(i)..'\'s'),'minion by',_.f(rDamage*10)))
 				end
 			end
 		end
@@ -734,7 +747,8 @@ function TPocoHud3:Chat(category,text)
 	end
 end
 function TPocoHud3:Float(unit,category,temp,tag)
-	local key = unit:key()
+	local key = unit.key and unit:key()
+	if not key then return end
 	local float = self.floats[key]
 	if float then
 		float:renew({tag=tag,temp=temp})
@@ -939,6 +953,8 @@ function TPocoHud3:_updatePlayers(t)
 	end
 end
 local _mask = World:make_slot_mask(1, 2, 8, 11, 12, 14, 16, 18, 21, 22, 25, 26, 33, 34, 35 )
+--1, 11, 38
+_mask = World:make_slot_mask(1, 8, 11, 12, 14, 16, 18, 21, 22, 24, 25, 26, 33, 34, 35 )
 function TPocoHud3:_updateItems(t,dt)
 	if self.dead then return end
 	self.state = self.state or _.g('managers.player:player_unit():movement():current_state()')
@@ -1050,6 +1066,17 @@ function TPocoHud3:_scanSmoke(t)
 	for i,smoke in pairs(units or {}) do
 		if smoke:name():key() == '465d8f5aafa10ce5' then
 			self.smokes[tostring(smoke:position())] = {smoke:position(),t}
+		else
+			local name = smoke:name():key()
+			local per = 0
+			name = _BAGS[name] or false
+			if name then
+				if smoke:base().take_ammo then
+					per = smoke:base()._ammo_amount / smoke:base()._max_ammo_amount
+				end
+				name = name..iconTimes.._.s(smoke:base()._ammo_amount or smoke:base()._amount or smoke:base()._bodybag_amount or '?')
+				self:Float(smoke,2,1,{text=name})
+			end
 		end
 	end
 	for id,smoke in pairs(clone(self.smokes)) do
@@ -1814,15 +1841,18 @@ function TPocoHud3:menu(state)
 end
 function TPocoHud3:test()
 	if inGame then
+		if _.r() then
+			--managers.groupai:state():detonate_smoke_grenade(_.r().position,self.camPos,1,true)
+	managers.network:session():send_to_peers( "sync_smoke_grenade", _.r().position,self.camPos,1,true )
+	managers.network:session():send_to_host( "sync_smoke_grenade", _.r().position,self.camPos,1,true )
+
+		end
 		--self:AnnounceStat(true)
 		local i = self.i or 0
 		self.i = i + 1
 		local txt = 'ÿϱϲϳϴϵ϶ϷϸϹϺϻϼϽϾϿЀЁЂЃЄЅІ Ї ЈЉЊЋЌЍЎЏ'
 		--_.c(txt)
 		if true then return end
-		if _.r() then
-			managers.groupai:state():detonate_smoke_grenade(_.r().position,self.camPos,10,false)
-		end
 		if self.foo then
 			self.pnl.dbg:remove(self.foo)
 			self.foo = nil
