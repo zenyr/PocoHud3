@@ -48,7 +48,8 @@ local O = {
 	chat = {
 		readThreshold = 2,
 		serverSendThreshold = 3,
-		clientSendThreshold = 5,
+		clientFullGameSendThreshold = 4,
+		clientMidGameSendThreshold = 5,
 		midgameAnnounce = 50,
 		index = {
 			midStat = 3,
@@ -351,6 +352,7 @@ function TFloat:draw(t)
 	local dx,dy,d,pDist,ww,hh= 0,0,1,0,self.owner._ws:size()
 	local pos = self.owner:_pos(unit,true)
 	local nl_dir = pos - camPos
+	local dir = pos - camPos
 	mvector3.normalize( nl_dir )
 	local dot = mvector3.dot( self.owner.nl_cam_forward, nl_dir )
 	local pPos = self.owner:_v2p(pos)
@@ -445,9 +447,10 @@ function TFloat:draw(t)
 		end
 		if category == 2 then -- Deadsimple text
 			local name = self.tag and self.tag.text
-			if name and pDist < 1000 then
+			if name and pDist < 1e6/dir:length() then
 				table.insert(txts,{name,cl.White})
 			end
+			pPos = pPos:with_y(pPos.y-size)
 			self.bg:set_visible(false)
 			prog = 0
 		end
@@ -735,15 +738,14 @@ function TPocoHud3:Chat(category,text)
 	if Opt.muted then return _('Muted:',text) end
 	local catInd = Opt.index[category] or -1
 	local canRead = catInd >= Opt.readThreshold
-	local canSend = catInd >= (Network:is_server() and Opt.serverSendThreshold or Opt.clientSendThreshold)
+	local isFullGame = not managers.statistics:is_dropin()
+	local canSend = catInd >= (Network:is_server() and Opt.serverSendThreshold or isFullGame and Opt.clientFullGameSendThreshold or Opt.clientMidGameSendThreshold)
 	local tStr = _.g('managers.hud._hud_heist_timer._timer_text:text()')
-	if canRead then
+	if canRead or canSend then
 		_.c(tStr..(canSend and '' or _BROADCASTHDR_HIDDEN), text )
 		if canSend then
 			managers.network:session():send_to_peers_ip_verified( "send_chat_message", 1, tStr.._BROADCASTHDR..text )
 		end
-	else
-		_.c('CantRead:',text)
 	end
 end
 function TPocoHud3:Float(unit,category,temp,tag)
@@ -831,6 +833,7 @@ function TPocoHud3:_checkBuff(t)
 		self:RemoveBuff('supp')
 	end
 end
+local _pnlDelay = 0
 function TPocoHud3:_updatePlayers(t)
 	if t-(self._lastUP or 0) > 0.1 then
 		self._lastUP = t
@@ -848,33 +851,35 @@ function TPocoHud3:_updatePlayers(t)
 			self:Stat(i,'pnl',0)
 		elseif isIn and not pnl then
 			-- makePnl
-			local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
-			local bPnl = managers.hud._teammate_panels[ isMe and 4 or cdata.panel_id or -1 ]
-			if bPnl then
-				local member = self:_member(i)
-				if member and alive(member:unit()) then
-					local peer = member and member:peer()
-					local ranks = {'I','II','III','IV','V'}
-					local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or '' -- TODO: 내 정보 0으로 뜨는 문제
-					rank = ranks[rank] and (ranks[rank]..'Ї') or ''
-					local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
-					local defaultLbl = bPnl._panel:child( "name" )
-					local nameBg =  bPnl._panel:child( "name_bg" )
-					self:_lbl(defaultLbl,{{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},{self:_name(i),self:_color(i)}})
-					local txtRect = {defaultLbl:text_rect()}
-					defaultLbl:set_size(txtRect[3],txtRect[4])
-					local shape = {defaultLbl:shape()}
-					nameBg:set_shape(shape[1]-3,shape[2],shape[3]+6,shape[4])
+			if managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
+				local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
+				local bPnl = managers.hud._teammate_panels[ isMe and 4 or cdata.panel_id or -1 ]
+				if bPnl then
+					local member = self:_member(i)
+					if member and alive(member:unit()) then
+						local peer = member and member:peer()
+						local ranks = {'I','II','III','IV','V'}
+						local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or '' -- TODO: 내 정보 0으로 뜨는 문제
+						rank = ranks[rank] and (ranks[rank]..'Ї') or ''
+						local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
+						local defaultLbl = bPnl._panel:child( "name" )
+						local nameBg =  bPnl._panel:child( "name_bg" )
+						self:_lbl(defaultLbl,{{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},{self:_name(i),self:_color(i)}})
+						local txtRect = {defaultLbl:text_rect()}
+						defaultLbl:set_size(txtRect[3],txtRect[4])
+						local shape = {defaultLbl:shape()}
+						nameBg:set_shape(shape[1]-3,shape[2],shape[3]+6,shape[4])
 
-					pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=80}
-					local wp = {bPnl._player_panel:world_position()}
-					pnl:set_world_position(wp[1],wp[2]-30)
+						pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=80}
+						local wp = {bPnl._player_panel:world_position()}
+						pnl:set_world_position(wp[1],wp[2]-30)
 
-					--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture="guis/textures/test_blur_df", render_template="VertexColorTexturedBlur3D", layer=-1, x=0,y=0 } )
-					self['pnl_lbl'..i] = pnl:text{name='lbl',align='center', text='-', font=FONT, font_size = O.info.size, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
-					self['pnl_lblA'..i] = pnl:text{name='lblA',align='center', text='-', font=FONT, font_size = O.info.size, color = cl.Black:with_alpha(0.4), x=0,y=0, layer=1, blend_mode = 'normal'}
-					self['pnl_lblB'..i] = pnl:text{name='lblB',align='center', text='-', font=FONT, font_size = O.info.size, color = cl.Black:with_alpha(0.4), x=2,y=0, layer=1, blend_mode = 'normal'}
-					self['pnl_'..i] = pnl
+						--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture="guis/textures/test_blur_df", render_template="VertexColorTexturedBlur3D", layer=-1, x=0,y=0 } )
+						self['pnl_lbl'..i] = pnl:text{name='lbl',align='center', text='-', font=FONT, font_size = O.info.size, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
+						self['pnl_lblA'..i] = pnl:text{name='lblA',align='center', text='-', font=FONT, font_size = O.info.size, color = cl.Black:with_alpha(0.4), x=0,y=0, layer=1, blend_mode = 'normal'}
+						self['pnl_lblB'..i] = pnl:text{name='lblB',align='center', text='-', font=FONT, font_size = O.info.size, color = cl.Black:with_alpha(0.4), x=2,y=0, layer=1, blend_mode = 'normal'}
+						self['pnl_'..i] = pnl
+					end
 				end
 			end
 		end
@@ -1728,7 +1733,7 @@ function TPocoHud3:_hook()
 					pid = data.peer_id
 				end
 			end
-			if pid and self:Stat(pid,'health',0) ~= 0 then
+			if pid and self:Stat(pid,'health') ~= 0 then
 				self:Stat(pid,'downAll',self:Stat(pid,'down'),true)
 				self:Stat(pid,'down',0)
 				self:Stat(pid,'health',0)
@@ -1781,7 +1786,7 @@ function TPocoHud3:_hook()
 			end
 			if minionClr then
 				for _, material in ipairs( self._materials or {}) do
-					material:set_variable( idstr_contour_color, Vector3(minionClr.r/2,minionClr.g/2,minionClr.b/2))
+					material:set_variable( idstr_contour_color, Vector3(minionClr.r/1.5,minionClr.g/1.5,minionClr.b/1.5))
 				end
 			end
 		end)
@@ -1826,7 +1831,6 @@ function TPocoHud3:_hook()
 			Run('update_person_joining', ...)
 			local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
 			if dlg then
-				_.d(_.s('Started at',joinT,dT,'s elapsed', tT,'s expected'))
 				dlg:set_text(_.s(
 					managers.localization:text("dialog_wait"), progress_percentage.."%",
 					tT-dT,'s left'
