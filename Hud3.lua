@@ -580,13 +580,13 @@ function THitDirection:draw(pnl, done_cb, seconds)
 		end
 		local dt = coroutine.yield()
 		t = t - dt
-		local r = t/seconds
-		pnl:set_alpha( math.pow(r,0.5) * O.hitDirection.opacity )
+		local p = t/seconds
+		pnl:set_alpha( math.pow(p,0.5) * O.hitDirection.opacity )
 
 		local target_vec = self.data.mobPos - self.owner.camPos
 		local fwd = self.owner.nl_cam_forward
 		local angle = target_vec:to_polar_with_reference( fwd, math.UP ).spin
-		local r = 130
+		local r = 100 + (1-math.pow(p,0.5)) * 100
 
 		self.bmp:set_rotation(-(angle+90))
 		pnl:set_center(ww/2-math.sin(angle)*r,hh/2-math.cos(angle)*r)
@@ -705,7 +705,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head)
 	end
 	local isSpecial = false
 	if unit then
-		local senderTweak = sender:base()._tweak_table
+		local senderTweak = sender and sender:base()._tweak_table or '?'
 		isSpecial = tweak_data.character[ unit:base()._tweak_table ].priority_shout
 		if isSpecial =='f34' then isSpecial = false end
 		for i = 1,4 do
@@ -769,14 +769,18 @@ function TPocoHud3:AnnounceStat(midgame)
 		local killS = self:Stat(pid,'killS')
 		if kill > 0 then
 			local dt = now()-self:Stat(pid,'time')
-			local dpm = _.f(60*self:Stat(pid,'dmg')/dt or 0)
+			local dps = _.f(self:Stat(pid,'dmg')/dt or 0)
+			local hit = math.max(self:Stat(pid,'hit'),1)
+			local shot = math.max(self:Stat(pid,'shot'),1)
+			local accuracy = _.f(hit/shot*100,0)..'%'
 			local kpm = _.f(60*kill/dt)
 			local downs = self:Stat(pid,'down')+self:Stat(pid,'downAll')
 			table.insert(txt,
 				_.s(iconLC..self:_name(pid)..iconRC,
 					kill..iconSkull..(killS>0 and '('..killS..' Sp)' or ''),
-					'DPM:'..dpm,
+					'DPS:'..dps,
 					'KPM:'..kpm,
+					'Acc:'..accuracy,
 					(downs>0 and downs..iconShadow or nil)
 				)
 			)
@@ -959,7 +963,7 @@ function TPocoHud3:_updatePlayers(t)
 			if managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
 				local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 				local bPnl = managers.hud._teammate_panels[ isMe and 4 or cdata.panel_id or -1 ]
-				if bPnl then
+				if bPnl and not (not isMe and bPnl == managers.hud._teammate_panels[4]) then
 					local member = self:_member(i)
 					if member and alive(member:unit()) then
 						local peer = member and member:peer()
@@ -1245,7 +1249,7 @@ function TPocoHud3:_member(something)
 	elseif t == 'number' then
 		return game:member( something )
 	elseif t == 'string' then
-		return self:_member(managers.criminals:character_color_id_by_name( something ))
+		return self:_member(managers.criminals:character_peer_id_by_name( something ))
 	end
 end
 function TPocoHud3:_pid(something)
@@ -1280,7 +1284,7 @@ function TPocoHud3:_name(something)
 		end
 		something = pid or self.pid
 	elseif str == 'string' then -- tweak_table name
-		local pName = managers.criminals:character_color_id_by_name( something )
+		local pName = managers.criminals:character_peer_id_by_name( something )
 		if pName then
 			return self:_name(pName)
 		else

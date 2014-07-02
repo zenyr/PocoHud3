@@ -1,6 +1,6 @@
 local YES,NO,yes,no = true,false,true,false
 return {
-	enable = YES,
+	enable = YES, -- Killswitch. Because reasons.
 	buff = {
 		show = YES,
 		left = 10,
@@ -33,8 +33,8 @@ return {
 		drills = YES,
 	},
 	info = {
-		size = 14,
-		clock = YES,
+		size = 17,
+		clock = YES, -- Clock on top of local playername
 	},
 	minion = {
 		show = YES
@@ -42,7 +42,8 @@ return {
 	chat = {
 		readThreshold = 2,
 		serverSendThreshold = 3,
-		clientSendThreshold = 5,
+		clientFullGameSendThreshold = 4,
+		clientMidGameSendThreshold = 5,
 		midgameAnnounce = 50,
 		index = {
 			midStat = 3,
@@ -52,11 +53,36 @@ return {
 			minionLost = 4,
 			minionShot = 4,
 			hostageChanged = 1,
-			outofAmmo = 4,
 			custody = 5,
 			downed = 2,
 			downedWarning = 5,
 			replenished = 5,
 		}
+	},
+	hitDirection = {
+		replace = YES,
+		duration = 2,
+		opacity = 0.5,
+		color = {
+			shield = cl.Aqua,
+			health = cl.Red
+		}
+	},
+	conv = {
+		city_swat = 'a Gensec Elite',
+		cop = 'a cop',
+		fbi = 'a FBI agent',
+		fbi_heavy_swat = 'a FBI heavy SWAT',
+		fbi_swat = 'a FBI SWAT',
+		gangster = 'a gangster',
+		gensec = 'a Gensec guard',
+		heavy_swat = 'a heavy SWAT',
+		security = 'a guard',
+		shield = 'a shield',
+		sniper = 'a sniper',
+		spooc = 'a cloaker',
+		swat = 'a SWAT',
+		tank = 'a bulldozer',
+		taser = 'a taser',
 	},
 }
