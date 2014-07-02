@@ -1,6 +1,6 @@
 if not TPocoBase then return end
 local _ = UNDERSCORE
-local VR = 0.01
+local VR = 0.02
 local inGame = CopDamage ~= nil
 local me
 --- Options ---
@@ -64,6 +64,32 @@ local O = {
 			downedWarning = 5,
 			replenished = 5,
 		}
+	},
+	hitDirection = {
+		replace = YES,
+		duration = 2,
+		opacity = 0.5,
+		color = {
+			shield = cl.Aqua,
+			health = cl.Red
+		}
+	},
+	conv = {
+		city_swat = 'a Gensec Elite',
+		cop = 'a cop',
+		fbi = 'a FBI agent',
+		fbi_heavy_swat = 'a FBI heavy SWAT',
+		fbi_swat = 'a FBI SWAT',
+		gangster = 'a gangster',
+		gensec = 'a Gensec guard',
+		heavy_swat = 'a heavy SWAT',
+		security = 'a guard',
+		shield = 'a shield',
+		sniper = 'a sniper',
+		spooc = 'a cloaker',
+		swat = 'a SWAT',
+		tank = 'a bulldozer',
+		taser = 'a taser',
 	},
 }
 local _BAGS = {}
@@ -261,13 +287,13 @@ function TPop:draw(t)
 		if dot > 0 then
 			local pPos = self.owner:_v2p(pos)
 			if not data.stay then
-				mvector3.set_y(pPos,pPos.y - math.lerp(100,0, math.pow((1-prog),7)))
+				mvector3.set_y(pPos,pPos.y - math.lerp(100,0, math.pow(1-prog,7)))
 			end
 
 			if prog >= 1 then
 				self.dead = true
 			else
-				local dx,dy,d,ww,hh = 0,0,1,self.owner._ws:size()
+				local dx,dy,d,ww,hh = 0,0,1,self.owner.ww,self.owner.hh
 				self.pnl:set_center( pPos.x,pPos.y)
 				if isADS then
 					dx = pPos.x - ww/2
@@ -349,7 +375,8 @@ function TFloat:draw(t)
 	local prog,txts = 0,{}
 	local unit = self.unit
 	if not alive(unit) then return end
-	local dx,dy,d,pDist,ww,hh= 0,0,1,0,self.owner._ws:size()
+	local dx,dy,d,pDist,ww,hh= 0,0,1,0,self.owner.ww,self.owner.hh
+	if not ww then return end
 	local pos = self.owner:_pos(unit,true)
 	local nl_dir = pos - camPos
 	local dir = pos - camPos
@@ -388,6 +415,8 @@ function TFloat:draw(t)
 			local cHealth = unit:character_damage() and unit:character_damage()._health and unit:character_damage()._health*10 or 0
 			local fHealth = cHealth > 0 and unit:character_damage() and unit:character_damage()._HEALTH_INIT*10 or 1
 			prog = cHealth / fHealth
+			local uType = unit:base() and unit:base()._tweak_table
+
 			local cCarry = unit:carry_data()
 			local isCiv = unit and managers.enemy:is_civilian( unit )
 			local color = isCiv and cl.Lime or math.lerp( cl.Red:with_alpha(0.6), cl.Yellow, prog )
@@ -406,6 +435,9 @@ function TFloat:draw(t)
 					table.insert(txts,{iconSkull,color})
 				else
 					table.insert(txts,{_.f(cHealth)..'/'.._.f(fHealth),color})
+					if uType then
+--						table.insert(txts,{uType,color:with_alpha(0.3)})
+					end
 				end
 			end
 			pPos = pPos:with_y(pPos.y-size*2)
@@ -517,13 +549,62 @@ function TFloat:destroy(skipAnim)
 		end
 	end
 end
+local THitDirection = class()
+function THitDirection:init(owner,data)
+	self.owner = owner
+	self.ppnl = owner.pnl.buff
+	self.data = data
+	self.sT = now()
+	local pnl = self.ppnl:panel{x = 0,y=0, w=200,h=200}
+	self.pnl = pnl
+	local bmp = pnl:bitmap{
+		name = "hit", rotation = 360, visible = true,
+		texture = "guis/textures/pd2/hitdirection",
+		color = data.shield>0 and O.hitDirection.color.shield or O.hitDirection.color.health,
+		blend_mode="add", alpha = 1, halign = "right"
+	}
+	self.bmp = bmp
+	bmp:set_center(100,100)
+	pnl:stop()
+	pnl:animate( callback( self, self, 'draw' ), callback( self, self, 'destroy'), O.hitDirection.duration )
+end
+function THitDirection:draw(pnl, done_cb, seconds)
+	local pnl = self.pnl
+	local ww,hh = self.owner.ww, self.owner.hh
+	pnl:set_visible( true )
+	pnl:set_alpha( 1 )
+	local t = seconds
+	while t > 0 do
+		if self.owner.dead then
+			break
+		end
+		local dt = coroutine.yield()
+		t = t - dt
+		local r = t/seconds
+		pnl:set_alpha( math.pow(r,0.5) * O.hitDirection.opacity )
+
+		local target_vec = self.data.mobPos - self.owner.camPos
+		local fwd = self.owner.nl_cam_forward
+		local angle = target_vec:to_polar_with_reference( fwd, math.UP ).spin
+		local r = 130
+
+		self.bmp:set_rotation(-(angle+90))
+		pnl:set_center(ww/2-math.sin(angle)*r,hh/2-math.cos(angle)*r)
+	end
+	pnl:set_visible( false )
+	if done_cb then done_cb(pnl) end
+end
+function THitDirection:destroy()
+	self.ppnl:remove(self.pnl)
+	self = nil
+end
 
 --- Class Start ---
 local TPocoHud3 = class(TPocoBase)
 TPocoHud3.className = 'Hud'
 TPocoHud3.classVersion = 3
 --- Inherited ---
-function TPocoHud3:onInit() -- 설정
+function TPocoHud3:onInit() -- ★설정
 	Poco:LoadOptions(self:name(1),O)
 	if not O.enable then
 		return false
@@ -550,6 +631,7 @@ function TPocoHud3:onInit() -- 설정
 	self.buffs = {}
 	self.floats = {}
 	self.smokes = {}
+	self.hits = {} -- to prevent HitDirection markers gc
 	self.gadget = self.gadget or {}
 --	self.tmp = self.pnl.dbg:bitmap{name='x', blend_mode = 'add', layer=1, x=0,y=40, color=clGood ,texture = "guis/textures/hud_icons"}
 	local dbgSize = 20
@@ -573,11 +655,13 @@ function TPocoHud3:onResolutionChanged()
 	end
 end
 function TPocoHud3:import(data)
+	self.killa = data.killa
 	self.stats = data.stats
 end
 function TPocoHud3:export()
 	Poco.save[self.className] = {
 		stats = self.stats,
+		killa = self.killa,
 	}
 end
 function TPocoHud3:Update(t,dt)
@@ -597,7 +681,11 @@ function TPocoHud3:onDestroy(gameEnd)
 end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head)
 	if unit then
-		self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head)
+		local uType = unit:base()._tweak_table or 0
+		local _arr = {russian=1,german=1,spanish=1,american=1}
+		if not _arr[uType] then
+			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head)
+		end
 	end
 end
 local _lastAttk, _lastAttkpid = 0,0
@@ -617,17 +705,18 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head)
 	end
 	local isSpecial = false
 	if unit then
+		local senderTweak = sender:base()._tweak_table
 		isSpecial = tweak_data.character[ unit:base()._tweak_table ].priority_shout
 		if isSpecial =='f34' then isSpecial = false end
 		for i = 1,4 do
 			local minion = self:Stat(i,'minion')
 			if unit == minion then
-				local apid = pid
-				self:Stat(i,'minionHit',apid)
+				local apid = self:_pid(senderTweak)
+				self:Stat(i,'minionHit',senderTweak)
 				if apid and apid > 0 and (apid ~= _lastAttkpid or now()-_lastAttk > 5) then
 					_lastAttk = now()
 					_lastAttkpid = apid
-					self:Chat('minionShot',_.s(self:_name(apid),'attacked',(i==apid and 'own' or self:_name(i)..'\'s'),'minion by',_.f(rDamage*10)))
+					self:Chat('minionShot',_.s(self:_name(senderTweak),'attacked',(i==apid and 'own' or self:_name(i)..'\'s'),'minion by',_.f(rDamage*10)))
 				end
 			end
 		end
@@ -697,6 +786,8 @@ function TPocoHud3:AnnounceStat(midgame)
 end
 local lastSlowT = 0
 function TPocoHud3:_slowUpdate(t,dt)
+	self.ww = self.pnl.dbg:w()
+	self.hh = self.pnl.dbg:h()
 	if inGame then
 		local peers = _.g('managers.network:session():peers()',{})
 		for pid,peer in pairs( peers ) do
@@ -711,8 +802,7 @@ function TPocoHud3:_update(t,dt)
 	if not self.cam then return end
 	self.rot = self.cam:rotation()
 	self.camPos = self.cam:position()
-	self.nl_cam_forward = Rotation()
-	mrotation.y( self.rot, self.nl_cam_forward )
+	self.nl_cam_forward = self.rot:y()
 	if t - lastSlowT > 5 then -- SlowUpdate
 		lastSlowT = t
 		self:_slowUpdate(t,dt)
@@ -724,11 +814,23 @@ function TPocoHud3:_update(t,dt)
 
 	end
 end
+function TPocoHud3:HitDirection(col_ray,isShield)
+	local mobPos
+	if self._lastAttkUnit and alive(self._lastAttkUnit) then
+		mobPos = self._lastAttkUnit:position()
+		self._lastAttkUnit = nil
+	elseif col_ray and col_ray.position and col_ray.distance then
+		mobPos = col_ray.position - (col_ray.ray*(col_ray.distance or 0))
+	end
+	managers.environment_controller._hit_some = math.min(managers.environment_controller._hit_some + managers.environment_controller._hit_amount, 1)
+	if mobPos then
+		table.insert(self.hits,THitDirection:new(self,{mobPos=mobPos,shield=isShield,dmg=0}))
+	end
+end
 function TPocoHud3:Minion(pid,unit)
 	if alive(unit) then
 		self:Stat(pid,'minion',unit)
 		self:Chat('converted',_.s(self:_name(pid),'converted a police hostage.'))
-		--unit:contour():_upd_color()
 	else
 		self:Stat(pid,'minion',0)
 	end
@@ -833,23 +935,26 @@ function TPocoHud3:_checkBuff(t)
 		self:RemoveBuff('supp')
 	end
 end
-local _pnlDelay = 0
+
 function TPocoHud3:_updatePlayers(t)
 	if t-(self._lastUP or 0) > 0.1 then
 		self._lastUP = t
 	else
 		return
 	end
+	local ranks = {'I','II','III','IV','V','V+'}
 	for i = 1,4 do
-		local isIn = self:_name(i) ~= self:_name(-1)
+		local name = self:_name(i)
+		name = name ~= self:_name(-1) and name
+		local nData = managers.hud:_name_label_by_peer_id( i )
 		local isMe = i==self.pid
 		local pnl = self['pnl_'..i]
 		pnl = pnl ~= 0 and pnl or nil
-		if pnl and not isIn then
+		if pnl and not name then
 			-- killPnl
 			self.pnl.stat:remove(pnl)
-			self:Stat(i,'pnl',0)
-		elseif isIn and not pnl then
+			self['pnl_'..i] = nil
+		elseif not pnl and name and (isMe or nData) then
 			-- makePnl
 			if managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
 				local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
@@ -858,8 +963,7 @@ function TPocoHud3:_updatePlayers(t)
 					local member = self:_member(i)
 					if member and alive(member:unit()) then
 						local peer = member and member:peer()
-						local ranks = {'I','II','III','IV','V'}
-						local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or '' -- TODO: 내 정보 0으로 뜨는 문제
+						local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or ''
 						rank = ranks[rank] and (ranks[rank]..'Ї') or ''
 						local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
 						local defaultLbl = bPnl._panel:child( "name" )
@@ -884,20 +988,19 @@ function TPocoHud3:_updatePlayers(t)
 			end
 		end
 		-- FillIn
-		if pnl then
+		if pnl and (nData or isMe) then
 			local lbl = self['pnl_lbl'..i]
 			local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 			local pInd = isMe and 4 or cdata.panel_id
 			local bPnl = managers.hud._teammate_panels[ pInd ]
 			local equip = (bPnl and #bPnl._special_equipment > 0)
-			local data = managers.hud:_name_label_by_peer_id( i )
-			local interText = data and data.interact:visible() and data.panel:child( "action" ):text()
+			local interText = nData and nData.interact:visible() and nData.panel:child( "action" ):text()
 			if isMe then
 				interText = managers.hud._progress_timer
 					and managers.hud._progress_timer._hud_panel:child( "progress_timer_text" ):visible()
 					and managers.hud._progress_timer._hud_panel:child( "progress_timer_text" ):text()
 			end
-			local unit = data and data.movement._unit
+			local unit = nData and nData.movement._unit
 			local kill = self:Stat(i,'kill')
 			local killS = self:Stat(i,'killS')
 			local dmg = self:Stat(i,'dmg')
@@ -953,6 +1056,21 @@ function TPocoHud3:_updatePlayers(t)
 				self['pnl_lblB'..i]:set_bottom(equip and 56 or 81)
 				--local sh = {lbl:shape()}
 				--self['pnl_blur'..i]:set_shape((sh[3]-tr[3])/2,sh[2],tr[3],tr[4])
+			end
+
+			local nLbl = nData and nData.text
+			if alive(nLbl) then
+				local member = self:_member(i)
+				local peer = member and member:peer()
+				local rank = peer and peer:rank() or ''
+				rank = ranks[rank] and (ranks[rank]..'Ї') or ''
+				local lvl = peer and peer:level() or '?'
+				txts = {
+					{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},
+					{name,color},
+					{' ('..math.ceil(distance/100)..'m)',color:with_alpha(0.5)}
+				}
+				self:_lbl(nLbl,txts)
 			end
 		end
 	end
@@ -1126,11 +1244,13 @@ function TPocoHud3:_member(something)
 		return something and alive(something) and game:member_from_unit( something )
 	elseif t == 'number' then
 		return game:member( something )
+	elseif t == 'string' then
+		return self:_member(managers.criminals:character_color_id_by_name( something ))
 	end
 end
-function TPocoHud3:_pid(unit)
-	local member = self:_member(unit)
-	return member and member:peer():id() or 0
+function TPocoHud3:_pid(something)
+	local member = self:_member(something)
+	return member and member:peer() and member:peer():id() or 0
 end
 function TPocoHud3:_color(something,fbk)
 	local fallback = fbk or cl.Purple
@@ -1159,6 +1279,14 @@ function TPocoHud3:_name(something)
 			end
 		end
 		something = pid or self.pid
+	elseif str == 'string' then -- tweak_table name
+		local pName = managers.criminals:character_color_id_by_name( something )
+		if pName then
+			return self:_name(pName)
+		else
+			local conv = O.conv
+			return conv[something] or 'AI'
+		end
 	end
 	local member = self:_member(something)
 	member = something==0 and "AI" or (member and member:peer():name() or "Someone")
@@ -1475,6 +1603,15 @@ function TPocoHud3:_hook()
 				}) )
 			end
 		end)
+		hook( PlayerDamage, '_look_for_friendly_fire', function( self, attacker_unit )
+			me._lastAttkUnit = attacker_unit
+			return Run('_look_for_friendly_fire', self, attacker_unit)
+		end)
+		if O.hitDirection.replace then
+			hook( PlayerDamage, '_hit_direction', function( self, col_ray )
+				me:HitDirection(col_ray,self:get_real_armor()/self:_total_armor())
+			end)
+		end
 		--UnitNetwork
 		hook( UnitNetworkHandler, 'long_dis_interaction', function( ... )
 			local self, target_unit, amount, aggressor_unit  = unpack({...})
@@ -1630,12 +1767,14 @@ function TPocoHud3:_hook()
 					me:Stat(peer_id,'health',0)
 					me:Stat(peer_id,'hit',0)
 					me:Stat(peer_id,'head',0)
+					me:Stat(peer_id,'dmg',0)
 					me:Stat(peer_id,'shot',0)
 					me:Stat(peer_id,'kill',0)
 					me:Stat(peer_id,'killS',0)
 					me:Stat(peer_id,'down',0)
 					me:Stat(peer_id,'downAll',0)
 					me:Stat(peer_id,'minion',0)
+					me:Stat(peer_id,'custody',0)
 				end
 			end
 			return Run('add_teammate_panel', self, ... )
@@ -1649,6 +1788,7 @@ function TPocoHud3:_hook()
 				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) then
 					self:Chat('replenished',self:_name(pid)..' replenished health by '.._.f(percent-bPercent)..'% '..(down>0 and '+'..down..' downcount' or ''))
 				end
+				self:Stat(pid,'custody',0)
 				self:Stat(pid,'downAll',self:Stat(pid,'down'),true)
 				self:Stat(pid,'down',0)
 			end
@@ -1733,13 +1873,12 @@ function TPocoHud3:_hook()
 					pid = data.peer_id
 				end
 			end
-			if pid and self:Stat(pid,'health') ~= 0 then
+			if pid and self:Stat(pid,'custody') == 0 then
 				self:Stat(pid,'downAll',self:Stat(pid,'down'),true)
 				self:Stat(pid,'down',0)
+				self:Stat(pid,'custody',1)
 				self:Stat(pid,'health',0)
-				self:Chat('custody',self:PeerIDToName(pid)..' is in custody.')
-			else
-				_.c('custody but failed to display')
+				self:Chat('custody',self:_name(pid)..' is in custody.')
 			end
 		end
 		hook( UnitNetworkHandler, 'set_trade_death', function( ... )
@@ -1844,50 +1983,7 @@ function TPocoHud3:menu(state)
 
 end
 function TPocoHud3:test()
-	if inGame then
-		if _.r() then
-			--managers.groupai:state():detonate_smoke_grenade(_.r().position,self.camPos,1,true)
-	managers.network:session():send_to_peers( "sync_smoke_grenade", _.r().position,self.camPos,1,true )
-	managers.network:session():send_to_host( "sync_smoke_grenade", _.r().position,self.camPos,1,true )
-
-		end
-		--self:AnnounceStat(true)
-		local i = self.i or 0
-		self.i = i + 1
-		local txt = 'ÿϱϲϳϴϵ϶ϷϸϹϺϻϼϽϾϿЀЁЂЃЄЅІ Ї ЈЉЊЋЌЍЎЏ'
-		--_.c(txt)
-		if true then return end
-		if self.foo then
-			self.pnl.dbg:remove(self.foo)
-			self.foo = nil
-		elseif false then
-			self.foo = self.pnl.dbg:bitmap{ name='foo', texture='guis/textures/hud_icons' or "guis/textures/pd2/pd2_waypoints"
-				or 'guis/dlcs/big_bank/textures/pd2/pre_planning/preplan_icon_types',
-						--[[texture_rect = {
-						240,
-						192,
-						32,
-						32
-					},]]
-				blend_mode = 'normal', layer=1, x=0,y=100, cl.White}
-
-		end
-	else
-		local pings = {}
-		local falsy = self:_name(5)
-		for i=1,4 do
-			local name = self:_name(i)
-			if name ~= falsy then
-				table.insert(pings,name..':')
-				table.insert(pings,self:Stat(i,'ping'))
-			end
-		end
-		if #pings > 0 then
-			_.c('Ping',_.s(unpack(pings)))
-		else
-			_.c('Ping','No ping data')
-		end
-	end
+-- reserved
 end
 function TPocoHud3:_v2p(pos)
 	return alive(self._ws) and pos and self._ws:world_to_screen( self.cam, pos )

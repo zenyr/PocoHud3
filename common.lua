@@ -19,6 +19,7 @@ local clr = function(bgr)
 end
 cl = {
 	Aqua				=clr(0xFFFF00),
+	Cyan				=clr(0xFFFF00),
 	Black				=clr(0x000000),
 	Blue				=clr(0xFF0000),
 	Cream				=clr(0xF0FBFF),
