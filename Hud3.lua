@@ -1,6 +1,6 @@
 if not TPocoBase then return end
 local _ = UNDERSCORE
-local VR = 0.01
+local VR = 0.02
 local inGame = CopDamage ~= nil
 local me
 --- Options ---
@@ -564,6 +564,7 @@ function THitDirection:init(owner,data)
 		blend_mode="add", alpha = 1, halign = "right"
 	}
 	self.bmp = bmp
+	bmp:set_center(100,100)
 	pnl:stop()
 	pnl:animate( callback( self, self, 'draw' ), callback( self, self, 'destroy'), O.hitDirection.duration )
 end
@@ -588,7 +589,6 @@ function THitDirection:draw(pnl, done_cb, seconds)
 		local r = 130
 
 		self.bmp:set_rotation(-(angle+90))
-		self.bmp:set_center(100,100)
 		pnl:set_center(ww/2-math.sin(angle)*r,hh/2-math.cos(angle)*r)
 	end
 	pnl:set_visible( false )
@@ -942,6 +942,7 @@ function TPocoHud3:_updatePlayers(t)
 	else
 		return
 	end
+	local ranks = {'I','II','III','IV','V','V+'}
 	for i = 1,4 do
 		local name = self:_name(i)
 		name = name ~= self:_name(-1) and name
@@ -962,7 +963,6 @@ function TPocoHud3:_updatePlayers(t)
 					local member = self:_member(i)
 					if member and alive(member:unit()) then
 						local peer = member and member:peer()
-						local ranks = {'I','II','III','IV','V','V+'}
 						local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or ''
 						rank = ranks[rank] and (ranks[rank]..'Ї') or ''
 						local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
@@ -1060,7 +1060,13 @@ function TPocoHud3:_updatePlayers(t)
 
 			local nLbl = nData and nData.text
 			if alive(nLbl) then
+				local member = self:_member(i)
+				local peer = member and member:peer()
+				local rank = peer and peer:rank() or ''
+				rank = ranks[rank] and (ranks[rank]..'Ї') or ''
+				local lvl = peer and peer:level() or '?'
 				txts = {
+					{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},
 					{name,color},
 					{' ('..math.ceil(distance/100)..'m)',color:with_alpha(0.5)}
 				}
@@ -1768,7 +1774,7 @@ function TPocoHud3:_hook()
 					me:Stat(peer_id,'down',0)
 					me:Stat(peer_id,'downAll',0)
 					me:Stat(peer_id,'minion',0)
-					me:Stat(pid,'custody',0)
+					me:Stat(peer_id,'custody',0)
 				end
 			end
 			return Run('add_teammate_panel', self, ... )
@@ -1873,8 +1879,6 @@ function TPocoHud3:_hook()
 				self:Stat(pid,'custody',1)
 				self:Stat(pid,'health',0)
 				self:Chat('custody',self:_name(pid)..' is in custody.')
-			else
-				_.c('PID'..tostring(pid),'custody but failed to display')
 			end
 		end
 		hook( UnitNetworkHandler, 'set_trade_death', function( ... )
@@ -1979,50 +1983,7 @@ function TPocoHud3:menu(state)
 
 end
 function TPocoHud3:test()
-	if inGame then
-		if _.r() then
-			--managers.groupai:state():detonate_smoke_grenade(_.r().position,self.camPos,1,true)
-			managers.network:session():send_to_peers( "sync_smoke_grenade", _.r().position,self.camPos,1,true )
-			managers.network:session():send_to_host( "sync_smoke_grenade", _.r().position,self.camPos,1,true )
-
-		end
-		--self:AnnounceStat(true)
-		local i = self.i or 0
-		self.i = i + 1
-		local txt = 'ÿϱϲϳϴϵ϶ϷϸϹϺϻϼϽϾϿЀЁЂЃЄЅІ Ї ЈЉЊЋЌЍЎЏ'
-		--_.c(txt)
-		if true then return end
-		if self.foo then
-			self.pnl.dbg:remove(self.foo)
-			self.foo = nil
-		elseif false then
-			self.foo = self.pnl.dbg:bitmap{ name='foo', texture='guis/textures/hud_icons' or "guis/textures/pd2/pd2_waypoints"
-				or 'guis/dlcs/big_bank/textures/pd2/pre_planning/preplan_icon_types',
-						--[[texture_rect = {
-						240,
-						192,
-						32,
-						32
-					},]]
-				blend_mode = 'normal', layer=1, x=0,y=100, cl.White}
-
-		end
-	else
-		local pings = {}
-		local falsy = self:_name(5)
-		for i=1,4 do
-			local name = self:_name(i)
-			if name ~= falsy then
-				table.insert(pings,name..':')
-				table.insert(pings,self:Stat(i,'ping'))
-			end
-		end
-		if #pings > 0 then
-			_.c('Ping',_.s(unpack(pings)))
-		else
-			_.c('Ping','No ping data')
-		end
-	end
+-- reserved
 end
 function TPocoHud3:_v2p(pos)
 	return alive(self._ws) and pos and self._ws:world_to_screen( self.cam, pos )
