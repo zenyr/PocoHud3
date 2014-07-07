@@ -67,8 +67,14 @@ local O = {
 	},
 	hitDirection = {
 		replace = YES,
-		duration = 2,
+		duration = YES,
 		opacity = 0.5,
+		number = YES,
+--		numberAsPercent = NO,
+		numberSize = 25,
+		numberDefaultFont = NO,
+		sizeStart = 100,
+		sizeEnd = 200,
 		color = {
 			shield = cl.Aqua,
 			health = cl.Red
@@ -96,7 +102,7 @@ local _BAGS = {}
 _BAGS['8f59e19e1e45a05e']='Ammo'
 _BAGS['43ed278b1faf89b3']='Med'
 _BAGS['a163786a6ddb0291']='Body'
-local FONT =  tweak_data.hud_present.title_font or tweak_data.hud_players.name_font or "fonts/font_eroded" or 'core/fonts/system_font'
+local FONT =  'fonts/font_small_mf' or tweak_data.hud_present.title_font or tweak_data.hud_players.name_font or "fonts/font_eroded" or 'core/fonts/system_font'
 local clGood =  Color( 255, 146, 208, 80 ) / 255
 local clBad =  Color( 255, 255, 192, 0 ) / 255
 local iconSkull,iconShadow,iconRight,iconDot,iconChapter,iconDiv,iconBigDot = '', '', '','Ї','ϸ','϶','ϴ'
@@ -345,7 +351,8 @@ function TFloat:_make()
 	self.bg = O.float.border
 		and HUDBGBox_create(pnl, {x= 0,y= 0,w= 1,h= 1},{color=cl.White:with_alpha(1)})
 		or pnl:bitmap( { name='blur', texture="guis/textures/test_blur_df", render_template="VertexColorTexturedBlur3D", layer=-1, x=0,y=0 } )
-	self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=m,y=m,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'normal', layer = 3} )
+	self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=m,y=m,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'normal', layer = 4} )
+	self.pieBg = pnl:bitmap( { name='pieBg', texture='guis/textures/pd2/hud_progress_active', w = size, h = size, layer=3, x=m,y=m, color=cl.Black:with_alpha(0.5) } )
 	self.lbl = pnl:text{text='text', font=FONT, font_size = size, color = cl.White, x=size+m*2,y=m, layer=3, blend_mode = 'normal'}
 	self.lblShadow1 = pnl:text{text='shadow', font=FONT, font_size = size, color = cl.Black:with_alpha(0.3), x=1+size+m*2,y=1+m, layer=2, blend_mode = 'normal'}
 	self.lblShadow2 = pnl:text{text='shadow', font=FONT, font_size = size, color = cl.Black:with_alpha(0.3), x=size+m*2-1,y=1+m, layer=2, blend_mode = 'normal'}
@@ -488,10 +495,12 @@ function TFloat:draw(t)
 		end
 		if prog > 0 then
 			self.pie:set_current(prog)
+			self.pieBg:set_visible(true)
 			self.lbl:set_x(2*m+size)
 			self:__shadow(2*m+size)
 		else
 			self.pie:set_visible(false)
+			self.pieBg:set_visible(false)
 			self.lbl:set_x(m)
 			self:__shadow(m)
 		end
@@ -556,23 +565,64 @@ function THitDirection:init(owner,data)
 	self.data = data
 	self.sT = now()
 	local pnl = self.ppnl:panel{x = 0,y=0, w=200,h=200}
+	local Opt = O.hitDirection
+	local color = data.shield and Opt.color.shield or Opt.color.health
 	self.pnl = pnl
 	local bmp = pnl:bitmap{
 		name = "hit", rotation = 360, visible = true,
 		texture = "guis/textures/pd2/hitdirection",
-		color = data.shield>0 and O.hitDirection.color.shield or O.hitDirection.color.health,
+		color = color,
 		blend_mode="add", alpha = 1, halign = "right"
 	}
 	self.bmp = bmp
 	bmp:set_center(100,100)
+	if Opt.number then
+		local nSize = Opt.numberSize
+		local font = Opt.numberDefaultFont and FONT or 'fonts/font_eroded'
+		local lbl = pnl:text{
+			x = 1,y = 1,font = font, font_size = nSize,
+			w = nSize*3, h = nSize,
+			text = '-'.._.f(data.dmg),
+			color = color,
+			align = "center",
+			layer = 1
+		}
+		lbl:set_center(100,100)
+		self.lbl = lbl
+		lbl = pnl:text{
+			x = 1,y = 1,font = font, font_size = nSize,
+			w = nSize*3, h = nSize,
+			text = '-'.._.f(data.dmg),
+			color = cl.Black:with_alpha(0.2),
+			align = "center",
+			layer = 1
+		}
+		lbl:set_center(101,101)
+		self.lbl1 = lbl
+		lbl = pnl:text{
+			x = 1,y = 1,font = font, font_size = nSize,
+			w = nSize*3, h = nSize,
+			text = '-'.._.f(data.dmg),
+			color = cl.Black:with_alpha(0.2),
+			align = "center",
+			layer = 1
+		}
+		lbl:set_center(99,101)
+		self.lbl2 = lbl
+	end
 	pnl:stop()
-	pnl:animate( callback( self, self, 'draw' ), callback( self, self, 'destroy'), O.hitDirection.duration )
+	local du = Opt.duration
+	if du == true then
+		du = self.data.time or 2
+	end
+	pnl:animate( callback( self, self, 'draw' ), callback( self, self, 'destroy'), du )
 end
 function THitDirection:draw(pnl, done_cb, seconds)
 	local pnl = self.pnl
+	local Opt = O.hitDirection
 	local ww,hh = self.owner.ww, self.owner.hh
 	pnl:set_visible( true )
-	pnl:set_alpha( 1 )
+	self.bmp:set_alpha( 1 )
 	local t = seconds
 	while t > 0 do
 		if self.owner.dead then
@@ -581,14 +631,18 @@ function THitDirection:draw(pnl, done_cb, seconds)
 		local dt = coroutine.yield()
 		t = t - dt
 		local p = t/seconds
-		pnl:set_alpha( math.pow(p,0.5) * O.hitDirection.opacity )
+		self.bmp:set_alpha( math.pow(p,0.5) * Opt.opacity )
 
 		local target_vec = self.data.mobPos - self.owner.camPos
 		local fwd = self.owner.nl_cam_forward
 		local angle = target_vec:to_polar_with_reference( fwd, math.UP ).spin
-		local r = 100 + (1-math.pow(p,0.5)) * 100
+		local r = Opt.sizeStart + (1-math.pow(p,0.5)) * (Opt.sizeEnd-Opt.sizeStart)
 
 		self.bmp:set_rotation(-(angle+90))
+		self.lbl:set_rotation(-(angle))
+		self.lbl1:set_rotation(-(angle))
+		self.lbl2:set_rotation(-(angle))
+
 		pnl:set_center(ww/2-math.sin(angle)*r,hh/2-math.cos(angle)*r)
 	end
 	pnl:set_visible( false )
@@ -632,6 +686,7 @@ function TPocoHud3:onInit() -- ★설정
 	self.floats = {}
 	self.smokes = {}
 	self.hits = {} -- to prevent HitDirection markers gc
+	self.hitsQ = {}
 	self.gadget = self.gadget or {}
 --	self.tmp = self.pnl.dbg:bitmap{name='x', blend_mode = 'add', layer=1, x=0,y=40, color=clGood ,texture = "guis/textures/hud_icons"}
 	local dbgSize = 20
@@ -780,7 +835,7 @@ function TPocoHud3:AnnounceStat(midgame)
 					kill..iconSkull..(killS>0 and '('..killS..' Sp)' or ''),
 					'DPS:'..dps,
 					'KPM:'..kpm,
-					'Acc:'..accuracy,
+					'Acc:'..(pid==0 and 'N/A' or accuracy),
 					(downs>0 and downs..iconShadow or nil)
 				)
 			)
@@ -818,7 +873,7 @@ function TPocoHud3:_update(t,dt)
 
 	end
 end
-function TPocoHud3:HitDirection(col_ray,isShield)
+function TPocoHud3:HitDirection(col_ray,data)
 	local mobPos
 	if self._lastAttkUnit and alive(self._lastAttkUnit) then
 		mobPos = self._lastAttkUnit:position()
@@ -826,9 +881,21 @@ function TPocoHud3:HitDirection(col_ray,isShield)
 	elseif col_ray and col_ray.position and col_ray.distance then
 		mobPos = col_ray.position - (col_ray.ray*(col_ray.distance or 0))
 	end
+	if not mobPos then -- still nothing? now we search data
+		local mobUnit = data.weapon_unit or data.attacker_unit
+		if mobUnit and alive(mobUnit) then
+			mobPos = mobUnit:position()
+		else
+			mobPos = data.hit_pos or data.position
+		end
+	end
+	if not mobPos then -- still no?... set to player position
+		mobPos = managers.player:player_unit():position()
+	end
 	managers.environment_controller._hit_some = math.min(managers.environment_controller._hit_some + managers.environment_controller._hit_amount, 1)
 	if mobPos then
-		table.insert(self.hits,THitDirection:new(self,{mobPos=mobPos,shield=isShield,dmg=0}))
+		-- TODO: Change intensity according to dmg?
+		table.insert(self.hits,THitDirection:new(self,{mobPos=mobPos,shield=data.shield,dmg=data.dmg,time=data.time}))
 	end
 end
 function TPocoHud3:Minion(pid,unit)
@@ -926,7 +993,7 @@ function TPocoHud3:_checkBuff(t)
 	end
 	-- Suppression
 	local supp = _.g('managers.player:player_unit():character_damage():effective_suppression_ratio()')
-	if false and supp and supp > 0 then
+	if false and supp and supp > 0 then -- disabled
 		local supp2 = math.lerp( 1, tweak_data.player.suppression.spread_mul, supp )
 		self:Buff({
 			key= 'supp', good=false,
@@ -937,6 +1004,19 @@ function TPocoHud3:_checkBuff(t)
 		})
 	else
 		self:RemoveBuff('supp')
+	end
+
+	local melee = self.state._state_data.meleeing and self.state:_get_melee_charge_lerp_value( t ) or 0
+	if melee > 0 then
+		self:Buff({
+			key= 'charge', good=true,
+			icon=skillIcon,
+			iconRect = { 1*64, 3*64,64,64 },
+			text='',
+			st=melee, et=1
+		})
+	else
+		self:RemoveBuff('charge')
 	end
 end
 
@@ -1179,7 +1259,7 @@ end
 
 function TPocoHud3:_upd_dbgLbl(t,dt)
 	if self.dead then return end
-	self._keyList = _.s(#(Poco._kbd:down_list() or {})>0 and Poco._kbd:down_list() or '')
+	self._keyList = ''--_.s(#(Poco._kbd:down_list() or {})>0 and Poco._kbd:down_list() or '')
 	self._dbgTxt = _.s(self._keyList,self:lastError())
 	if t-(self._last_upd_dbgLbl or 0) > 0.5 or self._dbgTxt ~= self.__dbgTxt  then
 		self.__dbgTxt = self._dbgTxt
@@ -1613,7 +1693,35 @@ function TPocoHud3:_hook()
 		end)
 		if O.hitDirection.replace then
 			hook( PlayerDamage, '_hit_direction', function( self, col_ray )
-				me:HitDirection(col_ray,self:get_real_armor()/self:_total_armor())
+				if not col_ray then
+					Run('_hit_direction', self, col_ray)
+				end -- Nullify if possible
+			end)
+			local _hitDirection = function(self,result,data,shield)
+				local sd = self._supperssion_data and self._supperssion_data.decay_start_t
+				if sd then
+					sd = math.max(0,sd-now())
+				end
+				local et = (self._regenerate_timer or 0)+(sd or 0)
+				if et == 0 then
+					et = 2 -- Failsafe
+				end
+				me:HitDirection(data.col_ray,{dmg=result,shield=shield,time=et})
+			end
+			hook( PlayerDamage, '_calc_armor_damage', function( self, attack_data )
+				local valid = self:get_real_armor() > 0
+				local result = Run('_calc_armor_damage', self, attack_data)
+				if valid then
+					_hitDirection(self,result,attack_data,true)
+				end
+				return result
+			end)
+			hook( PlayerDamage, '_calc_health_damage', function( self, attack_data )
+				local result = Run('_calc_health_damage', self, attack_data)
+				if result > 0 then
+					_hitDirection(self,result,attack_data,false)
+				end
+				return result
 			end)
 		end
 		--UnitNetwork

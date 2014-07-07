@@ -9,11 +9,11 @@ return {
 		size = 70, -- ignored by vanilla style
 		gap = 10,
 		align = 1, -- 1:left 2:center 3:right
-		style = 2, -- 1:PocoHud style 2:Vanilla style
+		style = 1, -- 1:PocoHud style 2:Vanilla style
 	},
 	popup = {
 		show = YES,
-		size = 20,
+		size = 20,				-- Font size
 		damageDecay = 10,
 		myDamage = YES,
 		crewDamage = YES,
@@ -33,7 +33,7 @@ return {
 		drills = YES,
 	},
 	info = {
-		size = 17,
+		size = 17,	 -- Font size
 		clock = YES, -- Clock on top of local playername
 	},
 	minion = {
@@ -60,9 +60,9 @@ return {
 		}
 	},
 	hitDirection = {
-		replace = YES,
-		duration = 2,
-		opacity = 0.5,
+		replace = YES, -- Better hit direction markers
+		duration = YES,  -- YES(=auto) or number(=seconds)
+		opacity = 0.5, -- 0~1
 		color = {
 			shield = cl.Aqua,
 			health = cl.Red
