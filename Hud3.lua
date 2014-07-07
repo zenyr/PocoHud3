@@ -1,6 +1,6 @@
 if not TPocoBase then return end
 local _ = UNDERSCORE
-local VR = 0.02
+local VR = 0.03
 local inGame = CopDamage ~= nil
 local me
 --- Options ---
@@ -104,7 +104,7 @@ local _BAGS = {}
 _BAGS['8f59e19e1e45a05e']='Ammo'
 _BAGS['43ed278b1faf89b3']='Med'
 _BAGS['a163786a6ddb0291']='Body'
-local FONT =  'fonts/font_small_mf' or tweak_data.hud_present.title_font or tweak_data.hud_players.name_font or "fonts/font_eroded" or 'core/fonts/system_font'
+local FONT =  'fonts/font_medium_mf' or tweak_data.hud_present.title_font or tweak_data.hud_players.name_font or "fonts/font_eroded" or 'core/fonts/system_font'
 local clGood =  Color( 255, 146, 208, 80 ) / 255
 local clBad =  Color( 255, 255, 192, 0 ) / 255
 local iconSkull,iconShadow,iconRight,iconDot,iconChapter,iconDiv,iconBigDot = '', '', '','Ї','ϸ','϶','ϴ'
