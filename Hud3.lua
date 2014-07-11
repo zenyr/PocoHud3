@@ -1,6 +1,7 @@
 if not TPocoBase then return end
 local _ = UNDERSCORE
-local VR = 0.03
+local VR = 0.04
+local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
 --- Options ---
@@ -734,17 +735,17 @@ function TPocoHud3:onDestroy(gameEnd)
 		World:newgui():destroy_workspace( self._worldws )
 	end
 end
-function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head)
+function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 	if unit then
 		local uType = unit:base()._tweak_table or 0
 		local _arr = {russian=1,german=1,spanish=1,american=1}
 		if not _arr[uType] then
-			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head)
+			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
 		end
 	end
 end
 local _lastAttk, _lastAttkpid = 0,0
-function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head)
+function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType)
 	local Opt = O.popup
 	if self.dead or not Opt.show then return end
 	local pid = self:_pid(sender)
@@ -787,6 +788,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head)
 	if death then
 		texts[#texts+1] = {'',isSpecial and cl.Yellow or color}
 	end
+
 	local pos = Vector3()
 	mvector3.set(pos,hitPos)
 	mvector3.set_z(pos,pos.z + offset)
@@ -796,8 +798,10 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head)
 			if self:Stat(pid,'time') == 0 then
 				self:Stat(pid,'time',now())
 			end
-			self:Stat(pid,'dmg',rDamage*10,true)
-			self:Stat(pid,'hit',1,true)
+			if dmgType == 'bullet' then
+				self:Stat(pid,'dmg',rDamage*10,true)
+				self:Stat(pid,'hit',1,true)
+			end
 			if head then
 				self:Stat(pid,'head',1,true)
 			end
@@ -818,7 +822,7 @@ end
 --- Internal functions ---
 function TPocoHud3:AnnounceStat(midgame)
 	local txt = {}
-	table.insert(txt,iconLC..'PocoHud³ v'.._.f(VR,3)..iconRC..' '..(midgame and 'midgame' or 'endgame')..' total:'..self.killa..iconSkull)
+	table.insert(txt,iconLC..'PocoHud³ v'.._.f(VR,3).. ' '.. VRR ..iconRC..' '..(midgame and 'midgame' or 'endgame')..' total:'..self.killa..iconSkull)
 	for pid = 0,4 do
 		local kill = self:Stat(pid,'kill')
 		local killS = self:Stat(pid,'killS')
@@ -841,7 +845,13 @@ function TPocoHud3:AnnounceStat(midgame)
 			)
 		end
 	end
-	self:Chat(midgame and 'midStat' or 'endStat',table.concat(txt,'\n'))
+	if #txt > 3 then
+		for ___,tx in ipairs(txt) do
+		self:Chat(midgame and 'midStat' or 'endStat',tx)
+		end
+	else
+		self:Chat(midgame and 'midStat' or 'endStat',table.concat(txt,'\n'))
+	end
 end
 local lastSlowT = 0
 function TPocoHud3:_slowUpdate(t,dt)
@@ -901,7 +911,7 @@ end
 function TPocoHud3:Minion(pid,unit)
 	if alive(unit) then
 		self:Stat(pid,'minion',unit)
-		self:Chat('converted',_.s(self:_name(pid),'converted a police hostage.'))
+		self:Chat('converted',_.s(self:_name(pid),'converted',self:_name(unit)))
 	else
 		self:Stat(pid,'minion',0)
 	end
@@ -915,7 +925,7 @@ function TPocoHud3:Chat(category,text)
 	local canSend = catInd >= (Network:is_server() and Opt.serverSendThreshold or isFullGame and Opt.clientFullGameSendThreshold or Opt.clientMidGameSendThreshold)
 	local tStr = _.g('managers.hud._hud_heist_timer._timer_text:text()')
 	if canRead or canSend then
-		_.c(tStr..(canSend and '' or _BROADCASTHDR_HIDDEN), text )
+		_.c(tStr..(canSend and '' or _BROADCASTHDR_HIDDEN), text , canSend and self:_color(self.pid) or nil)
 		if canSend then
 			managers.network:session():send_to_peers_ip_verified( "send_chat_message", 1, tStr.._BROADCASTHDR..text )
 		end
@@ -1006,7 +1016,7 @@ function TPocoHud3:_checkBuff(t)
 		self:RemoveBuff('supp')
 	end
 
-	local melee = self.state._state_data.meleeing and self.state:_get_melee_charge_lerp_value( t ) or 0
+	local melee = self.state and self.state._state_data.meleeing and self.state:_get_melee_charge_lerp_value( t ) or 0
 	if melee > 0 then
 		self:Buff({
 			key= 'charge', good=true,
@@ -1194,48 +1204,51 @@ function TPocoHud3:_updateItems(t,dt)
 			else
 				local attacker = self:_name(self:Stat(i,'minionHit'))
 				self:Stat(i,'minion',0)
-				self:Chat('minionLost',_.s(self:_name(i),'lost a minion to',attacker))
+				self:Chat('minionLost',_.s(self:_name(i),'lost a minion to',attacker,'.'))
 			end
 		end
 	end
 	-- ScanBuff
 	self:_checkBuff(t)
-	local style = O.buff.style
-	local vanilla = style == 2
-	local align = O.buff.align
-	local size = (vanilla and 40 or O.buff.size) + O.buff.gap
-	local count = 0
-	for __,buff in pairs(self.buffs) do
-		if not (buff.dead or buff.dying) then
-			count = count + 1
-		end
-	end
-	local x,y,move = self._ws:size()
-	x = x * O.buff.left/100 - size/2
-	y = y * O.buff.top/100 - size/2
-	local oX,oY = x,y
-	if align == 1 then
-		move = size
-	elseif align == 2 then
-		move = size
-		if vanilla then
-			y = y - count * size / 2
-		else
-			x = x - count * size / 2
-		end
-	else
-		move = -size
-	end
-	for key,buff in _pairs(self.buffs) do
-		if not (buff.dead or buff.dying) then
-			if vanilla then
-				y = y + move
-			else
-				x = x + move
+	if t - (self._lastBuff or 0) >= 1/O.buff.maxFPS then
+		self._lastBuff = t
+		local style = O.buff.style
+		local vanilla = style == 2
+		local align = O.buff.align
+		local size = (vanilla and 40 or O.buff.size) + O.buff.gap
+		local count = 0
+		for __,buff in pairs(self.buffs) do
+			if not (buff.dead or buff.dying) then
+				count = count + 1
 			end
-			buff:draw(t,x,y)
-		elseif not buff.dying then
-			buff:destroy()
+		end
+		local x,y,move = self._ws:size()
+		x = x * O.buff.left/100 - size/2
+		y = y * O.buff.top/100 - size/2
+		local oX,oY = x,y
+		if align == 1 then
+			move = size
+		elseif align == 2 then
+			move = size
+			if vanilla then
+				y = y - count * size / 2
+			else
+				x = x - count * size / 2
+			end
+		else
+			move = -size
+		end
+		for key,buff in _pairs(self.buffs) do
+			if not (buff.dead or buff.dying) then
+				if vanilla then
+					y = y + move
+				else
+					x = x + move
+				end
+				buff:draw(t,x,y)
+			elseif not buff.dying then
+				buff:destroy()
+			end
 		end
 	end
 
@@ -1280,9 +1293,9 @@ function TPocoHud3:_scanSmoke(t)
 			local per = 0
 			name = _BAGS[name] or false
 			if name then
-				if smoke:base().take_ammo then
+				--[[if smoke:base().take_ammo then
 					per = smoke:base()._ammo_amount / smoke:base()._max_ammo_amount
-				end
+				end]]
 				name = name..iconTimes.._.s(smoke:base()._ammo_amount or smoke:base()._amount or smoke:base()._bodybag_amount or '?')
 				self:Float(smoke,2,1,{text=name})
 			end
@@ -1365,6 +1378,8 @@ function TPocoHud3:_name(something)
 			end
 		end
 		something = pid or self.pid
+	elseif str == 'Unit' then
+			return self:_name(something:base()._tweak_table)
 	elseif str == 'string' then -- tweak_table name
 		local pName = managers.criminals:character_peer_id_by_name( something )
 		if pName then
@@ -1749,18 +1764,18 @@ function TPocoHud3:_hook()
 		hook( UnitNetworkHandler, 'damage_bullet', function( ... )
 			local self,subject_unit, attacker_unit, damage, i_body, height_offset, death, sender = unpack({...})
 			local head = i_body and alive(subject_unit) and subject_unit:character_damage().is_head and subject_unit:character_damage():is_head(subject_unit:body(i_body))
-			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head)
+			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'bullet')
 			return Run('damage_bullet',...)
 		end)
 		hook( UnitNetworkHandler, 'damage_explosion', function(...)
 			local self, subject_unit, attacker_unit, damage, i_attack_variant, death, direction, sender = unpack({...})
-			me:AddDmgPopByUnit(attacker_unit,subject_unit,0,damage*-0.1953125,death)
+			me:AddDmgPopByUnit(attacker_unit,subject_unit,0,damage*-0.1953125,death,false,'explosion')
 			return Run('damage_explosion', ... )
 		end)
 		hook( UnitNetworkHandler, 'damage_melee', function(...)
 			local self, subject_unit, attacker_unit, damage, damage_effect, i_body, height_offset, variant, death, sender  = unpack({...})
 			local head = i_body and alive(subject_unit) and subject_unit:character_damage().is_head and subject_unit:character_damage():is_head(subject_unit:body(i_body))
-			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head)
+			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'melee')
 			return Run('damage_melee',...)
 		end)
 		--CopDamage
@@ -1775,7 +1790,7 @@ function TPocoHud3:_hook()
 				if info.col_ray.position or info.pos or info.col_ray.hit_position then
 					mvector3.set(hitPos,info.col_ray.position or info.pos or info.col_ray.hit_position)
 					local head = self._unit:character_damage():is_head(info.col_ray.body)
-					me:AddDmgPop(info.attacker_unit,hitPos,self._unit,0,info.damage,self._dead,head)
+					me:AddDmgPop(info.attacker_unit,hitPos,self._unit,0,info.damage,self._dead,head,info.variant)
 				end
 			end
 			return result
@@ -1789,7 +1804,7 @@ function TPocoHud3:_hook()
 			elseif action_desc.variant == 'tied' and O.popup.dominated then
 				if not managers.enemy:is_civilian( self._unit ) then
 					me:Popup({pos=me:_pos(self._unit),text={{'Intimidated',cl.White}},stay=false,et=now()+dmgTime})
-					me:Chat('dominated','We got a police hostage around '..me:_name(me:_pos(self._unit))..'.'..(me._hostageTxt or ''))
+					me:Chat('dominated','We captured '..me:_name(self._unit)..' around '..me:_name(me:_pos(self._unit))..'.'..(me._hostageTxt or ''))
 				end
 			end
 			if action_desc.type=='act' and action_desc.variant then
