@@ -1,6 +1,6 @@
 if not TPocoBase then return end
 local _ = UNDERSCORE
-local VR = 0.04
+local VR = 0.05
 local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
@@ -66,6 +66,7 @@ local O = {
 			downed = 2,					-- 플레이어 다운(단, 클로커/테이저 등 다운카운트 감소시키는 경우만)
 			downedWarning = 5,	-- 플레이어가 3회 이상 다운
 			replenished = 5,		-- 플레이어가 의료킷으로 체력&다운카운트 복구
+			messiah = 5,				-- 플레이어가 피스톨메시아 사용
 		}
 	},
 	hitDirection = {					-- === 피격 표시 설정 ===
@@ -749,10 +750,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	local Opt = O.popup
 	if self.dead or not Opt.show then return end
 	local pid = self:_pid(sender)
-	if pid == self.pid and not Opt.myDamage then return
-	elseif pid == 0 and not Opt.AIDamage then return
-	elseif not Opt.crewDamage then return
-	end
+
 	local isPercent = damage<0
 	local dmgTime = Opt.damageDecay
 	local rDamage = damage>=0 and damage or -damage
@@ -793,7 +791,6 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	mvector3.set(pos,hitPos)
 	mvector3.set_z(pos,pos.z + offset)
 	local r,err = pcall(function()
-		self:Popup( {pos=pos, text=texts, stay=false, et=now()+dmgTime })
 		if sender then
 			if self:Stat(pid,'time') == 0 then
 				self:Stat(pid,'time',now())
@@ -816,6 +813,11 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 				end
 			end
 		end
+		if pid == self.pid and not Opt.myDamage then return
+		elseif pid == 0 and not Opt.AIDamage then return
+		elseif not Opt.crewDamage then return
+		end
+		self:Popup( {pos=pos, text=texts, stay=false, et=now()+dmgTime })
 	end)
 	if not r then _(err) end
 end
@@ -1741,6 +1743,14 @@ function TPocoHud3:_hook()
 				return result
 			end)
 		end
+		hook( PlayerDamage, 'consume_messiah_charge', function( self)
+			local result = Run('consume_messiah_charge', self)
+			if result then
+				me:Chat('messiah',_.s('Used pistol messiah.', self._messiah_charges ,'left'))
+			end
+			return result
+		end)
+
 		--UnitNetwork
 		hook( UnitNetworkHandler, 'long_dis_interaction', function( ... )
 			local self, target_unit, amount, aggressor_unit  = unpack({...})
