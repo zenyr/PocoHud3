@@ -1,6 +1,15 @@
 local YES,NO,yes,no = true,false,true,false
 return {
 	enable = YES, -- YES/NO : 포코허드 전체 스위치
+	debug = {
+		color = cl.White:with_alpha(0.5),
+		size = 22,
+		defaultFont = NO,
+		verboseOnly = NO,
+		showFPS = YES,
+		showClockIngame = NO,
+		showClockOutgame = YES,
+	},
 	buff = {			-- === 버프 설정 === >> 재장전, 스태미너, ECM, 버서커, 불렛스톰등 표현
 		show = YES,	-- YES/NO : 버프 표현기능 사용
 		left = 10,  -- 0~100% : 버프 기준점 가로 %
@@ -35,6 +44,7 @@ return {
 	info = {				-- === 플레이어 정보 ===
 		size = 17,		-- 자연수 : 정보 글자크기
 		clock = YES,	-- YES/NO : 내 정보란 빈칸을 활용해 (현실)시간 표시
+		verboseKey = '`',
 	},
 	minion = {			-- === 미니언 정보 === >> Float을 활용해 Joker스킬 사용한 미니언 표시
 		show = YES		-- YES/NO

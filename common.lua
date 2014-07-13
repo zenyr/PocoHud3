@@ -1,5 +1,5 @@
 require ('poco/3rdPartyLibrary.lua')
--- Poco Common Library V2 --
+-- Poco Common Library V2.1 --
 if not deep_clone then return end
 local inGame = CopDamage ~= nil
 function _pairs(t, f) -- pairs but sorted
@@ -218,6 +218,19 @@ function TPoco:init()
 end
 function TPoco:Bind(sender,key,downCbk,upCbk)
 	local name = sender:name(1)
+	if type(key) == 'number' then
+		if key == 0 then
+			key = 11
+		elseif key < 10 then -- Number key
+			key = key + 1
+		end
+	elseif type(key) == 'string' then
+		key = string.lower(key)
+		key = Input:keyboard():has_button( Idstring( key ) ) and Input:keyboard():button_index( Idstring( key ) )
+	end
+	if type(key) ~= 'number' then
+		return _('Poco:Bind err;invalid key:',key)
+	end
 	self.binds.down[key] = downCbk and {name,downCbk} or nil
 	self.binds.up[key] = upCbk and {name,upCbk} or nil
 end

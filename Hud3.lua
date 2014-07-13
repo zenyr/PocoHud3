@@ -1,4 +1,11 @@
+-- PocoHud3 by zenyr@zenyr.com
 if not TPocoBase then return end
+--[[
+Okay, you're trying to read my code and I know it is unavoidable, but frankly speaking I did not want to let malicious people to get access to certain things.
+As I already promised I will open my source code someday, and for extreme early adopters like YOU, I did not put any kind of DRM, obfuscation or countermeasure to protect the code other than BASIC compilation.
+I understand your curiosity. I would've do the same. This basic luac would not bar you from what you want, I just wanted to avoid script kids' code-theft a bit. I expect you the guru would not need to do such thing.
+Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
+]]
 local _ = UNDERSCORE
 local VR = 0.05
 local VRR = 'T'
@@ -8,6 +15,15 @@ local me
 local YES,NO,yes,no = true,false,true,false
 local O = {
 	enable = YES, -- YES/NO : 포코허드 전체 스위치
+	debug = {
+		color = cl.White:with_alpha(0.5),
+		size = 22,
+		defaultFont = NO,
+		verboseOnly = NO,
+		showFPS = YES,
+		showClockIngame = NO,
+		showClockOutgame = YES,
+	},
 	buff = {			-- === 버프 설정 === >> 재장전, 스태미너, ECM, 버서커, 불렛스톰등 표현
 		show = YES,	-- YES/NO : 버프 표현기능 사용
 		left = 10,  -- 0~100% : 버프 기준점 가로 %
@@ -42,6 +58,7 @@ local O = {
 	info = {				-- === 플레이어 정보 ===
 		size = 17,		-- 자연수 : 정보 글자크기
 		clock = YES,	-- YES/NO : 내 정보란 빈칸을 활용해 (현실)시간 표시
+		verboseKey = '`',
 	},
 	minion = {			-- === 미니언 정보 === >> Float을 활용해 Joker스킬 사용한 미니언 표시
 		show = YES		-- YES/NO
@@ -106,6 +123,7 @@ local _BAGS = {}
 _BAGS['8f59e19e1e45a05e']='Ammo'
 _BAGS['43ed278b1faf89b3']='Med'
 _BAGS['a163786a6ddb0291']='Body'
+local ALTFONT = 'fonts/font_eroded'
 local FONT =  'fonts/font_medium_mf' or tweak_data.hud_present.title_font or tweak_data.hud_players.name_font or "fonts/font_eroded" or 'core/fonts/system_font'
 local clGood =  Color( 255, 146, 208, 80 ) / 255
 local clBad =  Color( 255, 255, 192, 0 ) / 255
@@ -581,7 +599,7 @@ function THitDirection:init(owner,data)
 	bmp:set_center(100,100)
 	if Opt.number then
 		local nSize = Opt.numberSize
-		local font = Opt.numberDefaultFont and FONT or 'fonts/font_eroded'
+		local font = Opt.numberDefaultFont and FONT or ALTFONT
 		local lbl = pnl:text{
 			x = 1,y = 1,font = font, font_size = nSize,
 			w = nSize*3, h = nSize,
@@ -691,10 +709,13 @@ function TPocoHud3:onInit() -- ★설정
 	self.hits = {} -- to prevent HitDirection markers gc
 	self.gadget = self.gadget or {}
 --	self.tmp = self.pnl.dbg:bitmap{name='x', blend_mode = 'add', layer=1, x=0,y=40, color=clGood ,texture = "guis/textures/hud_icons"}
-	local dbgSize = 20
-	self.dbgLbl = self.pnl.dbg:text{text='HUD '..(inGame and 'Ingame' or 'Outgame'), font=FONT, font_size = dbgSize, color = cl.Purple, x=0,y=self.pnl.dbg:height()-dbgSize, layer=0}
+	local dbgO = O.debug
+	self.dbgLbl = self.pnl.dbg:text{text='HUD '..(inGame and 'Ingame' or 'Outgame'), font= dbgO.defaultFont and FONT or ALTFONT, font_size = dbgO.size, color = dbgO.color, x=0,y=self.pnl.dbg:height()-dbgO.size, layer=0}
 	self:_hook()
-	Poco:Bind(self,16,callback(self,self,'menu',true),callback(self,self,'menu',false))
+	local verboseKey = O.info.verboseKey
+	if verboseKey then
+		Poco:Bind(self,verboseKey,callback(self,self,'menu',true),callback(self,self,'menu',false))
+	end
 	Poco:Bind(self,21,callback(self,self,'test'),nil)
 	return true
 end
@@ -1169,6 +1190,10 @@ function TPocoHud3:_updatePlayers(t)
 					{' ('..math.ceil(distance/100)..'m)',color:with_alpha(0.5)}
 				}
 				self:_lbl(nLbl,txts)
+				local x,__,w,h = nLbl:text_rect()
+				nLbl:set_size(w,h)
+				nData.bag:set_x(nLbl:x()+w)
+				nData.panel:set_width(nLbl:x()+w + 20)
 			end
 		end
 	end
@@ -1276,11 +1301,23 @@ end
 
 function TPocoHud3:_upd_dbgLbl(t,dt)
 	if self.dead then return end
+	local dO = O.debug
+	if dO.verboseOnly then
+		self.dbgLbl:set_visible(self.verbose)
+	end
 	self._keyList = ''--_.s(#(Poco._kbd:down_list() or {})>0 and Poco._kbd:down_list() or '')
 	self._dbgTxt = _.s(self._keyList,self:lastError())
+	local txts = {}
+	if dO.showFPS then
+		txts[#txts+1] = math.floor(1/dt)
+	end
+	if (inGame and dO.showClockIngame) or (not inGame and dO.showClockOutgame) then
+		txts[#txts+1] = os.date('%X')
+	end
+	txts[#txts+1] = self._dbgTxt
 	if t-(self._last_upd_dbgLbl or 0) > 0.5 or self._dbgTxt ~= self.__dbgTxt  then
 		self.__dbgTxt = self._dbgTxt
-		self.dbgLbl:set_text( _.s( math.floor(1/dt)..'fps', os.date('%X'),self._dbgTxt))
+		self.dbgLbl:set_text(_.s(unpack(txts)))
 		self._last_upd_dbgLbl = t
 	end
 end
@@ -1964,6 +2001,9 @@ function TPocoHud3:_hook()
 		end)
 		hook( HuskPlayerMovement, '_get_max_move_speed', function( self, ... )
 			return Run('_get_max_move_speed', self,  ...) * 3
+			-- because of this, husk players will catch up de-sync waaay easily, representing their position more accurate.
+			-- If a host uses this, better stealth experience for all clients guaranteed. Now skill matters, instead of lag. :)
+			-- This does not make them actually move 3 times faster. This only kick in after severe desync.
 		end)
 		hook( HuskPlayerMovement, '_start_bleedout', function( self, ... )
 			local pid = me:_pid(self._unit)
@@ -2114,6 +2154,32 @@ function TPocoHud3:_hook()
 					tT-dT,'s left'
 					))
 			end
+		end)
+		-- Kick menu
+		hook( KickPlayer, 'modify_node', function( ... )
+			local self, node, up = unpack{...}
+			local new_node = deep_clone( node )
+			if managers.network:session() then
+				for _,peer in pairs( managers.network:session():peers() ) do
+					local rank = peer:rank()
+					local params = {
+									name			= peer:name(),
+									text_id			= _.s((rank and rank..'-' or '')..peer:level(),peer:name()),
+									callback		= "kick_player",
+									to_upper		= false,
+									localize		= "false",
+									rpc				= peer:rpc(),
+									peer			= peer,
+									}
+
+					local new_item = node:create_item( nil, params )
+					new_node:add_item( new_item )
+				end
+			end
+
+			managers.menu:add_back_button( new_node )
+
+			return new_node
 		end)
 	end
 end
