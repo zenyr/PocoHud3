@@ -1,13 +1,13 @@
 -- PocoHud3 by zenyr@zenyr.com
 if not TPocoBase then return end
---[[
+local disclamer = [[
 Okay, you're trying to read my code and I know it is unavoidable, but frankly speaking I did not want to let malicious people to get access to certain things.
 As I already promised I will open my source code someday, and for extreme early adopters like YOU, I did not put any kind of DRM, obfuscation or countermeasure to protect the code other than BASIC compilation.
 I understand your curiosity. I would've do the same. This basic luac would not bar you from what you want, I just wanted to avoid script kids' code-theft a bit. I expect you the guru would not need to do such thing.
 Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.06
+local VR = 0.07
 local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
@@ -68,12 +68,14 @@ local O = {
 		serverSendThreshold = 3,		-- 내가 방장인 경우 플레이어에게 모두 방송
 		clientFullGameSendThreshold = 4,	-- 내가 방장이 아니지만 방장과 동시에 시작했을 경우 플레이어에게 모두 방송
 		clientMidGameSendThreshold = 5,	-- 내가 방장도 아니고 중간에 입장했지만 플레이어에게 모두 방송
+		alwaysSendThreshold = 8, -- Mute상태에서도 무조건 방송
 
 		midgameAnnounce = 50,			-- 팀원+AI합산한 킬수마다 게임 중간 통계 출력 (이벤트 중요도에 따라 방송여부 결정)
 
 		index = { -- Index: 이벤트별 중요도 할당. 높은 수치는 '많은 사람들이 알아야 하는 중요한 정보', 낮은 수치는 '별로 필요 없는 사소한 정보'를 의미
 			midStat = 3,			-- 게임 중간통계 (*게임중 입장시 부정확)
 			endStat = 4,			-- 게임 최종통계 (*게임중 입장시 부정확)
+			endStatCredit = 4, -- 게임 최종통계 후 모드 특성 설명
 			dominated = 4,			-- 몹이 투항했을 경우
 			converted = 4,			-- 플레이어가 몹을 미니언으로 변환한 경우
 			minionLost = 4,		-- 미니언 사망
@@ -83,7 +85,7 @@ local O = {
 			downed = 2,			-- 플레이어 다운(단, 클로커/테이저 등 다운카운트 감소시키는 경우만)
 			downedWarning = 5,		-- 플레이어가 3회 이상 다운
 			replenished = 5,		-- 플레이어가 의료킷으로 체력&다운카운트 복구
-			messiah = 5,			-- 플레이어가 피스톨메시아 사용
+			messiah = 8,			-- 플레이어가 피스톨메시아 사용
 		}
 	},
 	hitDirection = {			-- === 피격 표시 설정 ===
@@ -104,9 +106,9 @@ local O = {
 	conv = {	-- === 미니언 사망 원인 표현용, 변경할 필요 없음 ===
 		city_swat = 'a Gensec Elite',
 		cop = 'a cop',
-		fbi = 'a FBI agent',
-		fbi_heavy_swat = 'a FBI heavy SWAT',
-		fbi_swat = 'a FBI SWAT',
+		fbi = 'an FBI agent',
+		fbi_heavy_swat = 'an FBI heavy SWAT',
+		fbi_swat = 'an FBI SWAT',
 		gangster = 'a gangster',
 		gensec = 'a Gensec guard',
 		heavy_swat = 'a heavy SWAT',
@@ -443,7 +445,7 @@ function TFloat:draw(t)
 	if dot > 0 or onScr then
 		if category == 0 then -- Unit
 			local cHealth = unit:character_damage() and unit:character_damage()._health and unit:character_damage()._health*10 or 0
-			local fHealth = cHealth > 0 and unit:character_damage() and unit:character_damage()._HEALTH_INIT*10 or 1
+			local fHealth = cHealth > 0 and unit:character_damage() and (unit:character_damage()._HEALTH_INIT and unit:character_damage()._HEALTH_INIT*10 or unit:character_damage()._health_max and unit:character_damage()._health_max*10 ) or 1
 			prog = cHealth / fHealth
 			local cCarry = unit:carry_data()
 			local isCiv = unit and managers.enemy:is_civilian( unit )
@@ -603,7 +605,7 @@ function THitDirection:init(owner,data)
 		local lbl = pnl:text{
 			x = 1,y = 1,font = font, font_size = nSize,
 			w = nSize*3, h = nSize,
-			text = '-'.._.f(data.dmg),
+			text = '-'.._.f(data.dmg*10),
 			color = color,
 			align = "center",
 			layer = 1
@@ -761,7 +763,7 @@ function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 	if unit then
 		local uType = unit:base()._tweak_table or 0
 		local _arr = {russian=1,german=1,spanish=1,american=1}
-		if not _arr[uType] then
+		if not _arr[uType] then -- this filters PlayerDrama related events out when hosting a game
 			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
 		end
 	end
@@ -791,7 +793,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 				if apid and apid > 0 and (apid ~= _lastAttkpid or now()-_lastAttk > 5) then
 					_lastAttk = now()
 					_lastAttkpid = apid
-					self:Chat('minionShot',_.s(self:_name(senderTweak),'attacked',(i==apid and 'own' or self:_name(i)..'\'s'),'minion by',_.f(rDamage*10)))
+					self:Chat('minionShot',_.s(self:_name(senderTweak),'attacked',(i==apid and 'own' or self:_name(i)..'\'s'),'minion for',_.f(rDamage*10)))
 				end
 			end
 		end
@@ -857,15 +859,24 @@ function TPocoHud3:AnnounceStat(midgame)
 			local accuracy = _.f(hit/shot*100,0)..'%'
 			local kpm = _.f(60*kill/dt)
 			local downs = self:Stat(pid,'down')+self:Stat(pid,'downAll')
-			table.insert(txt,
-				_.s(iconLC..self:_name(pid)..iconRC,
-					kill..iconSkull..(killS>0 and '('..killS..' Sp)' or ''),
-					'DPS:'..dps,
-					'KPM:'..kpm,
-					'Acc:'..(pid==0 and 'N/A' or accuracy),
-					(downs>0 and downs..iconShadow or nil)
+			if midgame then
+				table.insert(txt,
+					_.s(iconLC..self:_name(pid)..iconRC,
+						kill..iconSkull..(killS>0 and '('..killS..' Sp)' or ''),
+						(downs>0 and downs..iconShadow or nil)
+					)
 				)
-			)
+			else
+				table.insert(txt,
+					_.s(iconLC..self:_name(pid)..iconRC,
+						kill..iconSkull..(killS>0 and '('..killS..' Sp)' or ''),
+						'DPS:'..dps,
+						'KPM:'..kpm,
+						'Acc:'..(pid==0 and 'N/A' or accuracy),
+						(downs>0 and downs..iconShadow or nil)
+					)
+				)
+			end
 		end
 	end
 	if #txt > 3 then
@@ -874,6 +885,9 @@ function TPocoHud3:AnnounceStat(midgame)
 		end
 	else
 		self:Chat(midgame and 'midStat' or 'endStat',table.concat(txt,'\n'))
+	end
+	if not midgame then
+		self:Chat('endStatCredit','-- PocoHud3 : More info @ steam group "pocomods" --')
 	end
 end
 local lastSlowT = 0
@@ -941,8 +955,9 @@ function TPocoHud3:Minion(pid,unit)
 end
 function TPocoHud3:Chat(category,text)
 	local Opt = O.chat
-	if Opt.muted then return _('Muted:',text) end
 	local catInd = Opt.index[category] or -1
+	local forceSend = catInd >= Opt.alwaysSendThreshold
+	if Opt.muted and not forceSend then return _('Muted:',text) end
 	local canRead = catInd >= Opt.readThreshold
 	local isFullGame = not managers.statistics:is_dropin()
 	local canSend = catInd >= (Network:is_server() and Opt.serverSendThreshold or isFullGame and Opt.clientFullGameSendThreshold or Opt.clientMidGameSendThreshold)

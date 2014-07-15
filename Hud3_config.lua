@@ -54,12 +54,14 @@ return {
 		serverSendThreshold = 3,		-- 내가 방장인 경우 플레이어에게 모두 방송
 		clientFullGameSendThreshold = 4,	-- 내가 방장이 아니지만 방장과 동시에 시작했을 경우 플레이어에게 모두 방송
 		clientMidGameSendThreshold = 5,	-- 내가 방장도 아니고 중간에 입장했지만 플레이어에게 모두 방송
+		alwaysSendThreshold = 8, -- Mute상태에서도 무조건 방송
 
 		midgameAnnounce = 50,			-- 팀원+AI합산한 킬수마다 게임 중간 통계 출력 (이벤트 중요도에 따라 방송여부 결정)
 
 		index = { -- Index: 이벤트별 중요도 할당. 높은 수치는 '많은 사람들이 알아야 하는 중요한 정보', 낮은 수치는 '별로 필요 없는 사소한 정보'를 의미
 			midStat = 3,			-- 게임 중간통계 (*게임중 입장시 부정확)
 			endStat = 4,			-- 게임 최종통계 (*게임중 입장시 부정확)
+			endStatCredit = 4, -- 게임 최종통계 후 모드 특성 설명
 			dominated = 4,			-- 몹이 투항했을 경우
 			converted = 4,			-- 플레이어가 몹을 미니언으로 변환한 경우
 			minionLost = 4,		-- 미니언 사망
@@ -69,7 +71,7 @@ return {
 			downed = 2,			-- 플레이어 다운(단, 클로커/테이저 등 다운카운트 감소시키는 경우만)
 			downedWarning = 5,		-- 플레이어가 3회 이상 다운
 			replenished = 5,		-- 플레이어가 의료킷으로 체력&다운카운트 복구
-			messiah = 5,			-- 플레이어가 피스톨메시아 사용
+			messiah = 8,			-- 플레이어가 피스톨메시아 사용
 		}
 	},
 	hitDirection = {			-- === 피격 표시 설정 ===
@@ -90,9 +92,9 @@ return {
 	conv = {	-- === 미니언 사망 원인 표현용, 변경할 필요 없음 ===
 		city_swat = 'a Gensec Elite',
 		cop = 'a cop',
-		fbi = 'a FBI agent',
-		fbi_heavy_swat = 'a FBI heavy SWAT',
-		fbi_swat = 'a FBI SWAT',
+		fbi = 'an FBI agent',
+		fbi_heavy_swat = 'an FBI heavy SWAT',
+		fbi_swat = 'an FBI SWAT',
 		gangster = 'a gangster',
 		gensec = 'a Gensec guard',
 		heavy_swat = 'a heavy SWAT',
