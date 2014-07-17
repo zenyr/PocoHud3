@@ -1,6 +1,14 @@
-require ('poco/3rdPartyLibrary.lua')
 -- Poco Common Library V2.1 --
 if not deep_clone then return end
+function _req(name)
+  local f=io.open(name,"r")
+  if f~=nil then
+		io.close(f)
+		require(name)
+	end
+end
+_req ('poco/3rdPartyLibrary.lua')
+_req ('poco/3rdPartyLibrary.luac')
 local inGame = CopDamage ~= nil
 function _pairs(t, f) -- pairs but sorted
   local a = {}
