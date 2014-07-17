@@ -7,7 +7,7 @@ I understand your curiosity. I would've do the same. This basic luac would not b
 Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.07
+local VR = 0.08
 local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
@@ -28,11 +28,17 @@ local O = {
 		show = YES,	-- YES/NO : 버프 표현기능 사용
 		left = 10,  -- 0~100% : 버프 기준점 가로 %
 		top  = 22,  -- 0~100% : 버프 기준점 세로 %
-		maxFPS = 30,-- 자연수 : 버프 갱신주기
+		maxFPS = 50,-- 자연수 : 버프 갱신주기
 		size = 70,  -- 자연수 : 버프 아이콘 크기 (단, "바닐라 스타일"에서는 무시)
 		gap = 10,   -- 자연수 : 버프 아이콘 간격 (단, "바닐라 스타일"에서는 무시)
 		align = 1,  -- [1,2,3] : 아이콘 정렬방향 1왼쪽 2중앙 3오른쪽
 		style = 2,  -- [1,2]: 버프아이콘 스타일 1포코허드(컬러) 2바닐라(순정Feel)
+
+
+		noSprintDelay = YES,
+		hideInteractionCircle = YES,
+		simpleBusy = YES,
+		simpleBusyRadius = 10,
 	},
 	popup = {			-- === 데미지팝업 설정 ===
 		show = YES,		-- YES/NO : 데미지팝업 사용
@@ -93,7 +99,6 @@ local O = {
 		duration = YES,		-- YES/초 : 지속시간을 초로 입력. YES로 설정시 쉴드 복구시간으로 자동설정(권장)
 		opacity = 0.5,			-- 0-1 : 투명도
 		number = YES,			-- YES/NO : 피해량 표시
---		numberAsPercent = NO,
 		numberSize = 25,		-- 피해량 글자 크기
 		numberDefaultFont = NO,	-- 피해량 폰트를 기본폰트로
 		sizeStart = 100,		-- 최초 크기
@@ -153,8 +158,15 @@ function TBuff:_make()
 	local style = O.buff.style
 	local size = style==2 and 40 or O.buff.size
 	local data = self.data
-	if style == 2 then
-		self.created = true
+	local simple = self.owner:_isSimple(data.key)
+	self.created = true
+	if simple then
+		local simpleRadius = O.buff.simpleBusyRadius
+		local pnl = self.ppnl:panel({x = self.owner.ww/2-simpleRadius,y=self.owner.hh/2-simpleRadius, w=simpleRadius*2,h=simpleRadius*2})
+		self.pnl = pnl
+		local texture = data.good and "guis/textures/pd2/hud_progress_active" or "guis/textures/pd2/hud_progress_invalid"
+		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = simpleRadius, sides = 64, current = 20, total = 64, blend_mode = "add", layer = 0} )
+	elseif style == 2 then
 		local pnl = self.ppnl:panel({x = 0,y=0, w=100,h=100})
 		self.pnl = pnl
 		self.lbl = pnl:text{text='', font=FONT, align='center', font_size = size/2, color = data.color or data.good and clGood or clBad, x=1,y=1, layer=2, blend_mode = 'normal'}
@@ -173,7 +185,6 @@ function TBuff:_make()
 		pnl:set_shape(0,0,size*2+5,size*1.25)
 		pnl:set_position(-100,-100)
 	else
-		self.created = true
 		local pnl = self.ppnl:panel({x = 0,y=0, w=100,h=100})
 		self.pnl = pnl
 		self.lbl = pnl:text{text='', font=FONT, font_size = size/4, color = data.color or data.good and clGood or clBad, x=1,y=1, layer=2, blend_mode = 'normal'}
@@ -203,6 +214,7 @@ function TBuff:draw(t,x,y)
 		local prog = (now()-st)/(et-st)
 		local style = O.buff.style
 		local vanilla = style == 2
+		local simple = self.owner:_isSimple(data.key)
 		if (prog >= 1 or prog < 0) and et ~= 1 then
 			self.dead = true
 		elseif alive(self.pnl) then
@@ -211,11 +223,15 @@ function TBuff:draw(t,x,y)
 			end
 			x = self.x and self.x + (x-self.x)/5 or x
 			y = self.y and self.y + (y-self.y)/5 or y
-			self.pnl:set_center(x,y)
+			if not simple then
+				self.pnl:set_center(x,y)
+			end
 			self.x = x
 			self.y = y
 			local txts
-			if vanilla then
+			if simple then
+
+			elseif vanilla then
 				local sTxt = self.owner:_lbl(nil,data.text)
 				if et == 1 then -- Special
 					sTxt = sTxt ~= '' and (sTxt or ''):gsub(' ','\n') or  _.f(prog*100,1)..'%'
@@ -231,15 +247,17 @@ function TBuff:draw(t,x,y)
 					table.insert(txts,{_.f(et ~= 1 and et-now() or prog*100)..(et == 1 and '%' or 's'),data.good and clGood or clBad})
 				end
 			end
-			self.owner:_lbl(self.lbl,txts)
-			local _x,_y,w,h = self.lbl:text_rect()
-			self.lbl:set_size(w,h)
-			if vanilla then
-				local ww, hh = self.bg:size()
-				self.lbl:set_center(ww/2,hh/2)
-			else
-				local ww, hh = self.pnl:size()
-				self.lbl:set_center(ww/2,hh-h/2)
+			if not simple then
+				self.owner:_lbl(self.lbl,txts)
+				local _x,_y,w,h = self.lbl:text_rect()
+				self.lbl:set_size(w,h)
+				if vanilla then
+					local ww, hh = self.bg:size()
+					self.lbl:set_center(ww/2,hh/2)
+				else
+					local ww, hh = self.pnl:size()
+					self.lbl:set_center(ww/2,hh-h/2)
+				end
 			end
 			self.pie:set_current(1-prog)
 			if not self.dying then
@@ -486,9 +504,9 @@ function TFloat:draw(t)
 				name = _drillNames[name] or 'Drill'
 				prog = 1-tGUI._time_left/tGUI._timer
 				if pDist < 10000 or verbose then
-					table.insert(txts,{_.s(name..':',self.owner:_time(tGUI._time_left),'/',self.owner:_time(tGUI._timer)),tGUI._jammed and cl.Red or cl.White})
+					table.insert(txts,{_.s(name..':',self.owner:_time(tGUI._time_left)..(tGUI._jammed and '!' or ''),'/',self.owner:_time(tGUI._timer)),tGUI._jammed and cl.Red or cl.White})
 				else
-					table.insert(txts,{_.s(self.owner:_time(tGUI._time_left)),tGUI._jammed and cl.Red or cl.White})
+					table.insert(txts,{_.s(self.owner:_time(tGUI._time_left))..(tGUI._jammed and '!' or ''),tGUI._jammed and cl.Red or cl.White})
 				end
 			elseif dGUI then
 				dGUI._maxx = math.max( dGUI._maxx or 0, dGUI._timer)
@@ -1213,6 +1231,9 @@ function TPocoHud3:_updatePlayers(t)
 		end
 	end
 end
+function TPocoHud3:_isSimple(key)
+	return O.buff.simpleBusy and (key == 'transition' or key == 'charge')
+end
 local _mask = World:make_slot_mask(1, 2, 8, 11, 12, 14, 16, 18, 21, 22, 25, 26, 33, 34, 35 )
 --1, 11, 38
 _mask = World:make_slot_mask(1, 8, 11, 12, 14, 16, 18, 21, 22, 24, 25, 26, 33, 34, 35 )
@@ -1259,8 +1280,8 @@ function TPocoHud3:_updateItems(t,dt)
 		local align = O.buff.align
 		local size = (vanilla and 40 or O.buff.size) + O.buff.gap
 		local count = 0
-		for __,buff in pairs(self.buffs) do
-			if not (buff.dead or buff.dying) then
+		for key,buff in pairs(self.buffs) do
+			if not (buff.dead or buff.dying or self:_isSimple(key)) then
 				count = count + 1
 			end
 		end
@@ -1282,7 +1303,9 @@ function TPocoHud3:_updateItems(t,dt)
 		end
 		for key,buff in _pairs(self.buffs) do
 			if not (buff.dead or buff.dying) then
-				if vanilla then
+				if self:_isSimple(key) then
+					-- do not move
+				elseif vanilla then
 					y = y + move
 				else
 					x = x + move
@@ -1321,7 +1344,7 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 		self.dbgLbl:set_visible(self.verbose)
 	end
 	self._keyList = ''--_.s(#(Poco._kbd:down_list() or {})>0 and Poco._kbd:down_list() or '')
-	self._dbgTxt = _.s(self._keyList,self:lastError())
+	self._dbgTxt = _.s(self._keyList,string.upper(self:lastError()))
 	local txts = {}
 	if dO.showFPS then
 		txts[#txts+1] = math.floor(1/dt)
@@ -1612,6 +1635,7 @@ function TPocoHud3:_hook()
 			Run('_interupt_action_interact', self, t, input, complete )
 			local et = self._equip_weapon_expire_t
 			if et then
+				me:RemoveBuff('interaction')
 				pcall(me.Buff,me,({
 					key='transition', good=false,
 					icon=skillIcon,
@@ -1624,7 +1648,7 @@ function TPocoHud3:_hook()
 		hook( PlayerStandard, '_end_action_running', function( self,t, input, complete  )
 			Run('_end_action_running', self, t, input, complete )
 			local et = self._end_running_expire_t
-			if et then
+			if not (self.RUN_AND_SHOOT or O.buff.noSprintDelay) and et then
 				pcall(me.Buff,me,({
 					key='transition', good=false,
 					icon=skillIcon,
@@ -1666,7 +1690,7 @@ function TPocoHud3:_hook()
 			local et = self._interact_expire_t
 			if et then
 				pcall(me.Buff,me,({
-					key='transition', good=true,
+					key='interaction', good=true,
 					icon = "guis/textures/pd2/pd2_waypoints",
 					iconRect = {224, 32, 32, 32 },
 					--icon = "guis/textures/hud_icons",
@@ -2158,7 +2182,7 @@ function TPocoHud3:_hook()
 		end)
 		hook( MenuManager, 'update_person_joining', function( ... )
 			local self, id, progress_percentage = unpack{...}
-			local joinT = self['_joinT_'..id]
+			local joinT = self['_joinT_'..id] or os.clock()
 			local dT,per = os.clock()-joinT, math.max(1,progress_percentage)
 			local tT = dT/per*100
 			Run('update_person_joining', ...)
@@ -2170,6 +2194,20 @@ function TPocoHud3:_hook()
 					))
 			end
 		end)
+		-- Hide interaction circle
+		if O.buff.hideInteractionCircle then
+			hook( HUDInteraction, 'show_interaction_bar', function( ... )
+				local self, current, total = unpack{...}
+				Run('show_interaction_bar', ...)
+				self._interact_circle:set_visible(false)
+			end)
+			hook( HUDInteraction, '_animate_interaction_complete', function( ... )
+				local self, bitmap, circle  = unpack{...}
+				bitmap:parent():remove( bitmap )
+				circle:remove()
+				--Run('_animate_interaction_complete', ...)
+			end)
+		end
 		-- Kick menu
 		hook( KickPlayer, 'modify_node', function( ... )
 			local self, node, up = unpack{...}
@@ -2186,14 +2224,11 @@ function TPocoHud3:_hook()
 									rpc				= peer:rpc(),
 									peer			= peer,
 									}
-
 					local new_item = node:create_item( nil, params )
 					new_node:add_item( new_item )
 				end
 			end
-
 			managers.menu:add_back_button( new_node )
-
 			return new_node
 		end)
 	end

@@ -14,11 +14,16 @@ return {
 		show = YES,	-- YES/NO : 버프 표현기능 사용
 		left = 10,  -- 0~100% : 버프 기준점 가로 %
 		top  = 22,  -- 0~100% : 버프 기준점 세로 %
-		maxFPS = 30,-- 자연수 : 버프 갱신주기
+		maxFPS = 50,-- 자연수 : 버프 갱신주기
 		size = 70,  -- 자연수 : 버프 아이콘 크기 (단, "바닐라 스타일"에서는 무시)
 		gap = 10,   -- 자연수 : 버프 아이콘 간격 (단, "바닐라 스타일"에서는 무시)
 		align = 1,  -- [1,2,3] : 아이콘 정렬방향 1왼쪽 2중앙 3오른쪽
-		style = 2,  -- [1,2]: 버프아이콘 스타일 1포코허드(컬러) 2바닐라(순정Feel)
+		style = 1,  -- [1,2]: 버프아이콘 스타일 1포코허드(컬러) 2바닐라(순정Feel)
+
+		noSprintDelay = YES,
+		hideInteractionCircle = NO,
+		simpleBusy = YES,
+		simpleBusyRadius = 10,
 	},
 	popup = {			-- === 데미지팝업 설정 ===
 		show = YES,		-- YES/NO : 데미지팝업 사용
