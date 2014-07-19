@@ -7,7 +7,7 @@ I understand your curiosity. I would've do the same. This basic luac would not b
 Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.09
+local VR = 0.091
 local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
@@ -633,7 +633,7 @@ function THitDirection:init(owner,data)
 		lbl = pnl:text{
 			x = 1,y = 1,font = font, font_size = nSize,
 			w = nSize*3, h = nSize,
-			text = '-'.._.f(data.dmg),
+			text = '-'.._.f(data.dmg*10),
 			color = cl.Black:with_alpha(0.2),
 			align = "center",
 			layer = 1
@@ -643,7 +643,7 @@ function THitDirection:init(owner,data)
 		lbl = pnl:text{
 			x = 1,y = 1,font = font, font_size = nSize,
 			w = nSize*3, h = nSize,
-			text = '-'.._.f(data.dmg),
+			text = '-'.._.f(data.dmg*10),
 			color = cl.Black:with_alpha(0.2),
 			align = "center",
 			layer = 1
@@ -997,7 +997,9 @@ function TPocoHud3:Float(unit,category,temp,tag)
 	if float then
 		float:renew({tag=tag,temp=temp})
 	else
-		if category == 1 and O.float.drills then
+		if category == 1 and not O.float.drills then
+			--
+		else
 			self.floats[key] = TFloat:new(self,{category=category,key=key,unit=unit,temp=temp, tag=tag})
 		end
 	end
