@@ -7,7 +7,7 @@ I understand your curiosity. I would've do the same. This basic luac would not b
 Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.08
+local VR = 0.09
 local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
@@ -36,7 +36,7 @@ local O = {
 
 
 		noSprintDelay = YES,
-		hideInteractionCircle = YES,
+		hideInteractionCircle = NO,
 		simpleBusy = YES,
 		simpleBusyRadius = 10,
 	},
@@ -811,7 +811,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 				if apid and apid > 0 and (apid ~= _lastAttkpid or now()-_lastAttk > 5) then
 					_lastAttk = now()
 					_lastAttkpid = apid
-					self:Chat('minionShot',_.s(self:_name(senderTweak),'attacked',(i==apid and 'own' or self:_name(i)..'\'s'),'minion for',_.f(rDamage*10)))
+					self:Chat('minionShot',_.s(self:_name(senderTweak),'damaged',(i==apid and 'own' or self:_name(i)..'\'s'),'minion for',_.f(rDamage*10)))
 				end
 			end
 		end
@@ -856,7 +856,10 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 		end
 		if pid == self.pid and not Opt.myDamage then return
 		elseif pid == 0 and not Opt.AIDamage then return
-		elseif not Opt.crewDamage then return
+		elseif not Opt.crewDamage then
+			if pid > 0 and pid ~= self.pid then
+				return
+			end
 		end
 		self:Popup( {pos=pos, text=texts, stay=false, et=now()+dmgTime })
 	end)
@@ -865,7 +868,7 @@ end
 --- Internal functions ---
 function TPocoHud3:AnnounceStat(midgame)
 	local txt = {}
-	table.insert(txt,iconLC..'PocoHud³ v'.._.f(VR,3).. ' '.. VRR ..iconRC..' '..(midgame and 'midgame' or 'endgame')..' total:'..self.killa..iconSkull)
+	table.insert(txt,iconLC..'PocoHud³ v'.._.f(VR,3).. ' '.. VRR ..iconRC..' '..' Crew Kills:'..self.killa..iconSkull)
 	for pid = 0,4 do
 		local kill = self:Stat(pid,'kill')
 		local killS = self:Stat(pid,'killS')
@@ -887,9 +890,9 @@ function TPocoHud3:AnnounceStat(midgame)
 			else
 				table.insert(txt,
 					_.s(iconLC..self:_name(pid)..iconRC,
-						kill..iconSkull..(killS>0 and '('..killS..' Sp)' or ''),
-						'DPS:'..dps,
-						'KPM:'..kpm,
+						kill..iconSkull..(killS>0 and '('..killS..' Sp)' or ''),'|',
+						'DPS:'..dps,'|',
+						'KPM:'..kpm,'|',
 						'Acc:'..(pid==0 and 'N/A' or accuracy),
 						(downs>0 and downs..iconShadow or nil)
 					)
@@ -905,7 +908,7 @@ function TPocoHud3:AnnounceStat(midgame)
 		self:Chat(midgame and 'midStat' or 'endStat',table.concat(txt,'\n'))
 	end
 	if not midgame then
-		self:Chat('endStatCredit','-- PocoHud3 : More info @ steam group "pocomods" --')
+		self:Chat('endStatCredit','-- PocoHud³ : More info @ steam group "pocomods" --')
 	end
 end
 local lastSlowT = 0
@@ -994,7 +997,9 @@ function TPocoHud3:Float(unit,category,temp,tag)
 	if float then
 		float:renew({tag=tag,temp=temp})
 	else
-		self.floats[key] = TFloat:new(self,{category=category,key=key,unit=unit,temp=temp, tag=tag})
+		if category == 1 and O.float.drills then
+			self.floats[key] = TFloat:new(self,{category=category,key=key,unit=unit,temp=temp, tag=tag})
+		end
 	end
 end
 function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
@@ -1244,17 +1249,19 @@ function TPocoHud3:_updateItems(t,dt)
 	self:_scanSmoke(t)
 	self:_updatePlayers(t)
 	-- ScanFloat
-	local r = _.r(_mask)
-	if r and r.unit then
-		local unit = r.unit
-		if unit and unit:in_slot( 8 ) and alive( unit:parent() ) then -- shield
-			unit = unit:parent()
-		end
-		unit = (unit:movement() or unit:carry_data()) and unit
-		if unit then
-			local cHealth = unit:character_damage() and unit:character_damage()._health or false
-			if cHealth and cHealth > 0 or unit:carry_data() then
-				self:Float(unit,0,true)
+	if O.float.unit then
+		local r = _.r(_mask)
+		if r and r.unit then
+			local unit = r.unit
+			if unit and unit:in_slot( 8 ) and alive( unit:parent() ) then -- shield
+				unit = unit:parent()
+			end
+			unit = (unit:movement() or unit:carry_data()) and unit
+			if unit then
+				local cHealth = unit:character_damage() and unit:character_damage()._health or false
+				if cHealth and cHealth > 0 or unit:carry_data() then
+					self:Float(unit,0,true)
+				end
 			end
 		end
 	end
@@ -1516,6 +1523,12 @@ function TPocoHud3:_visibility(uPos)
 		-- 1. Inside smoke
 		-- 2. Through smoke
 	return result
+end
+function TPocoHud3:_show(state)
+	if self.dead then return end
+	for k,pnl in pairs(self.pnl) do
+		pnl:set_visible(state)
+	end
 end
 function TPocoHud3:_hook()
 	local Run = function(key,...)
@@ -1890,7 +1903,7 @@ function TPocoHud3:_hook()
 			elseif action_desc.variant == 'tied' and O.popup.dominated then
 				if not managers.enemy:is_civilian( self._unit ) then
 					me:Popup({pos=me:_pos(self._unit),text={{'Intimidated',cl.White}},stay=false,et=now()+dmgTime})
-					me:Chat('dominated','We captured '..me:_name(self._unit)..' around '..me:_name(me:_pos(self._unit))..'.'..(me._hostageTxt or ''))
+					me:Chat('dominated',me:_name(self._unit)..' around '..me:_name(me:_pos(self._unit))..' has been captured.'..(me._hostageTxt or ''))
 				end
 			end
 			if action_desc.type=='act' and action_desc.variant then
@@ -1903,6 +1916,14 @@ function TPocoHud3:_hook()
 		hook( HUDManager, 'show_endscreen_hud', function( self )
 			Run('show_endscreen_hud', self )
 			me:destroy(true)
+		end)
+		hook( HUDManager, 'set_disabled', function( self )
+			Run('set_disabled', self )
+			me:_show(false)
+		end)
+		hook( HUDManager, 'set_enabled', function( self )
+			Run('set_enabled', self )
+			me:_show(true)
 		end)
 
 		hook( ECMJammerBase, 'set_active', function( self,active )
@@ -2001,7 +2022,7 @@ function TPocoHud3:_hook()
 			local down = self:Stat(pid,'down')
 			if percent >= 99.8 and bPercent < percent then
 				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) then
-					self:Chat('replenished',self:_name(pid)..' replenished health by '.._.f(percent-bPercent)..'% '..(down>0 and '+'..down..' downcount' or ''))
+					self:Chat('replenished',self:_name(pid)..' replenished health by '.._.f(percent-bPercent)..'%'..(down>0 and '(+'..down..' down'..(down>1 and 's' or '')..')' or ''))
 				end
 				self:Stat(pid,'custody',0)
 				self:Stat(pid,'downAll',self:Stat(pid,'down'),true)
@@ -2029,9 +2050,9 @@ function TPocoHud3:_hook()
 		local OnCriminalDowned = function(pid)
 			self:Stat(pid,'down',1,true)
 			if self:Stat(pid,'down') >= 3 then
-				self:Chat('downedWarning','Warning:'..me:_name(pid)..' was downed '..me:Stat(pid,'down')..' times.')
+				self:Chat('downedWarning','Warning:'..me:_name(pid)..' has been downed '..me:Stat(pid,'down')..' times.')
 			else
-				self:Chat('downed',me:_name(pid)..' is downed. ')
+				self:Chat('downed',me:_name(pid)..' was downed.')
 			end
 		end
 		hook( PlayerBleedOut, '_enter', function( self, ... )
@@ -2303,7 +2324,7 @@ function TPocoHud3:_lbl(lbl,txts)
 				result = result..txtObj[1]
 				local __, count = txtObj[1]:gsub('[^\128-\193]', '')
 				posEnd = pos + count
-				table.insert(ranges,{pos,posEnd,txtObj[2] or cl.Blue})
+				table.insert(ranges,{pos,posEnd,txtObj[2] or cl.White})
 				pos = posEnd
 			end
 			lbl:set_text(result)
