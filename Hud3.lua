@@ -7,7 +7,7 @@ I understand your curiosity. I would've do the same. This basic luac would not b
 Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.091
+local VR = 0.092
 local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
@@ -2201,7 +2201,25 @@ function TPocoHud3:_hook()
 		hook( MenuManager, 'show_person_joining', function( ... )
 			local self, id, nick = unpack({...})
 			self['_joinT_'..id] = os.clock()
-			return Run('show_person_joining', ...)
+			local result = Run('show_person_joining', ...)
+
+			local peer = managers.network:session():peer(id)
+			if peer and 0 < peer:rank() then
+				managers.hud:post_event("infamous_player_join_stinger")
+				local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
+				if dlg then
+					local name = peer:level()..' '..string.upper(nick)
+					if peer:rank()>0 then
+						name = peer:rank()..'-'..name
+					end
+					dlg:set_title(_.s(
+						managers.localization:text("dialog_dropin_title", {	USER = name	})
+						))
+				end
+			end
+
+
+			return result
 		end)
 		hook( MenuManager, 'update_person_joining', function( ... )
 			local self, id, progress_percentage = unpack{...}
