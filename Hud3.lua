@@ -400,9 +400,13 @@ function TFloat:_make()
 	self.lblShadow2 = pnl:text{text='shadow', font=FONT, font_size = size, color = cl.Black:with_alpha(0.3), x=size+m*2-1,y=1+m, layer=2, blend_mode = 'normal'}
 end
 local _drillNames = {
-	lance = 'Thermal Drill', uload_database = 'Upload',
-	votingmachine2 = 'Voting Machine', hack_suburbia = 'Hacking',
-	digitalgui = 'Timelock', drill = 'Drill', huge_lance = 'The Beast',
+	drill = 'Drill',
+	lance = 'Thermal Drill',
+	uload_database = 'Upload',
+	votingmachine2 = 'Voting Machine',
+	hack_suburbia = 'Hacking',
+	digitalgui = 'Timelock',
+	huge_lance = 'The Beast',
 }
 local __n = {}
 function TFloat:draw(t)
@@ -517,7 +521,7 @@ function TFloat:draw(t)
 				end
 				local name = 'digitalgui'
 				name = _drillNames[name] or 'Timelock'
-				prog = 1-dGUI._timer/dGUI._maxx
+				prog = 1-dGUI._timer/math.max(dGUI._maxx,1)
 				if pDist < 10000 or self.owner.verbose then
 					table.insert(txts,{_.s(name..':',self.owner:_time(dGUI._timer),'/',self.owner:_time(dGUI._maxx)),cl.White})
 				else
@@ -1526,8 +1530,11 @@ function TPocoHud3:_visibility(uPos)
 		-- 2. Through smoke
 	return result
 end
-function TPocoHud3:_show(state)
+function TPocoHud3:_show(state,isEndgame)
 	if self.dead then return end
+	if isEndgame and not state then
+		self:AnnounceStat(false)
+	end
 	for k,pnl in pairs(self.pnl) do
 		pnl:set_visible(state)
 	end
@@ -1555,6 +1562,142 @@ function TPocoHud3:_hook()
 		end
 	end
 	--
+	if not inGame then
+		-- CrimenetLegend Revamp
+		hook( CrimeNetGui, 'toggle_legend', function( ... )
+			local self = unpack{...}
+			zinspect.t = self
+			if not self._injected then
+				self._injected = 1
+				self._panel:remove(self._panel:child("legend_panel"))
+				local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size
+				local w, h, ww, hh = 0,0,self._panel:size()
+				local mw, mh = 0
+				local legend_panel = self._panel:panel( { name="legend_panel", layer=40, visible=false, x=10, y=self._panel:child('legends_button'):bottom()+4} )
+				local host_icon = legend_panel:bitmap( { texture="guis/textures/pd2/crimenet_legend_host", x=10, y=10 } )
+				local host_text = legend_panel:text( { font=font, font_size=fontSize, x=host_icon:right()+2, y=host_icon:top(), text=managers.localization:to_upper_text( "menu_cn_legend_host" ), blend_mode="add" } )
+				mw = math.max( mw, self:make_fine_text( host_text ) )
+				-- self:make_color_text( host_text, tweak_data.screen_colors.text )
+
+				local join_icon = legend_panel:bitmap( { texture="guis/textures/pd2/crimenet_legend_join", x=10, y=host_text:bottom() } )
+				local join_text = legend_panel:text( { font=font, font_size=fontSize, x=host_text:left(), y=join_icon:top(), text=managers.localization:to_upper_text( "menu_cn_legend_join" ), blend_mode="add" } )
+				mw = math.max( mw, self:make_fine_text( join_text ) )
+				self:make_color_text( join_text, tweak_data.screen_colors.regular_color )
+
+
+				local friends_text = legend_panel:text( { font=font, font_size=fontSize, x=host_text:left(), y=join_text:bottom(), text=managers.localization:to_upper_text( "menu_cn_legend_friends" ), blend_mode="add" } )
+				mw = math.max( mw, self:make_fine_text( friends_text ) )
+				self:make_color_text( friends_text, tweak_data.screen_colors.friend_color )
+
+				if managers.crimenet:no_servers() then
+					join_icon:hide()
+					join_text:hide()
+
+					friends_text:hide()
+					friends_text:set_bottom( host_text:bottom() )
+				end
+
+				local risk_icon = legend_panel:bitmap( { texture="guis/textures/pd2/crimenet_legend_risklevel", x=10, y=friends_text:bottom() } )
+				local risk_text = legend_panel:text( { font=tweak_data.menu.pd2_small_font, font_size=tweak_data.menu.pd2_small_font_size, x=host_text:left(), y=risk_icon:top(), text=managers.localization:to_upper_text( "menu_cn_legend_risk" ), color=tweak_data.screen_colors.risk, blend_mode="add" } )
+				mw = math.max( mw, self:make_fine_text( risk_text ) )
+
+
+				local pro_text = legend_panel:text( { font=tweak_data.menu.pd2_small_font, font_size=tweak_data.menu.pd2_small_font_size, x=host_text:left(), y=risk_text:bottom(), text=managers.localization:to_upper_text( "menu_cn_legend_pro" ), color=tweak_data.screen_colors.pro_color, blend_mode="add" } )
+				mw = math.max( mw, self:make_fine_text( pro_text ) )
+
+
+				local ghost_icon = legend_panel:bitmap( { texture="guis/textures/pd2/cn_minighost", x=7, y=pro_text:bottom()+2+2, color = tweak_data.screen_colors.ghost_color } )
+				local ghost_text = legend_panel:text( { font=tweak_data.menu.pd2_small_font, font_size=tweak_data.menu.pd2_small_font_size, x=host_text:left(), y=pro_text:bottom(), text=managers.localization:to_upper_text( "menu_cn_legend_ghostable" ), blend_mode="add", color = tweak_data.screen_colors.ghost_color } )
+				mw = math.max( mw, self:make_fine_text( ghost_text ) )
+
+				local kick_icon = legend_panel:bitmap( { texture="guis/textures/pd2/cn_kick_marker", x=10, y=ghost_text:bottom()+2 } )
+				local kick_text = legend_panel:text( { font=tweak_data.menu.pd2_small_font, font_size=tweak_data.menu.pd2_small_font_size, x=host_text:left(), y=ghost_text:bottom(), text=managers.localization:to_upper_text( "menu_cn_kick_disabled" ), blend_mode="add" } )
+				mw = math.max( mw, self:make_fine_text( kick_text ) )
+
+
+				if managers.crimenet:no_servers() then
+					kick_icon:hide()
+					kick_text:hide()
+					kick_text:set_bottom( ghost_text:bottom() )
+				end
+
+				legend_panel:set_size( ww - 20, hh - legend_panel:y()*2 )
+				legend_panel:rect( { color=Color.black, alpha=0.4, layer=-1 } )
+				local _rowCnt = 0
+				local _drawRow = function(texts, _x, _y, _w)
+					local _fontSize = fontSize * 0.84
+					local isEven = _rowCnt % 2 == 0
+					_rowCnt = _rowCnt + 1
+					if isEven then
+						legend_panel:rect( { x=_x,y=_y,w=_w,h=_fontSize,color=Color.black, alpha=0.4, layer=0 } )
+					end
+					local count = #texts
+					local iw = _w / count
+					for i,text in pairs(texts) do
+						if text ~= '' then
+							local txt = legend_panel:text( { font=font, font_size=fontSize * 0.92, x=_x + iw*(i-0.5), y=_y, text=tostring(text), layer = 2, blend_mode='add'} )
+							if type(text) == 'table' then
+								if type(text[1]) ~= 'table' then
+									text = {text}
+								end
+								me:_lbl(txt,text)
+							end
+							self:make_fine_text( txt )
+							txt:set_center_x(_x + iw*(i-0.5))
+						end
+					end
+					return _y + _fontSize
+				end
+				local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
+				local risks = { "risk_pd", "risk_swat", "risk_fbi", "risk_death_squad", "risk_murder_squad"}
+				local x, y, tbl = 240, 10, {}
+				tbl[#tbl+1] = {{'Host',cl.BlanchedAlmond},'Job',{iconSkull,cl.PaleGreen:with_alpha(0.3)},{iconSkull,cl.PaleGoldenrod},{iconSkull..iconSkull,cl.LavenderBlush},{string.rep(iconSkull,3),cl.Wheat},{string.rep(iconSkull,4),cl.Tomato},'Heat'}
+				local addJob = function(host,heist)
+					local job_string =managers.localization:to_upper_text(tweak_data.narrative.jobs[heist].name_id) or heist
+					local pro = tweak_data.narrative.jobs[heist].professional
+					if pro then
+						job_string = {job_string, cl.Red}
+					end
+					local rowObj = {host:upper(),job_string}
+
+					for i, name in ipairs( risks ) do
+						local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
+						local f = managers.statistics._global.sessions.jobs[heist .. "_" .. tweak_data:index_to_difficulty( i + 1 ) .. "_started"] or 0
+						if i > 1 or not pro then
+							table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
+						else
+							table.insert(rowObj, {c > 0 and c or 'N/A', cl.Tan:with_alpha(0.4)})
+						end
+					end
+					table.insert(rowObj,{_.f(managers.job:get_job_heat_multipliers(heist)*100,5)..'% ('..managers.job:get_job_heat(heist)..')',managers.job:get_job_heat_color(heist)})
+					tbl[#tbl+1] = rowObj
+				end
+				for host,jobs in pairs(host_list) do
+					for no,heist in pairs(jobs) do
+						job_list[table.get_key(job_list,heist)] = nil
+						addJob(host,heist)
+					end
+				end
+				for no,heist in pairs(job_list) do
+					addJob('N/A',heist) -- Just in case
+				end
+				local _lastHost = ''
+				for row, _tbl in pairs(tbl) do
+					if _lastHost == _tbl[1] then
+						_tbl[1] = ''
+					else
+						_lastHost = _tbl[1]
+					end
+					y = _drawRow(_tbl,x,y,770)
+				end
+
+				BoxGuiObject:new( legend_panel, { sides = { 1, 1, 1, 1 } } )
+
+				legend_panel:bitmap( { texture="guis/textures/test_blur_df", w=legend_panel:w(), h=legend_panel:h(), render_template="VertexColorTexturedBlur3D", layer=-1 } )
+			end
+			Run('toggle_legend', ...)
+		end)
+	end
 	if inGame then
 		--PlayerStandards
 		hook( PlayerStandard, '_start_action_unequip_weapon', function( self,t ,data)
@@ -1917,7 +2060,7 @@ function TPocoHud3:_hook()
 		--ETC
 		hook( HUDManager, 'show_endscreen_hud', function( self )
 			Run('show_endscreen_hud', self )
-			me:destroy(true)
+			me:_show(false,true)
 		end)
 		hook( HUDManager, 'set_disabled', function( self )
 			Run('set_disabled', self )
@@ -2272,6 +2415,21 @@ function TPocoHud3:_hook()
 			managers.menu:add_back_button( new_node )
 			return new_node
 		end)
+		-- Remove ExpCap
+		if false then
+			hook( HUDStageEndScreen, 'stage_init', function( ... )
+				_('stageINITcalled')
+				local self, t, dt = unpack{...}
+				local _oldLvlCap = managers.experience.reached_level_cap
+				managers.experience.reached_level_cap = function(self)
+					_('lvlCAPcalled')
+					return false
+	end
+				Run('stage_init', ...)
+				managers.experience.reached_level_cap = _oldLvlCap
+			end)
+		end
+
 	end
 end
 --- Utility functions ---

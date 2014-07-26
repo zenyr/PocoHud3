@@ -922,6 +922,7 @@ function inspect.inspect(rootObject, options)
   options       = options or {}
   local depth   = options.depth or 1 or math.huge
   local filter  = parse_filter(options.filter or {})
+	local _mt		= options.mt
 
   local tableAppearances = countTableAppearances(rootObject)
 
@@ -1016,8 +1017,12 @@ function inspect.inspect(rootObject, options)
         if mt then
           needsComma = commaControl(needsComma)
           tabify()
-          puts('<metatable> = ')
-          putValue(mt, makePath(path, '<metatable>'))
+					if _mt then
+						puts('<metatable> = ')
+						putValue(mt, makePath(path, '<metatable>'))
+					else
+						puts('<metatable>')
+					end
         end
       end)
 
