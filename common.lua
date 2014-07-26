@@ -23,7 +23,7 @@ function _pairs(t, f) -- pairs but sorted
   end
 end
 local clr = function(bgr)
-	return Color(bgr%0x100,math.floor(bgr/0x100) % 0x100,math.floor(bgr/0x10000))
+	return Color(bgr%0x100 /255,math.floor(bgr/0x100) % 0x100 /255,math.floor(bgr/0x10000) /255)
 end
 cl = {
 	AliceBlue=clr(0xFFF8F0),
