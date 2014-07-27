@@ -1655,7 +1655,7 @@ function TPocoHud3:_show(state,isEndgame)
 		self:AnnounceStat(false)
 	end
 	for k,pnl in pairs(self.pnl) do
-		if not (isEndgame and pnl = self.pnl.dbg) then
+		if not (isEndgame and pnl == self.pnl.dbg) then
 			pnl:set_visible(state)
 		end
 	end
