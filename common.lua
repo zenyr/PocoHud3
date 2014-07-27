@@ -414,7 +414,8 @@ function TPoco:AddOn(ancestor)
 	end
 end
 function TPoco:Update(t,dt)
-	if not managers.menu_component:input_focus() then
+--	if not managers.menu_component:input_focus() then
+	if not (managers.menu_component._game_chat_gui and managers.menu_component._game_chat_gui:input_focus()) then
 		for key,cbks in pairs(self.binds.down) do
 			if cbks and self._kbd:pressed(key) then
 				cbks[2](t,dt)
