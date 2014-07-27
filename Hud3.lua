@@ -23,6 +23,7 @@ local O = {
 		showFPS = YES,
 		showClockIngame = NO,
 		showClockOutgame = YES,
+		showStat = YES,
 	},
 	buff = {			-- === 버프 설정 === >> 재장전, 스태미너, ECM, 버서커, 불렛스톰등 표현
 		show = YES,	-- YES/NO : 버프 표현기능 사용
@@ -1370,6 +1371,15 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 		self.__dbgTxt = self._dbgTxt
 		self.dbgLbl:set_text(_.s(unpack(txts)))
 		self._last_upd_dbgLbl = t
+	end
+	if dO.showStat then
+		if self.verbose ~= self._lastDbgHeist then
+			self._lastDbgHeist = self.verbose
+			if self.verbose then -- Show Stat
+			else -- Hide Stat
+
+			end
+		end
 	end
 end
 function TPocoHud3:_scanSmoke(t)
