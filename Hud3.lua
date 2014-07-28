@@ -7,7 +7,7 @@ I understand your curiosity. I would've do the same. This basic luac would not b
 Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.100
+local VR = 0.101
 local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
@@ -2388,7 +2388,7 @@ function TPocoHud3:_hook()
 					local rank = peer:rank()
 					local params = {
 									name			= peer:name(),
-									text_id			= _.s((rank and rank..'-' or '')..peer:level(),peer:name()),
+									text_id			= _.s((rank and rank..'-' or '')..(peer:level() or '?'),peer:name()),
 									callback		= "kick_player",
 									to_upper		= false,
 									localize		= "false",
