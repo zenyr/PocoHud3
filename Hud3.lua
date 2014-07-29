@@ -1417,7 +1417,7 @@ function TPocoHud3:_drawStat(state)
 			local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
 			local risks = { "risk_pd", "risk_swat", "risk_fbi", "risk_death_squad", "risk_murder_squad"}
 			local x, y, tbl = 15, 45, {}
-			tbl[#tbl+1] = {{'Host',cl.BlanchedAlmond},'Job',{iconSkull,cl.PaleGreen:with_alpha(0.3)},{iconSkull,cl.PaleGoldenrod},{iconSkull..iconSkull,cl.LavenderBlush},{string.rep(iconSkull,3),cl.Wheat},{string.rep(iconSkull,4),cl.Tomato},'Heat'}
+			tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{iconSkull,cl.PaleGreen:with_alpha(0.3)},{iconSkull,cl.PaleGoldenrod},{iconSkull..iconSkull,cl.LavenderBlush},{string.rep(iconSkull,3),cl.Wheat},{string.rep(iconSkull,4),cl.Tomato},'Heat'}
 			local addJob = function(host,heist)
 				local job_string =managers.localization:to_upper_text(tweak_data.narrative.jobs[heist].name_id) or heist
 				local pro = tweak_data.narrative.jobs[heist].professional
