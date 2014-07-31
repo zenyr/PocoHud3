@@ -778,8 +778,8 @@ function TPocoHud3:Update(t,dt)
 	if not r then _(err) end
 end
 function TPocoHud3:onDestroy(gameEnd)
-	if gameEnd then
-		self:AnnounceStat(false)
+	if self.m_id then
+		self:Menu(true) -- Force dismiss menu
 	end
 	if( alive( self._ws ) ) then
 		managers.gui_data:destroy_workspace(self._ws)
@@ -877,6 +877,22 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	if not r then _(err) end
 end
 --- Internal functions ---
+function TPocoHud3:Menu(dismiss)
+	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
+	if dismiss or self.m_id then
+		managers.mouse_pointer:remove_mouse(self.m_id)
+		if camBase then
+			camBase:remove_limits()
+		end
+		self.m_id = nil
+	else
+		self.m_id = managers.mouse_pointer:get_id()
+		managers.mouse_pointer:use_mouse({id = self.m_id})
+		if camBase then
+			camBase:set_limits(20,20)
+		end
+	end
+end
 function TPocoHud3:AnnounceStat(midgame)
 	local txt = {}
 	table.insert(txt,Icon.LC..'PocoHud³ v'.._.f(VR,3).. ' '.. VRR ..Icon.RC..' '..' Crew Kills:'..self.killa..Icon.Skull)
@@ -1693,6 +1709,12 @@ function TPocoHud3:_hook()
 		-- Moved Heist stat to DbgLbl
 	else
 		--PlayerStandards
+		hook( PlayerStandard, '_update_check_actions', function( self ,...)
+			if not me.m_id then
+				Run('_update_check_actions', self,... )
+			end
+		end)
+
 		hook( PlayerStandard, '_start_action_unequip_weapon', function( self,t ,data)
 			Run('_start_action_unequip_weapon', self, t,data)
 			local alt = self._ext_inventory:equipped_unit()
@@ -1729,6 +1751,7 @@ function TPocoHud3:_hook()
 				self:_stance_entered()
 			end
 		end)
+		-- PlayerManager
 		hook( PlayerManager, 'drop_carry', function( self ,...)
 			Run('drop_carry', self,... )
 			pcall(me.Buff,me,({
@@ -2431,7 +2454,7 @@ function TPocoHud3:menu(state)
 end
 function TPocoHud3:test()
 -- reserved
-
+	self:Menu()
 end
 function TPocoHud3:_v2p(pos)
 	return alive(self._ws) and pos and self._ws:world_to_screen( self.cam, pos )
