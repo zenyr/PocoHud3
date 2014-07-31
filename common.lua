@@ -261,6 +261,46 @@ _ = {
 		else
 			return from
 		end
+	end,
+	L = function(lbl,text,autoSize) -- FillLbl
+		local result = ''
+		local isTable = type(txts)=='table'
+		if not (lbl and alive(lbl)) then
+			if isTable then
+				for __, t in pairs(txts) do
+					result = result .. tostring(t[1])
+				end
+			else
+				result = txts
+			end
+		else
+			if isTable then
+				local pos = 0
+				local posEnd = 0
+				local ranges = {}
+				for _k,txtObj in ipairs(txts or {}) do
+					txtObj[1] = tostring(txtObj[1])
+					result = result..txtObj[1]
+					local __, count = txtObj[1]:gsub('[^\128-\193]', '')
+					posEnd = pos + count
+					table.insert(ranges,{pos,posEnd,txtObj[2] or cl.White})
+					pos = posEnd
+				end
+				lbl:set_text(result)
+				for _,range in ipairs(ranges) do
+					lbl:set_range_color( range[1], range[2], range[3] or cl.Green)
+				end
+			elseif type(txts)=='string' then
+				result = txts
+				lbl:set_text(txts)
+			end
+			if autoSize then
+				local x,y,w,h = lbl:text_rect()
+				lbl:set_size(w,h)
+			end
+		end
+		return result
+
 	end
 }
 setmetatable(_,{__call = function(__,...)io.stderr:write(_.S(...)..'\n')end})
