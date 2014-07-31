@@ -135,9 +135,15 @@ local ALTFONT = 'fonts/font_eroded'
 local FONT =  'fonts/font_medium_mf' or tweak_data.hud_present.title_font or tweak_data.hud_players.name_font or "fonts/font_eroded" or 'core/fonts/system_font'
 local clGood =  Color( 255, 146, 208, 80 ) / 255
 local clBad =  Color( 255, 255, 192, 0 ) / 255
-local iconSkull,iconShadow,iconRight,iconDot,iconChapter,iconDiv,iconBigDot = '', '', '','Ї','ϸ','϶','ϴ'
-local iconTimes,iconDivided,iconLC,iconRC,iconDeg,iconPM,iconNo = '×','÷','','','Ѐ','Ё','Љ'
-local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = iconDiv,iconShadow
+local Icon = {
+	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
+	Skull = 57364, Ghost = 57363, Dot = 1031, Chapter = 1016, Div = 1014, BigDot = 1012,
+	Times = 215, Divided = 247, LC=139, RC=155, Deg = 1024, PM= 1025, No = 1033,
+}
+for k,v in pairs(Icon) do
+	Icon[k] = utf8.char(v)
+end
+local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = Icon.Div,Icon.Ghost
 local skillIcon = 'guis/textures/pd2/skilltree/icons_atlas'
 local now = function () return managers.player:player_timer():time() --[[TimerManager:game():time()]] end
 --- miniClass start ---
@@ -485,7 +491,7 @@ function TFloat:draw(t)
 					--table.insert(txts,{''})
 				elseif cHealth == 0 then
 					prog = 0
-					table.insert(txts,{iconSkull,color})
+					table.insert(txts,{Icon.Skull,color})
 				else
 					table.insert(txts,{_.f(cHealth)..'/'.._.f(fHealth),color})
 					if verbose then
@@ -873,7 +879,7 @@ end
 --- Internal functions ---
 function TPocoHud3:AnnounceStat(midgame)
 	local txt = {}
-	table.insert(txt,iconLC..'PocoHud³ v'.._.f(VR,3).. ' '.. VRR ..iconRC..' '..' Crew Kills:'..self.killa..iconSkull)
+	table.insert(txt,Icon.LC..'PocoHud³ v'.._.f(VR,3).. ' '.. VRR ..Icon.RC..' '..' Crew Kills:'..self.killa..Icon.Skull)
 	for pid = 0,4 do
 		local kill = self:Stat(pid,'kill')
 		local killS = self:Stat(pid,'killS')
@@ -887,19 +893,19 @@ function TPocoHud3:AnnounceStat(midgame)
 			local downs = self:Stat(pid,'down')+self:Stat(pid,'downAll')
 			if midgame then
 				table.insert(txt,
-					_.s(iconLC..self:_name(pid)..iconRC,
-						kill..iconSkull..(killS>0 and '('..killS..' Sp)' or ''),
-						(downs>0 and downs..iconShadow or nil)
+					_.s(Icon.LC..self:_name(pid)..Icon.RC,
+						kill..Icon.Skull..(killS>0 and '('..killS..' Sp)' or ''),
+						(downs>0 and downs..Icon.Ghost or nil)
 					)
 				)
 			else
 				table.insert(txt,
-					_.s(iconLC..self:_name(pid)..iconRC,
-						kill..iconSkull..(killS>0 and '('..killS..' Sp)' or ''),'|',
+					_.s(Icon.LC..self:_name(pid)..Icon.RC,
+						kill..Icon.Skull..(killS>0 and '('..killS..' Sp)' or ''),'|',
 						'DPS:'..dps,'|',
 						'KPM:'..kpm,'|',
 						'Acc:'..(pid==0 and 'N/A' or accuracy),
-						(downs>0 and downs..iconShadow or nil)
+						(downs>0 and downs..Icon.Ghost or nil)
 					)
 				)
 			end
@@ -1185,22 +1191,22 @@ function TPocoHud3:_updatePlayers(t)
 			if interText then
 				txts[#txts+1]={' '..interText..'\n',color}
 			end
-			txts[#txts+1]={' '..iconSkull..kill,color}
-			txts[#txts+1]={' '..iconSkull..killS,cl.Yellow:with_alpha(0.8)}
+			txts[#txts+1]={' '..Icon.Skull..kill,color}
+			txts[#txts+1]={' '..Icon.Skull..killS,cl.Yellow:with_alpha(0.8)}
 			if self.verbose then
 				txts[#txts+1]={' !',color:with_red(1)}
 				txts[#txts+1]={_.f(head/hit*100,1)..'%',color:with_red(1)}
 				txts[#txts+1]={' '..avgDmg,color:with_alpha(0.8)}
-				txts[#txts+1]={iconTimes..accuracy..'%',accColor}
+				txts[#txts+1]={Icon.Times..accuracy..'%',accColor}
 			end
 			if boost then
-				txts[#txts+1]={' '..iconRight or '',clGood:with_alpha(0.5)}
+				txts[#txts+1]={' '..Icon.Start or '',clGood:with_alpha(0.5)}
 			end
 			if distance>0 then
 				txts[#txts+1]={' '..math.ceil(distance/100)..'m',(canBoost and clGood or clBad):with_alpha(0.8)}
 			end
 			txts[#txts+1]={ping,cl.White:with_alpha(0.5)}
-			txts[#txts+1]={' '..iconShadow..downs..(lives>0 and '/4' or ''),downs<3 and clGood or Color.red}
+			txts[#txts+1]={' '..Icon.Ghost..downs..(lives>0 and '/4' or ''),downs<3 and clGood or Color.red}
 
 			if isMe and O.info.clock then
 				txts[#txts+1]={os.date(' %X'),Color.white}
@@ -1417,7 +1423,7 @@ function TPocoHud3:_drawStat(state)
 			local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
 			local risks = { "risk_pd", "risk_swat", "risk_fbi", "risk_death_squad", "risk_murder_squad"}
 			local x, y, tbl = 15, 45, {}
-			tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{iconSkull,cl.PaleGreen:with_alpha(0.3)},{iconSkull,cl.PaleGoldenrod},{iconSkull..iconSkull,cl.LavenderBlush},{string.rep(iconSkull,3),cl.Wheat},{string.rep(iconSkull,4),cl.Tomato},'Heat'}
+			tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
 			local addJob = function(host,heist)
 				local job_string =managers.localization:to_upper_text(tweak_data.narrative.jobs[heist].name_id) or heist
 				local pro = tweak_data.narrative.jobs[heist].professional
@@ -1505,7 +1511,7 @@ function TPocoHud3:_scanSmoke(t)
 				--[[if smoke:base().take_ammo then
 					per = smoke:base()._ammo_amount / smoke:base()._max_ammo_amount
 				end]]
-				name = name..iconTimes.._.s(smoke:base()._ammo_amount or smoke:base()._amount or smoke:base()._bodybag_amount or '?')
+				name = name..Icon.Times.._.s(smoke:base()._ammo_amount or smoke:base()._amount or smoke:base()._bodybag_amount or '?')
 				self:Float(smoke,2,1,{text=name})
 			end
 		end
@@ -2425,6 +2431,7 @@ function TPocoHud3:menu(state)
 end
 function TPocoHud3:test()
 -- reserved
+
 end
 function TPocoHud3:_v2p(pos)
 	return alive(self._ws) and pos and self._ws:world_to_screen( self.cam, pos )
