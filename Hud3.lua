@@ -7,8 +7,8 @@ I understand your curiosity. I would've do the same. This basic luac would not b
 Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.101
-local VRR = 'T'
+local VR = 0.110
+local VRR = 'Dev'
 local inGame = CopDamage ~= nil
 local me
 --- Options ---
@@ -23,7 +23,6 @@ local O = {
 		showFPS = YES,
 		showClockIngame = NO,
 		showClockOutgame = YES,
-		showStat = YES,
 	},
 	buff = {			-- === 버프 설정 === >> 재장전, 스태미너, ECM, 버서커, 불렛스톰등 표현
 		show = YES,	-- YES/NO : 버프 표현기능 사용
@@ -710,34 +709,24 @@ PocoTab = PocoTab or class()
 function PocoTab:init(parent,ppnl,tabName)
 	self.ppnl = ppnl
 	self.name = tabName
-	self.pnl = ppnl:panel({ name = tabName , visible = false})
-	self.test = self.pnl:text({
-		name = 'tab_test',
-		text = 'tab_'..tabName,
-		font = FONT,
-		font_size = tweak_data.menu.pd2_medium_font_size,
-		color = cl.Maroon,
-		align = 'center',
-		vertical = 'center'
-	})
+	self.pnl = ppnl:panel({ x=0, y=parent.config.th,w = ppnl:w(), h = ppnl:h(), name = tabName , visible = false})
 end
 function PocoTab:inside(x,y)
 	return self.bg and self.bg:inside(x, y)
 end
+
 function PocoTab:destroy()
-	self.ppnl:remove(self.pnl)
+	-- does nothing yet
 end
 
 PocoTabs = PocoTabs or class()
 function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 	self._ws = ws
 	self.config = config
-	self.pnl = ws:panel():panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h }
+	self.pnl = ws:panel():panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h, layer = 505}
 	self.items = {} -- array of PocoTab
-	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th }
-	self.sPnl:rect{
-		color = cl.Black:with_alpha(0.3)
-	}
+	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th , layer = 501}
+
 	BoxGuiObject:new(self.sPnl, {
 		sides = {
 			1,
@@ -747,17 +736,21 @@ function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 		}
 	})
 end
-function PocoTabs:move(delta)
-	local tabIndex = self.tabIndex or 1
+function PocoTabs:goTo(index)
 	local cnt = #self.items
-	tabIndex = tabIndex + delta
-	if tabIndex < 1 then
-		tabIndex = cnt
-	elseif tabIndex > cnt then
-		tabIndex = 1
+	if index < 1 then
+		index = cnt
+	elseif index > cnt then
+		index = 1
 	end
-	self.tabIndex = tabIndex
-	self:repaint()
+	if index ~= self.tabIndex then
+		managers.menu_component:post_event("highlight")
+		self.tabIndex = index
+		self:repaint()
+	end
+end
+function PocoTabs:move(delta)
+	self:goTo((self.tabIndex or 1) + delta)
 end
 function PocoTabs:add(tabName)
 	local item = PocoTab:new(self,self.pnl,tabName)
@@ -808,101 +801,53 @@ end
 
 function PocoTabs:destroy(ws)
 	for k,v in pairs(self.items) do
-		if v.hPnl then
-			self.pnl:remove(v.hPnl)
-		end
 		v:destroy()
 	end
 	self._ws:panel():remove(self.pnl)
 end
--------------------- 아래는 쌤플
-local ssample = class()
-function ssample:init(tree_tabs_panel,tabName, w, x)
-	SkillTreeTabItem.super.init(self)
-	self._tree = tabName
-	self._tree_tab = tree_tabs_panel:panel({
-		name = "" .. tabName,
-		w = w,
-		x = x
-	})
-	self._tree_tab:text({
-		name = "tree_tab_name",
-		text = utf8.to_upper(tabName),
-		layer = 1,
-		wrap = false,
-		word_wrap = false,
-		font = tweak_data.menu.pd2_medium_font,
-		font_size = tweak_data.menu.pd2_medium_font_size,
-		color = tweak_data.screen_colors.button_stage_3,
-		align = "center",
-		vertical = "center"
-	})
-	local _, _, tw, th = self._tree_tab:child("tree_tab_name"):text_rect()
-	self._tree_tab:set_size(tw + 15, th + 10)
-	self._tree_tab:child("tree_tab_name"):set_size(self._tree_tab:size())
-	self._tree_tab:bitmap({
-		name = "tree_tab_select_rect",
-		texture = "guis/textures/pd2/shared_tab_box",
-		w = self._tree_tab:w(),
-		h = self._tree_tab:h(),
-		layer = 0,
-		color = tweak_data.screen_colors.text,
-		visible = false
-	})
-	self._tree_tab:move(0, 0)
-end
-
-PocoMenuGui = PocoMenuGui or class()
-function PocoMenuGui:init(ws)
+------------
+PocoMenu = PocoMenu or class()
+function PocoMenu:init(ws)
 	self._ws = ws
-	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 600, th = 40, h = 500})
-	self.gui:add('test1')
-	self.gui:add('test2')
-	self.gui:add('HAHAHA')
-	PocoMenuGui.m_id = managers.mouse_pointer:get_id()
+	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 800, th = 40, h = 700})
+
+	self.pnl = ws:panel():panel({ name = 'bg' , layer = 450})
+	self.pnl:rect{color = cl.Black:with_alpha(0.5)}
+	self.pnl:bitmap({
+		texture = "guis/textures/test_blur_df",
+		w = self.pnl:w(),h = self.pnl:h(),
+		render_template = "VertexColorTexturedBlur3D",
+		layer = -1
+	})
+
+	PocoMenu.m_id = managers.mouse_pointer:get_id()
+	PocoMenu.__active = managers.mouse_pointer._active
 	managers.mouse_pointer:use_mouse{
-		id = PocoMenuGui.m_id,
+		id = PocoMenu.m_id,
 		mouse_move = callback(self, self, 'mouse_moved'),
 		mouse_press = callback(self, self, "mouse_pressed"),
 		mouse_release = callback(self, self, "mouse_released")
 	}
-	_.c('UseMouse',PocoMenuGui.m_id)
-
-	if false then
-		self.pnl = ws:panel():panel({ name = 'menu' , layer = 10})
-
-					--data.mouse_press = callback(self, self, "mouse_pressed")
-					--data.mouse_release = callback(self, self, "mouse_released")
-		--[[managers.mouse_pointer:use_mouse{
-			id = self.m_id,
-			mouse_move = callback(self, self, 'mouse_moved'),
-			mouse_press = callback(self, self, "mouse_pressed"),
-			mouse_release = callback(self, self, "mouse_released")
-		}
-
-		managers.mouse_pointer:set_mouse_world_position(managers.gui_data:safe_to_full(self.pnl:world_center()))
-		self.buttons = {}
-		local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
-		if camBase then
-			camBase:set_limits(20,20)
-		end
-		]]
-		self._test = self.pnl:text{name='lbl',align='center', text='Testing!', font=FONT, font_size = 20, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
+	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
+	if camBase then
+		camBase:set_limits(15,15)
 	end
 end
+function PocoMenu:add(...)
+	return self.gui:add(...)
+end
 
-function PocoMenuGui:update(...)
+function PocoMenu:update(...)
 	----TEST
 	if self.gui then
 		--self.gui:update(...)
 	end
 	----TESTEND
 end
-function PocoMenuGui:destroy()
+function PocoMenu:destroy()
 	self.dead = true
-	if PocoMenuGui.m_id then
-		managers.mouse_pointer:remove_mouse(PocoMenuGui.m_id)
-		_.c('RemoveMouse',PocoMenuGui.m_id)
+	if PocoMenu.m_id then
+		managers.mouse_pointer:remove_mouse(PocoMenu.m_id)
 	end
 	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
 	if camBase then
@@ -916,12 +861,11 @@ function PocoMenuGui:destroy()
 	end
 end
 
-function PocoMenuGui:mouse_moved(panel, x, y)
-	_.c(self._test,_.s('MouseMoved',x,y))
-	return false, 'hand'
+function PocoMenu:mouse_moved(panel, x, y)
+	return true, 'hand'
 end
 
-function PocoMenuGui:mouse_pressed(panel, button, x, y)
+function PocoMenu:mouse_pressed(panel, button, x, y)
 	if button == Idstring("mouse wheel down") then
 		self.gui:move(1)
 		return
@@ -931,48 +875,18 @@ function PocoMenuGui:mouse_pressed(panel, button, x, y)
 	end
 
 	if button == Idstring("0") then
-		if self._panel:child("back_button"):inside(x, y) then
-			managers.menu:back()
-			return
-		end
-
-		if self._panel:child("respec_tree_button"):inside(x, y) then
-			self:respec_active_tree()
-			return
-		end
-
-		if self._active_page then
-			local (for generator), (for state), (for control) = ipairs(self._active_page._items)
-			do
-				do break end
-				if item:inside(x, y) then
-					self:place_point(item)
-					return true
-				end
-
+		for ind,tab in pairs(self.gui.items) do
+			if tab:inside(x,y) then
+				self.gui:goTo(ind)
 			end
-
 		end
-
-		local (for generator), (for state), (for control) = ipairs(self._tab_items)
-		do
-			do break end
-			if tab_item:inside(x, y) then
-				if self._active_tree ~= tab_item:tree() then
-					self:set_active_page(tab_item:tree(), true)
-				end
-
-				return true
-			end
-
-		end
-
 	end
 end
 
-function PocoMenuGui:mouse_released(panel,button, x, y)
-	_.c(self._test,_.s('MouseReleased',x,y))
-	return true, 'link'
+function PocoMenu:mouse_released(panel, button, x, y)
+	if button == Idstring("1") then
+		me:Menu(true)
+	end
 end
 
 
@@ -1016,9 +930,10 @@ function TPocoHud3:onInit() -- ★설정
 	self:_hook()
 	local verboseKey = O.info.verboseKey
 	if verboseKey then
-		Poco:Bind(self,verboseKey,callback(self,self,'menu',true),callback(self,self,'menu',false))
+		Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose',true),callback(self,self,'toggleVerbose',false))
 	end
-	Poco:Bind(self,21,callback(self,self,'test'),nil)
+	Poco:Bind(self,14,callback(self,self,'Menu',false))
+
 	return true
 end
 function TPocoHud3:onResolutionChanged()
@@ -1146,14 +1061,34 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	if not r then _(err) end
 end
 --- Internal functions ---
-function TPocoHud3:Menu(dismiss)
+function TPocoHud3:Menu(dismiss,...)
 	pcall(function()
 		local menu = self.menuGui
 		if menu then -- Remove
+			managers.menu_component:post_event("menu_exit")
 			menu:destroy()
 			self.menuGui = nil
 		elseif not dismiss then -- Show
-			self.menuGui = PocoMenuGui:new(self._ws)
+			managers.menu_component:post_event("menu_enter")
+			local gui = PocoMenu:new(self._ws)
+			self.menuGui = gui
+			--- Install tabs here ---
+			local tab = gui:add('Heist Status')
+			self:_drawStat(true,tab.pnl)
+			tab = gui:add('Placeholder')
+			tab.pnl:text{
+				x = 10, y = 10, w = 600, h = 40,
+				name = 'tab_name', text = 'More info to be announced here. :)',
+				font = FONT, font_size = 20, color = cl.White,
+				align = 'center', vertical = 'center'
+			}
+			tab = gui:add('About')
+			tab.pnl:text{
+				x = 10, y = 10, w = 600, h = 40,
+				name = 'tab_name', text = 'PocoHud3 '.._.f(VR,4)..VRR,
+				font = FONT, font_size = 20, color = cl.White,
+				align = 'center', vertical = 'center'
+			}
 		end
 	end)
 end
@@ -1659,94 +1594,82 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 		self.dbgLbl:set_text(string.upper(_.s(unpack(txts))))
 		self._last_upd_dbgLbl = t
 	end
-	if not inGame and dO.showStat and self.verbose ~= self._lastDbgStat then
-		self._lastDbgStat = self.verbose
-		self:_drawStat(self.verbose)
-	end
 end
-function TPocoHud3:_drawStat(state)
-	local ppnl = self.pnl.dbg
+function TPocoHud3:_drawStat(state,pnl)
+	local ppnl = pnl or self.pnl.dbg
 	if state then -- Show Stat
-		if not self.dbgStat then
-			local w, h, ww, hh = 0,0, ppnl:size()
-
-			self.dbgStat = ppnl:panel( { name='stat', layer=-11, visible=true, x=10, y=10, w=ww - 20, h=hh - 20} )
-			local pnl = self.dbgStat
-			local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size
-			pnl:text( { font='fonts/font_large_mf', font_size=30, x=20, y=15, text='Heist Status', layer = 2} )
-
-			local _rowCnt = 0
-			local _drawRow = function(texts, _x, _y, _w)
-				local _fontSize = fontSize * 0.84
-				_rowCnt = _rowCnt + 1
-				if _rowCnt % 2 == 0 then
-					pnl:rect( { x=_x,y=_y,w=_w,h=_fontSize,color=cl.White, alpha=0.05, layer=0 } )
-				end
-				local count = #texts
-				local iw = _w / count
-				for i,text in pairs(texts) do
-					if text ~= '' then
-						local txt = pnl:text( { font=font, font_size=fontSize * 0.92, x=_x + iw*(i-0.5), y=math.floor(_y)-1, text=tostring(text), layer = 2, blend_mode='add'} )
-						if type(text) == 'table' then
-							if type(text[1]) ~= 'table' then
-								text = {text}
-							end
-							me:_lbl(txt,text)
+		local w, h, ww, hh = 0,0, ppnl:size()
+		local pnl = ppnl:panel( { name='stat', visible=true, x=10, y=10, w=ww - 20, h=hh - 20} )
+		local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size
+		local _rowCnt = 0
+		local _drawRow = function(texts, _x, _y, _w)
+			local _fontSize = fontSize * 0.84
+			_rowCnt = _rowCnt + 1
+			if _rowCnt % 2 == 0 then
+				pnl:rect( { x=_x,y=_y,w=_w,h=_fontSize,color=cl.White, alpha=0.05, layer=0 } )
+			end
+			local count = #texts
+			local iw = _w / count
+			for i,text in pairs(texts) do
+				if text ~= '' then
+					local txt = pnl:text( { font=font, font_size=fontSize * 0.92, x=_x + iw*(i-0.5), y=math.floor(_y)-1, text=tostring(text), blend_mode='add'} )
+					if type(text) == 'table' then
+						if type(text[1]) ~= 'table' then
+							text = {text}
 						end
-						local x, y, w, h = txt:text_rect()
-						txt:set_size(w, h)
-
-						txt:set_center_x(math.round(_x + iw*(i-0.5)))
+						me:_lbl(txt,text)
 					end
-				end
-				return _y + _fontSize
-			end
-			local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
-			local risks = { "risk_pd", "risk_swat", "risk_fbi", "risk_death_squad", "risk_murder_squad"}
-			local x, y, tbl = 15, 45, {}
-			tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
-			local addJob = function(host,heist)
-				local job_string =managers.localization:to_upper_text(tweak_data.narrative.jobs[heist].name_id) or heist
-				local pro = tweak_data.narrative.jobs[heist].professional
-				if pro then
-					job_string = {job_string, cl.Red}
-				end
-				local rowObj = {host:upper(),job_string}
+					local x, y, w, h = txt:text_rect()
+					txt:set_size(w, h)
 
-				for i, name in ipairs( risks ) do
-					local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
-					local f = managers.statistics._global.sessions.jobs[heist .. "_" .. tweak_data:index_to_difficulty( i + 1 ) .. "_started"] or 0
-					if i > 1 or not pro then
-						table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
-					else
-						table.insert(rowObj, {c > 0 and c or 'N/A', cl.Tan:with_alpha(0.4)})
-					end
-				end
-				table.insert(rowObj,{_.f(managers.job:get_job_heat_multipliers(heist)*100,5)..'% ('..managers.job:get_job_heat(heist)..')',managers.job:get_job_heat_color(heist)})
-				tbl[#tbl+1] = rowObj
-			end
-			for host,jobs in pairs(host_list) do
-				for no,heist in pairs(jobs) do
-					job_list[table.get_key(job_list,heist)] = nil
-					addJob(host,heist)
+					txt:set_center_x(math.round(_x + iw*(i-0.5)))
 				end
 			end
-			for no,heist in pairs(job_list) do
-				addJob('N/A',heist) -- Just in case
+			return _y + _fontSize
+		end
+		local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
+		local risks = { "risk_pd", "risk_swat", "risk_fbi", "risk_death_squad", "risk_murder_squad"}
+		local x, y, tbl = 5, 5, {}
+		tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
+		local addJob = function(host,heist)
+			local job_string =managers.localization:to_upper_text(tweak_data.narrative.jobs[heist].name_id) or heist
+			local pro = tweak_data.narrative.jobs[heist].professional
+			if pro then
+				job_string = {job_string, cl.Red}
 			end
-			local _lastHost = ''
-			for row, _tbl in pairs(tbl) do
-				if _lastHost == _tbl[1] then
-					_tbl[1] = ''
+			local rowObj = {host:upper(),job_string}
+
+			for i, name in ipairs( risks ) do
+				local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
+				local f = managers.statistics._global.sessions.jobs[heist .. "_" .. tweak_data:index_to_difficulty( i + 1 ) .. "_started"] or 0
+				if i > 1 or not pro then
+					table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
 				else
-					_lastHost = _tbl[1]
+					table.insert(rowObj, {c > 0 and c or 'N/A', cl.Tan:with_alpha(0.4)})
 				end
-				y = _drawRow(_tbl,x,y,770)
 			end
-			local bPnl = pnl:panel( { name='bPnl', layer=-1, visible=true, x=10, y=10, w=780, h=y-5} )
-			BoxGuiObject:new( bPnl, { sides = { 1, 1, 1, 1 } } )
-			bPnl:rect( { color=cl.Black, alpha=0.7, layer=-1 } )
-			bPnl:bitmap( { texture="guis/textures/test_blur_df", w=bPnl:w(), h=bPnl:h(), render_template="VertexColorTexturedBlur3D", layer=-1 } )
+			local multi = managers.job:get_job_heat_multipliers(heist)
+			local color = multi >= 1 and math.lerp( cl.Khaki, cl.Chartreuse, 2*(multi - 1) ) or math.lerp( cl.Crimson, cl.OrangeRed, multi )
+			table.insert(rowObj,{_.f(multi*100,5)..'% ('..managers.job:get_job_heat(heist)..')',color})
+			tbl[#tbl+1] = rowObj
+		end
+		for host,jobs in pairs(host_list) do
+			for no,heist in pairs(jobs) do
+				job_list[table.get_key(job_list,heist)] = nil
+				addJob(host,heist)
+			end
+		end
+		for no,heist in pairs(job_list) do
+			addJob('N/A',heist) -- Just in case
+		end
+		local _lastHost = ''
+		for row, _tbl in pairs(tbl) do
+			if _lastHost == _tbl[1] then
+				_tbl[1] = ''
+			else
+				_lastHost = _tbl[1]
+			end
+			y = _drawRow(_tbl,x,y,770)
 		end
 
 	else -- Hide Stat
@@ -2704,6 +2627,11 @@ function TPocoHud3:_hook()
 			end
 			return Run('mouse_released', ...)
 		end)
+		hook( MenuManager, 'toggle_menu_state', function( ... )
+			me:Menu(true) -- dismiss Menu when actual game-menu is called
+			return Run('toggle_menu_state', ...)
+		end)
+
 		-- Kick menu
 		hook( KickPlayer, 'modify_node', function( ... )
 			local self, node, up = unpack{...}
@@ -2745,7 +2673,7 @@ function TPocoHud3:_hook()
 	end
 end
 --- Utility functions ---
-function TPocoHud3:menu(state)
+function TPocoHud3:toggleVerbose(state)
 	self.verbose = state
 end
 function TPocoHud3:test()
