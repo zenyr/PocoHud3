@@ -705,6 +705,277 @@ function THitDirection:destroy()
 	self = nil
 end
 
+--- GUI start ---
+PocoTab = PocoTab or class()
+function PocoTab:init(parent,ppnl,tabName)
+	self.ppnl = ppnl
+	self.name = tabName
+	self.pnl = ppnl:panel({ name = tabName , visible = false})
+	self.test = self.pnl:text({
+		name = 'tab_test',
+		text = 'tab_'..tabName,
+		font = FONT,
+		font_size = tweak_data.menu.pd2_medium_font_size,
+		color = cl.Maroon,
+		align = 'center',
+		vertical = 'center'
+	})
+end
+function PocoTab:inside(x,y)
+	return self.bg and self.bg:inside(x, y)
+end
+function PocoTab:destroy()
+	self.ppnl:remove(self.pnl)
+end
+
+PocoTabs = PocoTabs or class()
+function PocoTabs:init(ws,config) -- name,x,y,w,th, h
+	self._ws = ws
+	self.config = config
+	self.pnl = ws:panel():panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h }
+	self.items = {} -- array of PocoTab
+	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th }
+	self.sPnl:rect{
+		color = cl.Black:with_alpha(0.3)
+	}
+	BoxGuiObject:new(self.sPnl, {
+		sides = {
+			1,
+			1,
+			2,
+			2
+		}
+	})
+end
+function PocoTabs:move(delta)
+	local tabIndex = self.tabIndex or 1
+	local cnt = #self.items
+	tabIndex = tabIndex + delta
+	if tabIndex < 1 then
+		tabIndex = cnt
+	elseif tabIndex > cnt then
+		tabIndex = 1
+	end
+	self.tabIndex = tabIndex
+	self:repaint()
+end
+function PocoTabs:add(tabName)
+	local item = PocoTab:new(self,self.pnl,tabName)
+	table.insert(self.items,item)
+	self.tabIndex = self.tabIndex or 1
+	self:repaint()
+	return item
+end
+
+function PocoTabs:repaint()
+	local cnt = #self.items
+	local x = 0
+	if cnt == 0 then return end
+	local tabIndex = self.tabIndex or 1
+	for key,itm in pairs(self.items) do
+		local isSelected = key == tabIndex
+		local hPnl = self.pnl:panel{w = 100, h = self.config.th, x = x, y = 0}
+		if itm.hPnl then
+			self.pnl:remove(itm.hPnl)
+		end
+		local bg = hPnl:bitmap({
+			name = 'tab_top',
+			texture = 'guis/textures/pd2/shared_tab_box',
+			w = self.config.w, h = self.config.th + 3,
+			layer = 0, color = cl.White:with_alpha(isSelected and 1 or 0.1)
+		})
+		local lbl = hPnl:text({
+			x = 10, y = 10, w = 200, h = self.config.th,
+			name = 'tab_name', text = itm.name,
+			font = FONT,
+			font_size = 20,
+			color = isSelected and cl.Black or cl.White,
+			layer = 2,
+			align = 'center',
+			vertical = 'center'
+		})
+		local xx,yy,w,h = lbl:text_rect()
+
+		lbl:set_size(w,h)
+
+		bg:set_w(w + 20)
+		x = x + w + 25
+		itm.bg = bg
+		itm.hPnl = hPnl
+		itm.pnl:set_visible(isSelected)
+	end
+end
+
+function PocoTabs:destroy(ws)
+	for k,v in pairs(self.items) do
+		if v.hPnl then
+			self.pnl:remove(v.hPnl)
+		end
+		v:destroy()
+	end
+	self._ws:panel():remove(self.pnl)
+end
+-------------------- 아래는 쌤플
+local ssample = class()
+function ssample:init(tree_tabs_panel,tabName, w, x)
+	SkillTreeTabItem.super.init(self)
+	self._tree = tabName
+	self._tree_tab = tree_tabs_panel:panel({
+		name = "" .. tabName,
+		w = w,
+		x = x
+	})
+	self._tree_tab:text({
+		name = "tree_tab_name",
+		text = utf8.to_upper(tabName),
+		layer = 1,
+		wrap = false,
+		word_wrap = false,
+		font = tweak_data.menu.pd2_medium_font,
+		font_size = tweak_data.menu.pd2_medium_font_size,
+		color = tweak_data.screen_colors.button_stage_3,
+		align = "center",
+		vertical = "center"
+	})
+	local _, _, tw, th = self._tree_tab:child("tree_tab_name"):text_rect()
+	self._tree_tab:set_size(tw + 15, th + 10)
+	self._tree_tab:child("tree_tab_name"):set_size(self._tree_tab:size())
+	self._tree_tab:bitmap({
+		name = "tree_tab_select_rect",
+		texture = "guis/textures/pd2/shared_tab_box",
+		w = self._tree_tab:w(),
+		h = self._tree_tab:h(),
+		layer = 0,
+		color = tweak_data.screen_colors.text,
+		visible = false
+	})
+	self._tree_tab:move(0, 0)
+end
+
+PocoMenuGui = PocoMenuGui or class()
+function PocoMenuGui:init(ws)
+	self._ws = ws
+	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 600, th = 40, h = 500})
+	self.gui:add('test1')
+	self.gui:add('test2')
+	self.gui:add('HAHAHA')
+	PocoMenuGui.m_id = managers.mouse_pointer:get_id()
+	managers.mouse_pointer:use_mouse{
+		id = PocoMenuGui.m_id,
+		mouse_move = callback(self, self, 'mouse_moved'),
+		mouse_press = callback(self, self, "mouse_pressed"),
+		mouse_release = callback(self, self, "mouse_released")
+	}
+	_.c('UseMouse',PocoMenuGui.m_id)
+
+	if false then
+		self.pnl = ws:panel():panel({ name = 'menu' , layer = 10})
+
+					--data.mouse_press = callback(self, self, "mouse_pressed")
+					--data.mouse_release = callback(self, self, "mouse_released")
+		--[[managers.mouse_pointer:use_mouse{
+			id = self.m_id,
+			mouse_move = callback(self, self, 'mouse_moved'),
+			mouse_press = callback(self, self, "mouse_pressed"),
+			mouse_release = callback(self, self, "mouse_released")
+		}
+
+		managers.mouse_pointer:set_mouse_world_position(managers.gui_data:safe_to_full(self.pnl:world_center()))
+		self.buttons = {}
+		local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
+		if camBase then
+			camBase:set_limits(20,20)
+		end
+		]]
+		self._test = self.pnl:text{name='lbl',align='center', text='Testing!', font=FONT, font_size = 20, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
+	end
+end
+
+function PocoMenuGui:update(...)
+	----TEST
+	if self.gui then
+		--self.gui:update(...)
+	end
+	----TESTEND
+end
+function PocoMenuGui:destroy()
+	self.dead = true
+	if PocoMenuGui.m_id then
+		managers.mouse_pointer:remove_mouse(PocoMenuGui.m_id)
+		_.c('RemoveMouse',PocoMenuGui.m_id)
+	end
+	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
+	if camBase then
+		camBase:remove_limits()
+	end
+	if self.gui then
+		self.gui:destroy()
+	end
+	if self.pnl then
+		self._ws:panel():remove(self.pnl)
+	end
+end
+
+function PocoMenuGui:mouse_moved(panel, x, y)
+	_.c(self._test,_.s('MouseMoved',x,y))
+	return false, 'hand'
+end
+
+function PocoMenuGui:mouse_pressed(panel, button, x, y)
+	if button == Idstring("mouse wheel down") then
+		self.gui:move(1)
+		return
+	elseif button == Idstring("mouse wheel up") then
+		self.gui:move(-1)
+		return
+	end
+
+	if button == Idstring("0") then
+		if self._panel:child("back_button"):inside(x, y) then
+			managers.menu:back()
+			return
+		end
+
+		if self._panel:child("respec_tree_button"):inside(x, y) then
+			self:respec_active_tree()
+			return
+		end
+
+		if self._active_page then
+			local (for generator), (for state), (for control) = ipairs(self._active_page._items)
+			do
+				do break end
+				if item:inside(x, y) then
+					self:place_point(item)
+					return true
+				end
+
+			end
+
+		end
+
+		local (for generator), (for state), (for control) = ipairs(self._tab_items)
+		do
+			do break end
+			if tab_item:inside(x, y) then
+				if self._active_tree ~= tab_item:tree() then
+					self:set_active_page(tab_item:tree(), true)
+				end
+
+				return true
+			end
+
+		end
+
+	end
+end
+
+function PocoMenuGui:mouse_released(panel,button, x, y)
+	_.c(self._test,_.s('MouseReleased',x,y))
+	return true, 'link'
+end
+
+
 --- Class Start ---
 local TPocoHud3 = class(TPocoBase)
 TPocoHud3.className = 'Hud'
@@ -778,9 +1049,7 @@ function TPocoHud3:Update(t,dt)
 	if not r then _(err) end
 end
 function TPocoHud3:onDestroy(gameEnd)
-	if self.m_id then
-		self:Menu(true) -- Force dismiss menu
-	end
+	self:Menu(true) -- Force dismiss menu
 	if( alive( self._ws ) ) then
 		managers.gui_data:destroy_workspace(self._ws)
 	end
@@ -878,20 +1147,15 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 end
 --- Internal functions ---
 function TPocoHud3:Menu(dismiss)
-	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
-	if dismiss or self.m_id then
-		managers.mouse_pointer:remove_mouse(self.m_id)
-		if camBase then
-			camBase:remove_limits()
+	pcall(function()
+		local menu = self.menuGui
+		if menu then -- Remove
+			menu:destroy()
+			self.menuGui = nil
+		elseif not dismiss then -- Show
+			self.menuGui = PocoMenuGui:new(self._ws)
 		end
-		self.m_id = nil
-	else
-		self.m_id = managers.mouse_pointer:get_id()
-		managers.mouse_pointer:use_mouse({id = self.m_id})
-		if camBase then
-			camBase:set_limits(20,20)
-		end
-	end
+	end)
 end
 function TPocoHud3:AnnounceStat(midgame)
 	local txt = {}
@@ -964,8 +1228,9 @@ function TPocoHud3:_update(t,dt)
 
 	if inGame then
 		self:_updateItems(t,dt)
-	else
-
+	end
+	if self.menuGui then
+		self.menuGui:update(t,dt)
 	end
 end
 function TPocoHud3:HitDirection(col_ray,data)
@@ -1163,9 +1428,9 @@ function TPocoHud3:_updatePlayers(t)
 						pnl:set_world_position(wp[1],wp[2]-30)
 
 						--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture="guis/textures/test_blur_df", render_template="VertexColorTexturedBlur3D", layer=-1, x=0,y=0 } )
-						self['pnl_lbl'..i] = pnl:text{name='lbl',align='center', text='-', font=FONT, font_size = O.info.size, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
-						self['pnl_lblA'..i] = pnl:text{name='lblA',align='center', text='-', font=FONT, font_size = O.info.size, color = cl.Black:with_alpha(0.4), x=0,y=0, layer=1, blend_mode = 'normal'}
-						self['pnl_lblB'..i] = pnl:text{name='lblB',align='center', text='-', font=FONT, font_size = O.info.size, color = cl.Black:with_alpha(0.4), x=2,y=0, layer=1, blend_mode = 'normal'}
+						self['pnl_lbl'..i] = pnl:text{name='lbl',align='right', text='-', font=FONT, font_size = O.info.size, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
+						self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = O.info.size, color = cl.Black:with_alpha(0.4), x=0,y=0, layer=1, blend_mode = 'normal'}
+						self['pnl_lblB'..i] = pnl:text{name='lblB',align='right', text='-', font=FONT, font_size = O.info.size, color = cl.Black:with_alpha(0.4), x=2,y=0, layer=1, blend_mode = 'normal'}
 						self['pnl_'..i] = pnl
 					end
 				end
@@ -1710,7 +1975,7 @@ function TPocoHud3:_hook()
 	else
 		--PlayerStandards
 		hook( PlayerStandard, '_update_check_actions', function( self ,...)
-			if not me.m_id then
+			if not me.menuGui then
 				Run('_update_check_actions', self,... )
 			end
 		end)
@@ -2408,6 +2673,37 @@ function TPocoHud3:_hook()
 				--Run('_animate_interaction_complete', ...)
 			end)
 		end
+		-- Mouse hook plugin
+		hook( MenuComponentManager, 'mouse_moved', function( ... )
+			local self, o, x, y = unpack{...}
+			if me.menuGui then
+				local used, pointer = me.menuGui:mouse_moved(o, x, y)
+				if used then
+					return true, pointer
+				end
+			end
+			return Run('mouse_moved', ...)
+		end)
+		hook( MenuComponentManager, 'mouse_pressed', function( ... )
+			local self, o, button, x, y = unpack{...}
+			if me.menuGui and me.menuGui.mouse_pressed then
+				local used, pointer = me.menuGui:mouse_pressed(o, button, x, y)
+				if used then
+					return true, pointer
+				end
+			end
+			return Run('mouse_pressed', ...)
+		end)
+		hook( MenuComponentManager, 'mouse_released', function( ... )
+			local self, o, button, x, y = unpack{...}
+			if me.menuGui and me.menuGui.mouse_released then
+				local used, pointer = me.menuGui:mouse_released(o, button, x, y)
+				if used then
+					return true, pointer
+				end
+			end
+			return Run('mouse_released', ...)
+		end)
 		-- Kick menu
 		hook( KickPlayer, 'modify_node', function( ... )
 			local self, node, up = unpack{...}
@@ -2440,7 +2736,7 @@ function TPocoHud3:_hook()
 				managers.experience.reached_level_cap = function(self)
 					_('lvlCAPcalled')
 					return false
-	end
+				end
 				Run('stage_init', ...)
 				managers.experience.reached_level_cap = _oldLvlCap
 			end)

@@ -262,7 +262,7 @@ _ = {
 			return from
 		end
 	end,
-	L = function(lbl,text,autoSize) -- FillLbl
+	L = function(lbl,txts,autoSize) -- FillLbl
 		local result = ''
 		local isTable = type(txts)=='table'
 		if not (lbl and alive(lbl)) then
@@ -301,9 +301,10 @@ _ = {
 		end
 		return result
 
-	end
+	end,
+	W = function(...)io.stderr:write(_.S(...)..'\n')end
 }
-setmetatable(_,{__call = function(__,...)io.stderr:write(_.S(...)..'\n')end})
+setmetatable(_,{__call = function(__,...) return _.W(...) end})
 UNDERSCORE = _
 if clone then
 	for k,v in pairs(clone(_)) do
@@ -485,7 +486,7 @@ function TPoco:destroy()
 		v:destroy()
 	end
 	self.dead = true
-	managers.hud._workspace:remove(self.pnl)
+	managers.hud._workspace:panel():remove(self.pnl)
 	setup.update = setup._update
 	setup._update = nil
 	_('Poco:destroy')
