@@ -7,8 +7,8 @@ I understand your curiosity. I would've do the same. This basic luac would not b
 Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.110
-local VRR = 'Dev'
+local VR = 0.111
+local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
 --- Options ---
