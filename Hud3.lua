@@ -711,10 +711,28 @@ function PocoTab:init(parent,ppnl,tabName)
 	self.name = tabName
 	self.wrapper = ppnl:panel({ x=0, y=parent.config.th,w = ppnl:w(), h = ppnl:h()-parent.config.th, name = tabName})
 	self.pnl = self.wrapper:panel({ x=0, y=0, w = ppnl:w(), h = ppnl:h(), name = 'content' , visible = true})
+	self.hotZones = {}
 end
 
-function PocoTab:inside(x,y)
+function PocoTab:insideTab(x,y)
 	return self.bg and self.bg:inside(x, y)
+end
+
+function PocoTab:registerHotZone(itm,bg,callback)
+	if bg then
+		bg:set_visible(false)
+	end
+	table.insert(self.hotZones,{elem=itm,bg=bg,cbk=callback})
+end
+function PocoTab:isHot(x,y)
+	if self.wrapper:inside(x,y) then
+		for i,hotZone in pairs(self.hotZones) do
+			if hotZone.elem and hotZone.elem:inside(x,y) then
+				return true, hotZone
+			end
+		end
+	end
+	return false
 end
 
 function PocoTab:scroll(val, force)
@@ -850,6 +868,10 @@ function PocoMenu:init(ws)
 		render_template = "VertexColorTexturedBlur3D",
 		layer = -1
 	})
+	local active_menu = managers.menu:active_menu()
+	if active_menu then
+		active_menu.input:set_force_input(false)
+	end
 
 	PocoMenu.m_id = managers.mouse_pointer:get_id()
 	PocoMenu.__active = managers.mouse_pointer._active
@@ -891,10 +913,35 @@ function PocoMenu:destroy()
 	if self.pnl then
 		self._ws:panel():remove(self.pnl)
 	end
+	local active_menu = managers.menu:active_menu()
+	if active_menu then
+		active_menu.input:set_force_input(true)
+	end
+
+
 end
 
 function PocoMenu:mouse_moved(panel, x, y)
-	return true, 'hand'
+	local xx,yy = managers.gui_data:safe_to_full(x, y)
+	for ind,tab in pairs(self.gui.items) do
+		if tab:insideTab(xx,yy) and self.tabIndex ~= ind then
+			return true, 'link'
+		end
+	end
+	local currentTab = self.gui and self.gui.currentTab
+	if self._hotBg then
+		self._hotBg:set_visible(false)
+		self._hotBg = nil
+	end
+	if currentTab and currentTab:isHot(xx,yy) then
+		local __, hotZone = currentTab:isHot(xx,yy)
+		if hotZone.bg then
+			self._hotBg = hotZone.bg
+			hotZone.bg:set_visible(true)
+		end
+		return true, 'link'
+	end
+	return true, 'arrow'
 end
 
 function PocoMenu:mouse_pressed(panel, button, x, y)
@@ -924,9 +971,14 @@ function PocoMenu:mouse_pressed(panel, button, x, y)
 
 		if button == Idstring("0") then
 			for ind,tab in pairs(self.gui.items) do
-				if tab:inside(x,y) then
+				if tab:insideTab(x,y) and self.tabIndex ~= ind then
 					self.gui:goTo(ind)
+					return true
 				end
+			end
+			if currentTab and currentTab:isHot(x,y) then
+				local __, hotZone = currentTab:isHot(x,y)
+				hotZone.cbk()
 			end
 		end
 	end)
@@ -1148,12 +1200,8 @@ function TPocoHud3:Menu(dismiss,...)
 						else
 							val = _.s(val)
 						end
---[[						row[#row+1] = {
-							{titlecase(name:gsub('_multiplier',''):gsub('_',' '))..' ',cl.WhiteSmoke},
-							{val..' ',cl.LightSteelBlue}
-						}]]
 						row[#row+1] = {
-							{titlecase(name:gsub('_multiplier',''):gsub('_',' '))..' ',cl.WhiteSmoke}
+							{(name:gsub('_multiplier',''):gsub('_',' '))..' ',cl.WhiteSmoke}
 						}
 						row[#row+1] = {
 							{val..' ',cl.LightSteelBlue}
@@ -1179,12 +1227,22 @@ function TPocoHud3:Menu(dismiss,...)
 			if pnl:h() < y then
 				pnl:set_h(y)
 			end
-			return y
 		else
-				y = self:_drawRow(pnl,fontSize,{{'No upgrades acquired\n',cl.White:with_alpha(0.5)}},0,y,w)
+			y = self:_drawRow(pnl,fontSize,{{'No upgrades acquired\n',cl.White:with_alpha(0.5)}},0,y,w)
 		end
-
+		return y
 	end
+	local _drawPlayer = function(pnl, pid, member, offsetY)
+		offsetY = offsetY or 0
+		pnl:text{
+			x = 10, y = offsetY+10, w = 600, h = 30,
+			name = 'tab_desc', text = self:_name(pid),
+			font = 'fonts/font_large_mf', font_size = 25, color = self:_color(pid)
+		}
+		local y,fontSize,w = offsetY+35, 19, 970
+		return y
+	end
+
 	local r,err = pcall(function()
 		local menu = self.menuGui
 		if menu then -- Remove
@@ -1196,26 +1254,63 @@ function TPocoHud3:Menu(dismiss,...)
 			local gui = PocoMenu:new(self._ws)
 			self.menuGui = gui
 			--- Install tabs here ---
-			local tab = gui:add('Heist Status')
+			local tab = gui:add('About')
+
+			local btn = tab.pnl:panel{w = 400,h=100, x = 10, y = 10}
+			local bg = BoxGuiObject:new(btn, {sides = {1,1,1,1}})
+
+			_.l({
+				pnl = tab.pnl,w = 400,h=100,
+				x = 10, y = 10, font = FONT, font_size = 20, color = cl.White,
+				align = 'center', vertical = 'center'
+			},{{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\nDiscuss/suggest at PocoMods steam group!',cl.LightSkyBlue},{'\n\n(Click here to visit)',cl.Tomato}})
+			tab:registerHotZone(btn,bg,function()
+				managers.menu:post_event("prompt_enter")
+				Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
+			end)
+
+			btn = tab.pnl:panel{w = 400,h=40, x = 10, y = 120}
+			bg = BoxGuiObject:new(btn, {sides = {1,1,1,1}})
+
+			_.l({
+				pnl = tab.pnl,w = 400,h=40, x = 10, y = 120, font = FONT, font_size = 20, color = cl.White,
+				align = 'center', vertical = 'center'
+			},{'@zenyr',cl.OrangeRed})
+			tab:registerHotZone(btn,bg,function()
+				managers.menu:post_event("prompt_enter")
+				Steam:overlay_activate('url', 'http://twitter.com/zenyr')
+
+			end)
+
+			tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
 			tab = gui:add('Upgrade Skills')
-			local y = _drawUpgrades(tab.pnl,_.g('Global.player_manager.team_upgrades'),true,'Active/available upgrades that you and your crew will benefit from',0)
-			_drawUpgrades(tab.pnl,_.g('Global.player_manager.upgrades'),false,'Active/available upgrades that you acquired',y or 40)
+			local y = 0
+			if inGame then
+				for pid,upg in pairs(_.g('Global.player_manager.synced_team_upgrades',{})) do
+					if upg then
+						y = _drawUpgrades(tab.pnl,upg,true,'Crew bonus from '..self:_name(pid),y)
+					end
+				end
+			end
+			y = _drawUpgrades(tab.pnl,_.g('Global.player_manager.team_upgrades'),true,'Perks that you and your crew will benefit from',y)
+			y = _drawUpgrades(tab.pnl,_.g('Global.player_manager.upgrades'),false,'Perks that you have acquired',y)
 			tab = gui:add('Inspect')
+			y = 0
+			for i=1,4 do
+				local member= self:_member(i)
+				if member and member._unit then
+					y = _drawPlayer(tab.pnl, i, member, y)
+				end
+			end
 			_.l({
 				pnl = tab.pnl,
-				x = 10, y = 10, font = FONT, font_size = 20, color = cl.White,
+				x = 10, y = y+10, font = FONT, font_size = 20, color = cl.White,
 				align = 'center', vertical = 'center'
-			},'Test',true)
-			tab = gui:add('About')
-			_.l({
-				pnl = tab.pnl,
-				x = 10, y = 10, font = FONT, font_size = 20, color = cl.White,
-				align = 'center', vertical = 'center'
-			},{{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green}},true)
+			},{{'*to be announced',cl.Crimson}},true)
 		end
 	end)
-	if not r then _(err) end
+	if not r then _('MenuCallErr',err) end
 end
 function TPocoHud3:AnnounceStat(midgame)
 	local txt = {}
@@ -2702,10 +2797,7 @@ function TPocoHud3:_hook()
 		hook( MenuComponentManager, 'mouse_moved', function( ... )
 			local self, o, x, y = unpack{...}
 			if me.menuGui then
-				local used, pointer = me.menuGui:mouse_moved(o, x, y)
-				if used then
-					return true, pointer
-				end
+				return me.menuGui:mouse_moved(o, x, y)
 			end
 			return Run('mouse_moved', ...)
 		end)
@@ -2733,7 +2825,12 @@ function TPocoHud3:_hook()
 			me:Menu(true) -- dismiss Menu when actual game-menu is called
 			return Run('toggle_menu_state', ...)
 		end)
+		hook( MenuManager, 'active_menu', function( ... )
+			managers.menu:post_event("prompt_enter")
 
+			if me.menuGui then return true end
+			return Run('active_menu', ...)
+		end)
 		-- Kick menu
 		hook( KickPlayer, 'modify_node', function( ... )
 			local self, node, up = unpack{...}
@@ -2871,7 +2968,7 @@ function TPocoHud3:_drawRow(pnl, fontSize, texts, _x, _y, _w, bg, align)
 	end
 	for i,text in pairs(texts) do
 		if text ~= '' then
-			local res, lbl = _.l({ pnl=pnl,font=FONT, color=cl.White, font_size=fontSize * 0.92, x=_x + iw*(i-0.5), y=math.floor(_y)-1, text='', blend_mode='add'},text,true)
+			local res, lbl = _.l({ pnl=pnl,font=FONT, color=cl.White, font_size=fontSize * 0.92, x=_x + iw*(i-0.5), y=math.floor(_y)+1, text='', blend_mode='add'},text,true)
 			if isCenter(i) then
 				lbl:set_center_x(math.round(_x + iw*(i-0.5)))
 			else
