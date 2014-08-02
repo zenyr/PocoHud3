@@ -136,7 +136,7 @@ local clGood =  Color( 255, 146, 208, 80 ) / 255
 local clBad =  Color( 255, 255, 192, 0 ) / 255
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
-	Skull = 57364, Ghost = 57363, Dot = 1031, Chapter = 1016, Div = 1014, BigDot = 1012,
+	Skull = 57364, Ghost = 57363, Dot = 1031, Chapter = 1015, Div = 1014, BigDot = 1012,
 	Times = 215, Divided = 247, LC=139, RC=155, Deg = 1024, PM= 1025, No = 1033,
 }
 for k,v in pairs(Icon) do
@@ -709,10 +709,35 @@ PocoTab = PocoTab or class()
 function PocoTab:init(parent,ppnl,tabName)
 	self.ppnl = ppnl
 	self.name = tabName
-	self.pnl = ppnl:panel({ x=0, y=parent.config.th,w = ppnl:w(), h = ppnl:h(), name = tabName , visible = false})
+	self.wrapper = ppnl:panel({ x=0, y=parent.config.th,w = ppnl:w(), h = ppnl:h()-parent.config.th, name = tabName})
+	self.pnl = self.wrapper:panel({ x=0, y=0, w = ppnl:w(), h = ppnl:h(), name = 'content' , visible = true})
 end
+
 function PocoTab:inside(x,y)
 	return self.bg and self.bg:inside(x, y)
+end
+
+function PocoTab:scroll(val, force)
+	local tVal = force and 0 or self.pnl:y() + val
+	local pVal = math.clamp(tVal,self.wrapper:h()-self.pnl:h()-200,0)
+	if pVal ~= tVal then
+		self._errCnt = 1+ (self._errCnt or 0)
+	else
+		self._errCnt = 0
+	end
+	return self.pnl:set_y(pVal)
+end
+
+function PocoTab:canScroll(down,x,y)
+	local result = self:isLarge() and self.wrapper:inside(x,y)
+	if (self._errCnt or 0) > 1 then
+		result = false
+	end
+	return result
+end
+
+function PocoTab:isLarge()
+	return self.pnl:h() > self.ppnl:h()
 end
 
 function PocoTab:destroy()
@@ -767,6 +792,9 @@ function PocoTabs:repaint()
 	local tabIndex = self.tabIndex or 1
 	for key,itm in pairs(self.items) do
 		local isSelected = key == tabIndex
+		if isSelected then
+			self.currentTab = itm
+		end
 		local hPnl = self.pnl:panel{w = 200, h = self.config.th, x = x, y = 0}
 		if itm.hPnl then
 			self.pnl:remove(itm.hPnl)
@@ -797,6 +825,9 @@ function PocoTabs:repaint()
 		itm.hPnl = hPnl
 		itm.pnl:set_visible(isSelected)
 	end
+	if self.currentTab then
+		self.currentTab:scroll(0,true)
+	end
 end
 
 function PocoTabs:destroy(ws)
@@ -812,7 +843,7 @@ function PocoMenu:init(ws)
 	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 40, h = 700})
 
 	self.pnl = ws:panel():panel({ name = 'bg' , layer = 450})
-	self.pnl:rect{color = cl.Black:with_alpha(0.5)}
+	self.pnl:rect{color = cl.Black:with_alpha(0.7)}
 	self.pnl:bitmap({
 		texture = "guis/textures/test_blur_df",
 		w = self.pnl:w(),h = self.pnl:h(),
@@ -832,6 +863,7 @@ function PocoMenu:init(ws)
 	if camBase then
 		camBase:set_limits(15,15)
 	end
+	self._lastMove = 0
 end
 function PocoMenu:add(...)
 	return self.gui:add(...)
@@ -866,21 +898,38 @@ function PocoMenu:mouse_moved(panel, x, y)
 end
 
 function PocoMenu:mouse_pressed(panel, button, x, y)
-	if button == Idstring("mouse wheel down") then
-		self.gui:move(1)
-		return
-	elseif button == Idstring("mouse wheel up") then
-		self.gui:move(-1)
-		return
-	end
+	pcall(function()
+		local scrollStep = 40
+		local currentTab = self.gui and self.gui.currentTab
+		if button == Idstring("mouse wheel down") then
+			if currentTab and currentTab:canScroll(true,x,y) then
+				return currentTab:scroll(-scrollStep)
+			end
+			if now() - self._lastMove > 0.2 then
+				self._lastMove = now()
+				self.gui:move(1)
+			end
+			return
+		elseif button == Idstring("mouse wheel up") then
+			if currentTab and currentTab:canScroll(false,x,y) then
+				return currentTab:scroll(scrollStep)
+			end
+			if now() - self._lastMove > 0.2 then
+				self._lastMove = now()
+				self.gui:move(-1)
+			end
 
-	if button == Idstring("0") then
-		for ind,tab in pairs(self.gui.items) do
-			if tab:inside(x,y) then
-				self.gui:goTo(ind)
+			return
+		end
+
+		if button == Idstring("0") then
+			for ind,tab in pairs(self.gui.items) do
+				if tab:inside(x,y) then
+					self.gui:goTo(ind)
+				end
 			end
 		end
-	end
+	end)
 end
 
 function PocoMenu:mouse_released(panel, button, x, y)
@@ -1070,56 +1119,67 @@ function TPocoHud3:Menu(dismiss,...)
 			end
 			return table.concat(buf, " ")
 	end
-	local _drawUpgrades = function(pnl)
+	local _drawUpgrades = function(pnl, data, isTeam, desc, offsetY)
 		local _ignore = {}
+		offsetY = offsetY or 0
 		pnl:text{
-			x = 10, y = 10, w = 600, h = 20,
-			name = 'tab_desc', text = 'Active/available upgrades that you acquired',
-			font = FONT, font_size = 20, color = cl.White,
+			x = 10, y = offsetY+10, w = 600, h = 30,
+			name = 'tab_desc', text = Icon.Chapter..' '..desc,
+			font = 'fonts/font_large_mf', font_size = 25, color = cl.CornFlowerBlue,
 		}
-		local large = 3
-		local y,fontSize,w = 30, 19, 970
-		local data = Global.player_manager
+		local large = 5
+		local y,fontSize,w = offsetY+35, 19, 970
 		if data then
-			for category, upgrades in _pairs(data.upgrades or {}) do
-				local isLarge = table.size(upgrades) > large
-				local row = {}
+			local merged = table.deepcopy(data)
+			for category, upgrades in _pairs(merged) do
+				local row,cnt = {},0
 				y = self:_drawRow(pnl,fontSize*1.1,{{titlecase(category:gsub('_',' ')),cl.Peru},''},5,y,w)
 				for name,value in _pairs(upgrades) do
-					local isMulti = name:find('_multiplier') or name:find('_chance') or name:find('_mul')
-					local val = managers.player:upgrade_value(category, name, 1)
-					if isMulti and type(val) == 'number' then
-						val = _.s(val*100) .. '%'
-					elseif type(val) == 'table' then
-						val = _.s( type(val[1]) == 'number' and _.s(val[1]*100) .. '%' or _.s(val[1]==true and 'Yes' or val[1]), _.s(val[2],'sec') )
-					elseif val == true then
-						val = 'Yes'
-					else
-						val = _.s(val)
+					local isMulti = name:find('multiplier') or name:find('_chance') or name:find('_mul')
+					local val = isTeam and managers.player:team_upgrade_value(category, name, 1) or managers.player:upgrade_value(category, name, 1)
+					if not (isMulti and val == 1) then
+						cnt = cnt + 1
+						if isMulti and type(val) == 'number' then
+							val = _.s(val*100) .. '%'
+						elseif type(val) == 'table' then
+							val = _.s( type(val[1]) == 'number' and _.s(val[1]*100) .. '%' or _.s(val[1]==true and 'Yes' or val[1]), _.s(val[2],'sec') )
+						elseif val == true then
+							val = 'Yes'
+						else
+							val = _.s(val)
+						end
+--[[						row[#row+1] = {
+							{titlecase(name:gsub('_multiplier',''):gsub('_',' '))..' ',cl.WhiteSmoke},
+							{val..' ',cl.LightSteelBlue}
+						}]]
+						row[#row+1] = {
+							{titlecase(name:gsub('_multiplier',''):gsub('_',' '))..' ',cl.WhiteSmoke}
+						}
+						row[#row+1] = {
+							{val..' ',cl.LightSteelBlue}
+						}
+
+						if #row> large then
+							y = self:_drawRow(pnl,fontSize,row,15,y,w,true,{0,1,0,1,0,1})
+							row = {}
+						end
 					end
-					row[#row+1] = {
-						{titlecase(name:gsub('_multiplier',''):gsub('_',' '))..' ',cl.WhiteSmoke},
-						{val..' ',cl.LightSteelBlue}
-					}
-					if #row> large then
-						y = self:_drawRow(pnl,fontSize,row,15,y,w,true)
-						row = {}
-					end
+				end
+				if cnt == 0 then
+					row[#row+1] =  {'Not effective',cl.LightSteelBlue}
 				end
 				if #row > 0 then
 					while (#row <= large) do
 						table.insert(row,'')
 					end
-					y = self:_drawRow(pnl,fontSize,row,15,y,w,true)
+					y = self:_drawRow(pnl,fontSize,row,15,y,w,true,{0,1,0,1,0,1})
 					row = {}
 				end
 			end
-			local synced = data.synced_team_upgrades
-			if synced then
-
-			else
-				y = self:_drawRow(pnl,fontSize,{{'No team upgrades acquired\n',cl.White:with_alpha(0.5)}},0,y,w)
+			if pnl:h() < y then
+				pnl:set_h(y)
 			end
+			return y
 		else
 				y = self:_drawRow(pnl,fontSize,{{'No upgrades acquired\n',cl.White:with_alpha(0.5)}},0,y,w)
 		end
@@ -1138,15 +1198,21 @@ function TPocoHud3:Menu(dismiss,...)
 			--- Install tabs here ---
 			local tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
-			tab = gui:add('Active Upgrades')
-			_drawUpgrades(tab.pnl)
-			tab = gui:add('About')
-			tab.pnl:text{
-				x = 10, y = 10, w = 600, h = 40,
-				name = 'tab_name', text = 'PocoHud3 '.._.f(VR,4)..VRR,
-				font = FONT, font_size = 20, color = cl.White,
+			tab = gui:add('Upgrade Skills')
+			local y = _drawUpgrades(tab.pnl,_.g('Global.player_manager.team_upgrades'),true,'Active/available upgrades that you and your crew will benefit from',0)
+			_drawUpgrades(tab.pnl,_.g('Global.player_manager.upgrades'),false,'Active/available upgrades that you acquired',y or 40)
+			tab = gui:add('Inspect')
+			_.l({
+				pnl = tab.pnl,
+				x = 10, y = 10, font = FONT, font_size = 20, color = cl.White,
 				align = 'center', vertical = 'center'
-			}
+			},'Test',true)
+			tab = gui:add('About')
+			_.l({
+				pnl = tab.pnl,
+				x = 10, y = 10, font = FONT, font_size = 20, color = cl.White,
+				align = 'center', vertical = 'center'
+			},{{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green}},true)
 		end
 	end)
 	if not r then _(err) end
@@ -1685,7 +1751,7 @@ function TPocoHud3:_drawStat(state,pnl)
 			end
 			local multi = managers.job:get_job_heat_multipliers(heist)
 			local color = multi >= 1 and math.lerp( cl.Khaki, cl.Chartreuse, 2*(multi - 1) ) or math.lerp( cl.Crimson, cl.OrangeRed, multi )
-			table.insert(rowObj,{_.f(multi*100,5)..'% ('..managers.job:get_job_heat(heist)..')',color})
+			table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..managers.job:get_job_heat(heist)..')',color:with_alpha(0.3)}})
 			tbl[#tbl+1] = rowObj
 		end
 		for host,jobs in pairs(host_list) do
@@ -2794,7 +2860,7 @@ function TPocoHud3:_lbl(lbl,txts)
 	return result
 end
 function TPocoHud3:_drawRow(pnl, fontSize, texts, _x, _y, _w, bg, align)
-	local _fontSize = fontSize * 0.84
+	local _fontSize = fontSize * 1
 	if bg then
 		pnl:rect( { x=_x,y=_y,w=_w,h=_fontSize,color=cl.White, alpha=0.05, layer=0 } )
 	end
