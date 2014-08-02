@@ -767,7 +767,7 @@ function PocoTabs:repaint()
 	local tabIndex = self.tabIndex or 1
 	for key,itm in pairs(self.items) do
 		local isSelected = key == tabIndex
-		local hPnl = self.pnl:panel{w = 100, h = self.config.th, x = x, y = 0}
+		local hPnl = self.pnl:panel{w = 200, h = self.config.th, x = x, y = 0}
 		if itm.hPnl then
 			self.pnl:remove(itm.hPnl)
 		end
@@ -809,7 +809,7 @@ end
 PocoMenu = PocoMenu or class()
 function PocoMenu:init(ws)
 	self._ws = ws
-	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 800, th = 40, h = 700})
+	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 40, h = 700})
 
 	self.pnl = ws:panel():panel({ name = 'bg' , layer = 450})
 	self.pnl:rect{color = cl.Black:with_alpha(0.5)}
@@ -1062,7 +1062,70 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 end
 --- Internal functions ---
 function TPocoHud3:Menu(dismiss,...)
-	pcall(function()
+	local titlecase = function (str)
+			local buf = {}
+			for word in string.gfind(str, "%S+") do
+					local first, rest = string.sub(word, 1, 1), string.sub(word, 2)
+					table.insert(buf, string.upper(first) .. string.lower(rest))
+			end
+			return table.concat(buf, " ")
+	end
+	local _drawUpgrades = function(pnl)
+		local _ignore = {}
+		pnl:text{
+			x = 10, y = 10, w = 600, h = 20,
+			name = 'tab_desc', text = 'Active/available upgrades that you acquired',
+			font = FONT, font_size = 20, color = cl.White,
+		}
+		local large = 3
+		local y,fontSize,w = 30, 19, 970
+		local data = Global.player_manager
+		if data then
+			for category, upgrades in _pairs(data.upgrades or {}) do
+				local isLarge = table.size(upgrades) > large
+				local row = {}
+				y = self:_drawRow(pnl,fontSize*1.1,{{titlecase(category:gsub('_',' ')),cl.Peru},''},5,y,w)
+				for name,value in _pairs(upgrades) do
+					local isMulti = name:find('_multiplier') or name:find('_chance') or name:find('_mul')
+					local val = managers.player:upgrade_value(category, name, 1)
+					if isMulti and type(val) == 'number' then
+						val = _.s(val*100) .. '%'
+					elseif type(val) == 'table' then
+						val = _.s( type(val[1]) == 'number' and _.s(val[1]*100) .. '%' or _.s(val[1]==true and 'Yes' or val[1]), _.s(val[2],'sec') )
+					elseif val == true then
+						val = 'Yes'
+					else
+						val = _.s(val)
+					end
+					row[#row+1] = {
+						{titlecase(name:gsub('_multiplier',''):gsub('_',' '))..' ',cl.WhiteSmoke},
+						{val..' ',cl.LightSteelBlue}
+					}
+					if #row> large then
+						y = self:_drawRow(pnl,fontSize,row,15,y,w,true)
+						row = {}
+					end
+				end
+				if #row > 0 then
+					while (#row <= large) do
+						table.insert(row,'')
+					end
+					y = self:_drawRow(pnl,fontSize,row,15,y,w,true)
+					row = {}
+				end
+			end
+			local synced = data.synced_team_upgrades
+			if synced then
+
+			else
+				y = self:_drawRow(pnl,fontSize,{{'No team upgrades acquired\n',cl.White:with_alpha(0.5)}},0,y,w)
+			end
+		else
+				y = self:_drawRow(pnl,fontSize,{{'No upgrades acquired\n',cl.White:with_alpha(0.5)}},0,y,w)
+		end
+
+	end
+	local r,err = pcall(function()
 		local menu = self.menuGui
 		if menu then -- Remove
 			managers.menu_component:post_event("menu_exit")
@@ -1075,13 +1138,8 @@ function TPocoHud3:Menu(dismiss,...)
 			--- Install tabs here ---
 			local tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
-			tab = gui:add('Placeholder')
-			tab.pnl:text{
-				x = 10, y = 10, w = 600, h = 40,
-				name = 'tab_name', text = 'More info to be announced here. :)',
-				font = FONT, font_size = 20, color = cl.White,
-				align = 'center', vertical = 'center'
-			}
+			tab = gui:add('Active Upgrades')
+			_drawUpgrades(tab.pnl)
 			tab = gui:add('About')
 			tab.pnl:text{
 				x = 10, y = 10, w = 600, h = 40,
@@ -1091,6 +1149,7 @@ function TPocoHud3:Menu(dismiss,...)
 			}
 		end
 	end)
+	if not r then _(err) end
 end
 function TPocoHud3:AnnounceStat(midgame)
 	local txt = {}
@@ -1602,31 +1661,7 @@ function TPocoHud3:_drawStat(state,pnl)
 		local pnl = ppnl:panel( { name='stat', visible=true, x=10, y=10, w=ww - 20, h=hh - 20} )
 		local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size
 		local _rowCnt = 0
-		local _drawRow = function(texts, _x, _y, _w)
-			local _fontSize = fontSize * 0.84
-			_rowCnt = _rowCnt + 1
-			if _rowCnt % 2 == 0 then
-				pnl:rect( { x=_x,y=_y,w=_w,h=_fontSize,color=cl.White, alpha=0.05, layer=0 } )
-			end
-			local count = #texts
-			local iw = _w / count
-			for i,text in pairs(texts) do
-				if text ~= '' then
-					local txt = pnl:text( { font=font, font_size=fontSize * 0.92, x=_x + iw*(i-0.5), y=math.floor(_y)-1, text=tostring(text), blend_mode='add'} )
-					if type(text) == 'table' then
-						if type(text[1]) ~= 'table' then
-							text = {text}
-						end
-						me:_lbl(txt,text)
-					end
-					local x, y, w, h = txt:text_rect()
-					txt:set_size(w, h)
 
-					txt:set_center_x(math.round(_x + iw*(i-0.5)))
-				end
-			end
-			return _y + _fontSize
-		end
 		local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
 		local risks = { "risk_pd", "risk_swat", "risk_fbi", "risk_death_squad", "risk_murder_squad"}
 		local x, y, tbl = 5, 5, {}
@@ -1669,7 +1704,8 @@ function TPocoHud3:_drawStat(state,pnl)
 			else
 				_lastHost = _tbl[1]
 			end
-			y = _drawRow(_tbl,x,y,770)
+			_rowCnt = _rowCnt + 1
+			y = self:_drawRow(pnl,fontSize,_tbl,x,y,970, _rowCnt % 2 == 0,{1,_rowCnt == 1 and 1 or 0})
 		end
 
 	else -- Hide Stat
@@ -2756,6 +2792,28 @@ function TPocoHud3:_lbl(lbl,txts)
 		end
 	end
 	return result
+end
+function TPocoHud3:_drawRow(pnl, fontSize, texts, _x, _y, _w, bg, align)
+	local _fontSize = fontSize * 0.84
+	if bg then
+		pnl:rect( { x=_x,y=_y,w=_w,h=_fontSize,color=cl.White, alpha=0.05, layer=0 } )
+	end
+	local count = #texts
+	local iw = _w / count
+	local isCenter = function(i)
+		return align == true or (type(align)=='table' and align[i]~=0)
+	end
+	for i,text in pairs(texts) do
+		if text ~= '' then
+			local res, lbl = _.l({ pnl=pnl,font=FONT, color=cl.White, font_size=fontSize * 0.92, x=_x + iw*(i-0.5), y=math.floor(_y)-1, text='', blend_mode='add'},text,true)
+			if isCenter(i) then
+				lbl:set_center_x(math.round(_x + iw*(i-0.5)))
+			else
+				lbl:set_x(math.round(_x+iw*(i-1)))
+			end
+		end
+	end
+	return _y + _fontSize
 end
 --- Class end ---
 if Poco and not Poco.dead then
