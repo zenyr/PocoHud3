@@ -284,7 +284,7 @@ _ = {
 					if type(txtObj)=='table' then
 						txtObj[1] = tostring(txtObj[1])
 					else
-						_('_.L Err:txtObj is not a table',txtObj)
+						txtObj = {txtObj}
 					end
 					result = result..txtObj[1]
 					local __, count = txtObj[1]:gsub('[^\128-\193]', '')
@@ -381,9 +381,6 @@ function TPoco:init()
 	self.funcs = {}
 	self.save = {}
 	self.binds = {down={},up={}}
-	if inGame then
-		self.pnl = managers.hud._workspace:panel():panel({ name = "poco_sheet" , layer = 50000})
-	end
 	self._kbd = Input:keyboard()
 	if not setup._update then
 		setup._update = setup.update
@@ -464,7 +461,13 @@ function TPoco:AddOn(ancestor)
 end
 function TPoco:Update(t,dt)
 --	if not managers.menu_component:input_focus() then
-	if not (managers.menu_component._game_chat_gui and managers.menu_component._game_chat_gui:input_focus()) then
+	for __,func in pairs(self.funcs) do
+		func(t,dt)
+	end
+	if not (
+		(managers.menu_component._blackmarket_gui and managers.menu_component._blackmarket_gui._renaming_item) or
+		(managers.menu_component._game_chat_gui and managers.menu_component._game_chat_gui:input_focus())
+		) then
 		for key,cbks in pairs(self.binds.down) do
 			if cbks and self._kbd:pressed(key) then
 				cbks[2](t,dt)
@@ -475,10 +478,6 @@ function TPoco:Update(t,dt)
 				cbks[2](t,dt)
 			end
 		end
-	end
-
-	for __,func in pairs(self.funcs) do
-		func(t,dt)
 	end
 end
 function TPoco:register(key,func)
@@ -494,7 +493,6 @@ function TPoco:destroy()
 		v:destroy()
 	end
 	self.dead = true
-	managers.hud._workspace:panel():remove(self.pnl)
 	setup.update = setup._update
 	setup._update = nil
 	_('Poco:destroy')
