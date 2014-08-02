@@ -262,45 +262,53 @@ _ = {
 			return from
 		end
 	end,
-	L = function(lbl,txts,autoSize) -- FillLbl
+	L = function(lbl, txts, autoSize) -- New FillLbl
 		local result = ''
 		local isTable = type(txts)=='table'
-		if not (lbl and alive(lbl)) then
-			if isTable then
-				for __, t in pairs(txts) do
-					result = result .. tostring(t[1])
-				end
-			else
-				result = txts
+		if not isTable then
+			return _.L(lbl,{{txts}},autoSize)
+		end
+		if isTable and type(txts[2]) == 'userdata' then
+			return _.L(lbl,{txts},autoSize)
+		end
+		if lbl then
+			if type(lbl) ~= 'userdata' then
+				local obj = lbl
+				lbl = obj.pnl:text(obj)
 			end
-		else
-			if isTable then
+			if alive(lbl) then
 				local pos = 0
 				local posEnd = 0
 				local ranges = {}
 				for _k,txtObj in ipairs(txts or {}) do
-					txtObj[1] = tostring(txtObj[1])
+					if type(txtObj)=='table' then
+						txtObj[1] = tostring(txtObj[1])
+					else
+						_('_.L Err:txtObj is not a table',txtObj)
+					end
 					result = result..txtObj[1]
 					local __, count = txtObj[1]:gsub('[^\128-\193]', '')
-					posEnd = pos + count
-					table.insert(ranges,{pos,posEnd,txtObj[2] or cl.White})
-					pos = posEnd
+					if count > 0 then
+						posEnd = pos + count
+						table.insert(ranges,{pos,posEnd,txtObj[2] or cl.White})
+						pos = posEnd
+					end
 				end
 				lbl:set_text(result)
 				for _,range in ipairs(ranges) do
 					lbl:set_range_color( range[1], range[2], range[3] or cl.Green)
 				end
-			elseif type(txts)=='string' then
-				result = txts
-				lbl:set_text(txts)
+				if autoSize then
+					local x,y,w,h = lbl:text_rect()
+					lbl:set_size(w,h)
+				end
 			end
-			if autoSize then
-				local x,y,w,h = lbl:text_rect()
-				lbl:set_size(w,h)
+		else -- simple merge
+			for __, t in pairs(txts) do
+				result = result .. tostring(t[1])
 			end
 		end
-		return result
-
+		return result, lbl
 	end,
 	W = function(...)io.stderr:write(_.S(...)..'\n')end
 }
