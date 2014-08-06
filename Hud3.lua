@@ -22,6 +22,7 @@ local function _req(name)
 	end
 	return __req(name) or __req(name..'c')
 end
+PocoHud3Class = nil
 _req ('poco/Hud3_class.lua')
 if not PocoHud3Class then return end
 --- Options ---
@@ -446,8 +447,18 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 
 			PocoUINumValue:new(tab,{
-				x = 10, y = 50, w = 100, h=40,
-				text={'TestA',cl.OrangeRed}
+				x = 10, y = 50, w = 400, h=25, min = 0, value = 5, max = 10,
+				text='TestA', hintText ='This is something'
+			})
+
+			PocoUIColorValue:new(tab,{
+				x = 10, y = 80, w = 400, h=40, value = 'Red',
+				text='TestB',hintText ='This is something'
+			})
+
+			PocoUIReversedBooleanValue:new(tab,{
+				x = 10, y = 110, w = 400, h=40, value = 'YES',
+				text='TestB',hintText ='This is something'
 			})
 
 			tab = gui:add('Heist Status')
