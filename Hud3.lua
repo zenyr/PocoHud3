@@ -7,7 +7,7 @@ I understand your curiosity. I would've do the same. This basic luac would not b
 Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.111
+local VR = 0.120
 local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
@@ -139,12 +139,12 @@ local O = {
 		taser = 'a taser',
 	},
 }
-PocoHud3Class.loadVar(O,me)
 local ALTFONT= PocoHud3Class.ALTFONT
 local FONT= PocoHud3Class.FONT
 local clGood= PocoHud3Class.clGood
 local clBad= PocoHud3Class.clBad
 local Icon= PocoHud3Class.Icon
+local MouseEvent= PocoHud3Class.MouseEvent
 
 local _BAGS = {}
 _BAGS['8f59e19e1e45a05e']='Ammo'
@@ -419,35 +419,24 @@ function TPocoHud3:Menu(dismiss,...)
 			self.menuGui = gui
 			--- Install tabs here ---
 			local tab = gui:add('About')
-
-			local btn = tab.pnl:panel{w = 400,h=100, x = 10, y = 10}
-			local bg = BoxGuiObject:new(btn, {sides = {1,1,1,1}})
-
-			_.l({
-				pnl = tab.pnl,w = 400,h=100,
-				x = 10, y = 10, font = FONT, font_size = 20, color = cl.White,
-				align = 'center', vertical = 'center'
-			},{{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\nDiscuss/suggest at PocoMods steam group!',cl.LightSkyBlue},{'\n\n(Click here to visit)',cl.Tomato}})
-			tab:registerHotZone{itm=btn,simpleElem=bg,cbk=function()
-				managers.menu:post_event("prompt_enter")
-				Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
-			end}
-
-			btn = tab.pnl:panel{w = 400,h=40, x = 10, y = 120}
-			bg = BoxGuiObject:new(btn, {sides = {1,1,1,1}})
-
-			_.l({
-				pnl = tab.pnl,w = 400,h=40, x = 10, y = 120, font = FONT, font_size = 20, color = cl.White,
-				align = 'center', vertical = 'center'
-			},{'@zenyr',cl.OrangeRed})
-			tab:registerHotZone(btn,bg,function()
-				managers.menu:post_event("prompt_enter")
-				Steam:overlay_activate('url', 'http://twitter.com/zenyr')
-
-			end)
+			PocoUIButton:new(tab,{
+				onPressed = function()
+					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
+				end,
+				x = 10, y = 10, w = 400,h=100,
+				text={{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\nDiscuss/suggest at PocoMods steam group!',cl.LightSkyBlue},{'\n\n(Click here to visit)',cl.Tomato}}
+			})
+			PocoUIButton:new(tab,{
+				onPressed = function()
+					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
+				end,
+				x = 10, y = 120, w = 400,h=40,
+				text={'@zenyr',cl.OrangeRed}
+			})
 
 			tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
+
 			tab = gui:add('Upgrade Skills')
 			local y = 0
 			if inGame then
@@ -2001,9 +1990,10 @@ function TPocoHud3:_hook()
 	hook( MenuComponentManager, 'mouse_moved', function( ... )
 		local self, o, x, y = unpack{...}
 		if me.menuGui then
-			return me.menuGui:mouse_moved(o, x, y)
+			return me.menuGui:mouse_moved(o, managers.gui_data:safe_to_full(x,y))
+		else
+			return Run('mouse_moved', ...)
 		end
-		return Run('mouse_moved', ...)
 	end)
 	hook( MenuComponentManager, 'mouse_pressed', function( ... )
 		local self, o, button, x, y = unpack{...}
@@ -2141,6 +2131,7 @@ end
 --- Class end ---
 if Poco and not Poco.dead then
 	me = Poco:AddOn(TPocoHud3)
+	PocoHud3Class.loadVar(O,me)
 	if me and not me.dead then
 		PocoHud3 = me
 	else
