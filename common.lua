@@ -298,7 +298,7 @@ _ = {
 					end
 				end
 				lbl:set_text(result)
-				for _,range in ipairs(ranges) do
+				for __,range in ipairs(ranges) do
 					lbl:set_range_color( range[1], range[2], range[3] or cl.Green)
 				end
 				if autoSize then
@@ -313,14 +313,41 @@ _ = {
 		end
 		return result, lbl
 	end,
+	M = function(orig,new,copy)
+		if copy then
+			orig = table.deepcopy(orig)
+		end
+		local merge_task = {}
+		 merge_task[orig] = new
+
+		 local left = orig
+		 while left ~= nil do
+				local right = merge_task[left]
+				for new_key, new_val in pairs(right) do
+					 local old_val = left[new_key]
+					 if old_val == nil then
+							left[new_key] = new_val
+					 else
+							local old_type = type(old_val)
+							local new_type = type(new_val)
+							if (old_type == "table" and new_type == "table") then
+								 merge_task[old_val] = new_val
+							else
+								 left[new_key] = new_val
+							end
+					 end
+				end
+				merge_task[left] = nil
+				left = next(merge_task)
+		 end
+		 return orig
+	end,
 	W = function(...)io.stderr:write(_.S(...)..'\n')end
 }
 setmetatable(_,{__call = function(__,...) return _.W(...) end})
 UNDERSCORE = _
-if clone then
-	for k,v in pairs(clone(_)) do
-		_[k:lower()] = v
-	end
+for k,v in pairs(table.deepcopy(_)) do
+	_[k:lower()] = v
 end
 _assert = _assert or assert
 assert = function()	end

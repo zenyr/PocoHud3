@@ -23,7 +23,7 @@ local function _req(name)
 	return __req(name) or __req(name..'c')
 end
 _req ('poco/Hud3_class.lua')
-
+if not PocoHud3Class then return end
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
 local O = {
@@ -141,10 +141,11 @@ local O = {
 }
 local ALTFONT= PocoHud3Class.ALTFONT
 local FONT= PocoHud3Class.FONT
+local FONTLARGE = PocoHud3Class.FONTLARGE
 local clGood= PocoHud3Class.clGood
 local clBad= PocoHud3Class.clBad
 local Icon= PocoHud3Class.Icon
-local MouseEvent= PocoHud3Class.MouseEvent
+local PocoEvent= PocoHud3Class.PocoEvent
 
 local _BAGS = {}
 _BAGS['8f59e19e1e45a05e']='Ammo'
@@ -341,7 +342,7 @@ function TPocoHud3:Menu(dismiss,...)
 		pnl:text{
 			x = 10, y = offsetY+10, w = 600, h = 30,
 			name = 'tab_desc', text = Icon.Chapter..' '..desc,
-			font = 'fonts/font_large_mf', font_size = 25, color = cl.CornFlowerBlue,
+			font = FONTLARGE, font_size = 25, color = cl.CornFlowerBlue,
 		}
 		local large = 5
 		local y,fontSize,w = offsetY+35, 19, 970
@@ -424,14 +425,29 @@ function TPocoHud3:Menu(dismiss,...)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
 				x = 10, y = 10, w = 400,h=100,
-				text={{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\nDiscuss/suggest at PocoMods steam group!',cl.LightSkyBlue},{'\n\n(Click here to visit)',cl.Tomato}}
+				text={{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise}},
+				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
 			PocoUIButton:new(tab,{
 				onPressed = function()
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 				end,
 				x = 10, y = 120, w = 400,h=40,
-				text={'@zenyr',cl.OrangeRed}
+				text={'@zenyr',cl.OrangeRed},
+				hintText = {'Not in English but feel free to ask in English.',{' :)',cl.DarkKhaki}}
+			})
+
+			tab = gui:add('Options')
+			PocoUIHintLabel:new(tab,{
+				x = 10, y = 10, h=40,
+				fontSize = 30,font = FONTLARGE,
+				text={'Killswitches',cl.OrangeRed},
+				hintText = 'Please note that this screen is bound to be changed in the future.'
+			})
+
+			PocoUINumValue:new(tab,{
+				x = 10, y = 50, w = 100, h=40,
+				text={'TestA',cl.OrangeRed}
 			})
 
 			tab = gui:add('Heist Status')
@@ -1965,7 +1981,7 @@ function TPocoHud3:_hook()
 	-- Kick menu
 	hook( KickPlayer, 'modify_node', function( ... )
 		local self, node, up = unpack{...}
-		local new_node = deep_clone( node )
+		local new_node = table.deepcopy( node )
 		if managers.network:session() then
 			for __,peer in pairs( managers.network:session():peers() ) do
 				local rank = peer:rank()
