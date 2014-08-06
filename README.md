@@ -3,7 +3,9 @@ PocoHud3
 
 Payday2 Interface enhancer MOD
 
-* http://steamcommunity.com/groups/pocomods
+* This repository is to disclose my source code, for DEVELOPERS.
+
+* For USER-FRINEDLY, working version, join in http://steamcommunity.com/groups/pocomods and download from a 'Download' forum thread.
 
 License
 
