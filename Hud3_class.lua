@@ -12,13 +12,24 @@ for k,v in pairs(Icon) do
 	Icon[k] = utf8.char(v)
 end
 local now = function () return managers.player:player_timer():time() --[[TimerManager:game():time()]] end
-local O,me
+local MouseEvent = {
+	In = 'onEnter',
+	Out = 'onExit',
+	Pressed = 'onPressed',
+	Released = 'onReleased',
+	PressedAlt = 'onPressedAlt',
+	ReleasedAlt = 'onReleasedAlt',
+	WheelUp = 'onWheelUp',
+	WheelDown = 'onWheelDown',
+}
+local O, me
 PocoHud3Class = {
 	ALTFONT	= ALTFONT	,
 	FONT		= FONT		,
 	clGood	= clGood	,
 	clBad		= clBad		,
 	Icon		= Icon		,
+	MouseEvent = MouseEvent,
 }
 PocoHud3Class.loadVar = function(_O,_me)
 	O = _O
@@ -585,30 +596,64 @@ function THitDirection:destroy()
 end
 
 --- GUI start ---
-local Event = {
-	In = 1,
-	Out = 2,
-	Pressed = 3,
-	Released = 4
-}
 PocoUIElem = PocoUIElem or class()
+DBG = 1
 function PocoUIElem:init(parent,config)
 	self.parent = parent
 	self.config = config or {}
-	self.ppnl = config.ppnl
+	self.ppnl = parent.pnl
+	self.pnl = self.ppnl:panel({ name = config.name, x=config.x, y=config.y, w = config.w, h = config.h})
+	self.status = 0
 end
+
 function PocoUIElem:postInit()
 	self.config.elem = self
-	parent:registerHotZone(self.config)
+	for event,eventVal in pairs(MouseEvent) do
+		if self.config[eventVal] then
+			self.parent:addHotZone(eventVal,self)
+		end
+	end
+end
+
+function PocoUIElem:isHot(event,x,y)
+	return self.pnl:inside(x,y)
+end
+
+function PocoUIElem:fire(event,x,y)
+	local sound = {
+		onEnter = 'highlight',
+		onPressed = 'prompt_enter'
+	}
+	if self.config[event] then
+		if sound[event] then
+			managers.menu:post_event(sound[event])
+		end
+		return true, self.config[event](self,x,y)
+	end
+end
+
+function PocoUIElem:draw()
+	-- abstract
 end
 
 PocoUIButton = PocoUIButton or class(PocoUIElem)
 function PocoUIButton:init(parent,config)
 	self.super.init(self,parent,config)
 
-	local ppnl = self.ppnl
-	self.wrapper = ppnl:panel({ name = config.name, x=config.x, y=config.y, w = config.w, h = config.h})
+	self.bg = BoxGuiObject:new(self.pnl, {sides = {1,1,1,1}})
+	self.bg:set_visible(false)
+	local __, lbl = _.l({
+		pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 20, color = config.fontColor or cl.White,
+		align = config.align or 'center', vertical = config.vAlign or 'center'
+	},config.text,config.autoSize)
 
+	self.config[MouseEvent.In] = function(self,x,y)
+		self.bg:set_visible(true)
+	end
+	self.config[MouseEvent.Out] = function(self,x,y)
+		self.bg:set_visible(false)
+	end
+	self.lbl = lbl
 	self.super.postInit(self)
 end
 
@@ -617,7 +662,7 @@ function PocoTab:init(parent,ppnl,tabName)
 	self.ppnl = ppnl
 	self.name = tabName
 	self.wrapper = ppnl:panel({ x=0, y=parent.config.th,w = ppnl:w(), h = ppnl:h()-parent.config.th, name = tabName})
-	self.pnl = self.wrapper:panel({ x=0, y=0, w = ppnl:w(), h = ppnl:h(), name = 'content' , visible = true})
+	self.pnl = self.wrapper:panel({ x=0, y=0, w = ppnl:w(), h = ppnl:h(), name = 'content'})
 	self.hotZones = {}
 end
 
@@ -625,7 +670,12 @@ function PocoTab:insideTab(x,y)
 	return self.bg and self.bg:inside(x, y)
 end
 
-function PocoTab:registerHotZone(config)
+function PocoTab:addHotZone(event,item)
+	self.hotZones[event] = self.hotZones[event] or {}
+	table.insert(self.hotZones[event],item)
+end
+
+function PocoTab:registerHotZone(config) -- Deprecated
 	if not config then
 		return false
 	end
@@ -634,7 +684,23 @@ function PocoTab:registerHotZone(config)
 	end
 	table.insert(self.hotZones,config)
 end
-function PocoTab:isHot(x,y)
+
+function PocoTab:isHot(event, x, y, autoFire)
+	if self.hotZones[event] and self.wrapper:inside(x,y) then
+		for i,hotZone in pairs(self.hotZones[event]) do
+			if hotZone:isHot(event, x,y) then
+				if autoFire then
+					hotZone:fire(event, x, y)
+				end
+				return hotZone
+			end
+		end
+	else
+		return false
+	end
+end
+
+function PocoTab:isHotOld(x,y) -- Deprecated
 	if self.wrapper:inside(x,y) then
 		for i,hotZone in pairs(self.hotZones) do
 			if hotZone.elem and hotZone.elem:inside(x,y) then
@@ -647,7 +713,7 @@ end
 
 function PocoTab:scroll(val, force)
 	local tVal = force and 0 or self.pnl:y() + val
-	local pVal = math.clamp(tVal,self.wrapper:h()-self.pnl:h()-200,0)
+	local pVal = math.clamp(tVal,self.wrapper:h()-self.pnl:h()-100,0)
 	if pVal ~= tVal then
 		self._errCnt = 1+ (self._errCnt or 0)
 	else
@@ -659,7 +725,10 @@ end
 function PocoTab:canScroll(down,x,y)
 	local result = self:isLarge() and self.wrapper:inside(x,y)
 	if (self._errCnt or 0) > 1 then
-		result = false
+		local pos = self.pnl:y()
+		if (pos == 0) ~= down then
+			result = false
+		end
 	end
 	return result
 end
@@ -676,9 +745,9 @@ PocoTabs = PocoTabs or class()
 function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 	self._ws = ws
 	self.config = config
-	self.pnl = ws:panel():panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h, layer = 505}
+	self.pnl = ws:panel():panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h, layer = 1005}
 	self.items = {} -- array of PocoTab
-	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th , layer = 501}
+	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th }
 
 	BoxGuiObject:new(self.sPnl, {
 		sides = {
@@ -731,7 +800,7 @@ function PocoTabs:repaint()
 			name = 'tab_top',
 			texture = 'guis/textures/pd2/shared_tab_box',
 			w = self.config.w, h = self.config.th + 3,
-			layer = 0, color = cl.White:with_alpha(isSelected and 1 or 0.1)
+			color = cl.White:with_alpha(isSelected and 1 or 0.1)
 		})
 		local lbl = hPnl:text({
 			x = 10, y = 10, w = 200, h = self.config.th,
@@ -770,13 +839,12 @@ function PocoMenu:init(ws)
 	self._ws = ws
 	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 40, h = 700})
 
-	self.pnl = ws:panel():panel({ name = 'bg' , layer = 450})
+	self.pnl = ws:panel():panel({ name = 'bg' , layer = 1005})
 	self.pnl:rect{color = cl.Black:with_alpha(0.7)}
 	self.pnl:bitmap({
 		texture = "guis/textures/test_blur_df",
 		w = self.pnl:w(),h = self.pnl:h(),
-		render_template = "VertexColorTexturedBlur3D",
-		layer = -1
+		render_template = "VertexColorTexturedBlur3D"
 	})
 	local active_menu = managers.menu:active_menu()
 	if active_menu then
@@ -830,27 +898,34 @@ function PocoMenu:destroy()
 
 
 end
-_DBG_MOVE = ''
+
 function PocoMenu:mouse_moved(panel, x, y)
-	_DBG_MOVE = debug.traceback()
-	local xx,yy = managers.gui_data:safe_to_full(x, y)
+	local xx,yy = x, y
+	local isNewPos = self._x ~= xx or self._y ~= yy
+	self._x = xx
+	self._y = yy
+	local _fireMouseOut = function()
+		if self.lastHot then
+			self.lastHot:fire(MouseEvent.Out,x,y)
+			self.lastHot = nil
+		end
+	end
 	for ind,tab in pairs(self.gui.items) do
 		if tab:insideTab(xx,yy) and self.tabIndex ~= ind then
 			return true, 'link'
 		end
 	end
 	local currentTab = self.gui and self.gui.currentTab
-	if self._hotBg then
-		self._hotBg:set_visible(false)
-		self._hotBg = nil
-	end
-	if currentTab and currentTab:isHot(xx,yy) then
-		local __, hotZone = currentTab:isHot(xx,yy)
-		if hotZone.bg then
-			self._hotBg = hotZone.bg
-			hotZone.bg:set_visible(true)
+	local hotElem = currentTab and currentTab:isHot(MouseEvent.In, xx,yy)
+	if hotElem then
+		if isNewPos and hotElem ~= self.lastHot then
+			_fireMouseOut()
+			self.lastHot = hotElem
+			hotElem:fire(MouseEvent.In,x,y)
 		end
 		return true, 'link'
+	else
+		_fireMouseOut()
 	end
 	return true, 'arrow'
 end
@@ -860,6 +935,9 @@ function PocoMenu:mouse_pressed(panel, button, x, y)
 		local scrollStep = 40
 		local currentTab = self.gui and self.gui.currentTab
 		if button == Idstring("mouse wheel down") then
+			if currentTab:isHot(MouseEvent.WheelDown, x,y, true) then
+				return true
+			end
 			if currentTab and currentTab:canScroll(true,x,y) then
 				return currentTab:scroll(-scrollStep)
 			end
@@ -869,6 +947,9 @@ function PocoMenu:mouse_pressed(panel, button, x, y)
 			end
 			return
 		elseif button == Idstring("mouse wheel up") then
+			if currentTab:isHot(MouseEvent.WheelUp, x,y, true) then
+				return true
+			end
 			if currentTab and currentTab:canScroll(false,x,y) then
 				return currentTab:scroll(scrollStep)
 			end
@@ -880,23 +961,28 @@ function PocoMenu:mouse_pressed(panel, button, x, y)
 			return
 		end
 
-		if button == Idstring("0") then
+		if button == Idstring('0') then
 			for ind,tab in pairs(self.gui.items) do
 				if tab:insideTab(x,y) and self.tabIndex ~= ind then
 					self.gui:goTo(ind)
 					return true
 				end
 			end
-			if currentTab and currentTab:isHot(x,y) then
-				local __, hotZone = currentTab:isHot(x,y)
-				hotZone.cbk()
-			end
+			return currentTab and currentTab:isHot(MouseEvent.Pressed, x,y, true)
+		end
+		if button == Idstring('1') then
+			return currentTab and currentTab:isHot(MouseEvent.PressedAlt, x,y, true)
 		end
 	end)
 end
 
 function PocoMenu:mouse_released(panel, button, x, y)
-	if button == Idstring("1") then
-		me:Menu(true)
+	local currentTab = self.gui and self.gui.currentTab
+	if button == Idstring('0') then
+		return currentTab and currentTab:isHot(MouseEvent.Released, x,y, true)
+	end
+	if button == Idstring('1') then
+		local hot = currentTab and currentTab:isHot(MouseEvent.ReleasedAlt, x,y, true)
+		return hot or me:Menu(true)
 	end
 end
