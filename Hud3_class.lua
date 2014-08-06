@@ -640,20 +640,32 @@ function PocoUIElem:_bind(eventVal,cbk)
 	end
 	return self
 end
+
+function PocoUIElem:sound(sound)
+	managers.menu:post_event(sound)
+end
 function PocoUIElem:isHot(event,x,y)
 	return self.pnl:inside(x,y)
 end
 
 function PocoUIElem:fire(event,x,y)
+	local result = {self.config[event](self,x,y)}
 	local sound = {
-		onEnter = 'slider_grab',
 		onPressed = 'prompt_enter'
 	}
 	if self.config[event] then
-		if sound[event] then
-			managers.menu:post_event(sound[event])
+		if self.result == false then
+			managers.menu:post_event('menu_error')
+			self.result = nil
+			return true
+		elseif self.mute then
+			self.mute = nil
+			return true
 		end
-		return true, self.config[event](self,x,y)
+		if sound[event] then
+			self:sound(sound[event])
+		end
+		return true, unpack(result)
 	end
 end
 
@@ -678,10 +690,10 @@ function PocoUIHintLabel:makeHintPanel()
 		x = 0, y = 0, w = 500, h = 200,
 		visible = false
 	}
-	hintPnl:rect{ color = cl.White:with_alpha(0.1), layer = 1005}
+	hintPnl:rect{ color = cl.Black:with_alpha(0.7), layer = 1005}
 	local __, hintLbl = _.l({
 		pnl = hintPnl,x=5, y=5, font = config.hintFont or FONT, font_size = config.hintFontSize or 20, color = config.hintFontColor or cl.White,
-		align = config.align, vertical = config.vAlign
+		align = config.align, vertical = config.vAlign, layer = 1006
 	},config.hintText or '',true)
 	hintPnl:set_size(hintLbl:size())
 	hintPnl:grow(10,10)
@@ -709,6 +721,7 @@ function PocoUIButton:init(parent,config,inherited)
 
 	self:_bind(PocoEvent.In, function(self,x,y)
 		bg:set_visible(true)
+		self:sound('slider_grab')
 	end):_bind(PocoEvent.Out, function(self,x,y)
 		bg:set_visible(false)
 	end)
@@ -721,13 +734,14 @@ end
 
 PocoUIValue = PocoUIValue or class(PocoUIElem)
 function PocoUIValue:init(parent,config,inherited)
+	local dx = config.w/16
 	PocoUIElem.init(self,parent,config,true)
 	local __, lbl = _.l({
-			pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 20,
+			pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 24,
 			color = config.fontColor or cl.White },config.text,true)
 	self.lbl = lbl
 	local __, lbl = _.l({
-			pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 20,
+			pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 24,
 			color = config.fontColor or cl.White },config.text,true)
 	self.valLbl = lbl
 
@@ -740,11 +754,13 @@ function PocoUIValue:init(parent,config,inherited)
 				24,
 				24
 			},
-			color = cl.Green,
+			color = cl.White,
 			x = 0,
 			y = 0,
 			blend_mode = 'add'
 		})
+		self.arrowLeft:set_center_x(9*dx)
+
 		self.arrowRight = self.pnl:bitmap({
 			texture = "guis/textures/menu_arrows",
 			texture_rect = {
@@ -753,20 +769,40 @@ function PocoUIValue:init(parent,config,inherited)
 				24,
 				24
 			},
-			color = cl.Red,
+			color = cl.White,
 			x = 20,
 			y = 1,
 			blend_mode = 'add',
 			rotation = 180,
 		})
+		self.arrowRight:set_center_x(15*dx)
 
-		self.arrowRight:set_right(self.pnl:w())
 		self:_bind(PocoEvent.Pressed,function(self,x,y)
-			_('UIValuePressed',x,y)
-		end)
+			if self.arrowRight:inside(x,y) then
+				self:next()
+			elseif self.arrowLeft:inside(x,y) then
+				self:prev()
+			else
+				self.mute = true
+			end
+		end):_bind(PocoEvent.Move,function(self,x,y)
+			if self.arrowRight:inside(x,y) or self.arrowLeft:inside(x,y) then
+				self.cursor = 'link'
+			else
+				self.cursor = 'arrow'
+			end
+		end):_bind(PocoEvent.WheelUp,self.next):_bind(PocoEvent.WheelDown,self.prev)
 	end
 
 	-- Always inherited though
+end
+
+function PocoUIValue:next()
+	self.result = false
+end
+
+function PocoUIValue:prev()
+	self.result = false
 end
 
 function PocoUIValue:isValid(val)
@@ -774,9 +810,12 @@ function PocoUIValue:isValid(val)
 end
 
 function PocoUIValue:val(set)
-	if set then
+	if set ~= nil then
 		if not self.value or self:isValid(set) then
 			self.value = set
+			_.l(self.valLbl,set,true)
+			self.valLbl:set_center_x(3*self.config.w/4)
+			return set
 		else
 			return false
 		end
@@ -789,16 +828,168 @@ end
 PocoUINumValue = PocoUINumValue or class(PocoUIValue)
 function PocoUINumValue:init(parent,config,inherited)
 	self.super.init(self,parent,config,true)
-	self:val(0)
+	self:val(config.value or 0)
 
 	if not inherited then
 		self:postInit(self)
 	end
 end
 
-function PocoUINumValue:isValid(val)
-	return (type(val) == 'number') and (val >= (self.config.max or 100)) and (val <= (self.config.min or 100))
+function PocoUINumValue:next()
+	self:val(self:val()+(self.config.step or 1))
 end
+
+function PocoUINumValue:prev()
+	self:val(self:val()-(self.config.step or 1))
+end
+
+function PocoUINumValue:isValid(val)
+	local result = (type(val) == 'number') and (val <= (self.config.max or 100)) and (val >= (self.config.min or 0))
+	self.result = result
+	return result
+end
+
+PocoUIChooseValue = PocoUIChooseValue or class(PocoUIValue)
+function PocoUIChooseValue:init(parent,config,inherited)
+	PocoUIValue.init(self,parent,config,true)
+	-- abstract
+end
+
+function PocoUIChooseValue:selection()
+	return {}
+end
+
+function PocoUIChooseValue:go(delta)
+	local val = self:val()
+	local sel = self:selection()
+	local keys = table.sorted_keys(sel)
+	local ind = table.index_of(keys,val)
+	self:val(keys[ind+delta] or delta>0 and keys[1] or keys[#keys] )
+end
+
+function PocoUIChooseValue:next()
+	self:go(1)
+end
+
+function PocoUIChooseValue:prev(val)
+	self:go(-1)
+end
+
+function PocoUIChooseValue:innerVal(set)
+	if set then
+		local key = table.get_key(self:selection(),set)
+		if key then
+			return self:val(key)
+		end
+	else
+		return self:selection()[self:val()]
+	end
+end
+
+PocoUIBooleanValue = PocoUIBooleanValue or class(PocoUIChooseValue)
+function PocoUIBooleanValue:init(parent,config,inherited)
+	PocoUIChooseValue.init(self,parent,config,true)
+	self:val(config.value or 'YES')
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
+function PocoUIBooleanValue:selection()
+	return {YES=true,NO=false}
+end
+
+PocoUIReversedBooleanValue = PocoUIReversedBooleanValue or class(PocoUIBooleanValue)
+function PocoUIReversedBooleanValue:selection()
+	return {YES=true,NO=false}
+end
+PocoUIColorValue = PocoUIColorValue or class(PocoUIChooseValue)
+function PocoUIColorValue:init(parent,config,inherited)
+	self.super.init(self,parent,config,true)
+	self:val(config.value or 'White')
+
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
+function PocoUIColorValue:selection()
+	return cl
+end
+
+function PocoUIColorValue:val(set)
+	local val = PocoUIValue.val(self,set)
+	if set then
+		local color = cl[val] or cl.White
+		_.l(self.valLbl,{val,color})
+	end
+	return val
+end
+
+PocoUIStringValue = PocoUIStringValue or class(PocoUIValue)
+function PocoUIStringValue:init(parent,config,inherited)
+	self.super.init(self,parent,config,true)
+	self:_initLayout()
+	self:val('')
+
+
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
+function PocoUIStringValue:_initLayout()
+	-- valLbl 아래로 이동 등등
+end
+
+function PocoUIStringValue:startEdit()
+	me._ws:connect_keyboard(Input:keyboard())
+	self.pnl:enter_text(callback(self, self, "enter_text"))
+	self.pnl:key_press(callback(self, self, "key_press"))
+	self.pnl:key_release(callback(self, self, "key_release"))
+	self._rename_caret = self.pnl:rect({
+		name = "caret",
+		layer = 1006,
+		x = 0,
+		y = 0,
+		w = 0,
+		h = 0,
+		color = Color(0.05, 1, 1, 1)
+	})
+	self._rename_caret:animate(self.blink)
+	self.beforeVal = self:val()
+end
+
+function PocoUIStringValue:endEdit(cancel)
+	me._ws:disconnect_keyboard()
+	self.pnl:enter_text(nil)
+	self.pnl:key_press(nil)
+	self.pnl:key_release(nil)
+	self.pnl:remove(self._rename_caret)
+	self._rename_caret = nil
+	if cancel then
+		self:val(self.beforeVal)
+	end
+end
+
+function PocoUIStringValue:repaint()
+	if self._rename_caret then
+		local x, y, w, h = self.valLbl:text_rect()
+		self._rename_caret:set_h(self.lbl:h())
+		self._rename_caret:set_world_position(x + w, y)
+	end
+end
+
+function PocoUIStringValue.blink(o)
+	while true do
+		o:set_color(Color(0, 1, 1, 1))
+		wait(0.5)
+		o:set_color(Color.white)
+		wait(0.5)
+	end
+
+end
+
 
 PocoTab = PocoTab or class()
 function PocoTab:init(parent,ppnl,tabName)
@@ -1069,6 +1260,7 @@ function PocoMenu:mouse_pressed(panel, button, x, y)
 		local currentTab = self.gui and self.gui.currentTab
 		if button == Idstring("mouse wheel down") then
 			if currentTab:isHot(PocoEvent.WheelDown, x,y, true) then
+				managers.menu_componenet:post_event('slider_grab')
 				return true
 			end
 			if currentTab and currentTab:canScroll(true,x,y) then
@@ -1080,6 +1272,7 @@ function PocoMenu:mouse_pressed(panel, button, x, y)
 			end
 		elseif button == Idstring("mouse wheel up") then
 			if currentTab:isHot(PocoEvent.WheelUp, x,y, true) then
+				managers.menu_componenet:post_event('slider_grab')
 				return true
 			end
 			if currentTab and currentTab:canScroll(false,x,y) then
