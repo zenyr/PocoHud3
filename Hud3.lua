@@ -2825,12 +2825,6 @@ function TPocoHud3:_hook()
 			me:Menu(true) -- dismiss Menu when actual game-menu is called
 			return Run('toggle_menu_state', ...)
 		end)
-		hook( MenuManager, 'active_menu', function( ... )
-			managers.menu:post_event("prompt_enter")
-
-			if me.menuGui then return true end
-			return Run('active_menu', ...)
-		end)
 		-- Kick menu
 		hook( KickPlayer, 'modify_node', function( ... )
 			local self, node, up = unpack{...}
