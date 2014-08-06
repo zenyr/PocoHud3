@@ -759,7 +759,7 @@ function PocoUIValue:init(parent,config,inherited)
 			y = 0,
 			blend_mode = 'add'
 		})
-		self.arrowLeft:set_center_x(9*dx)
+		self.arrowLeft:set_center_x(7*dx)
 
 		self.arrowRight = self.pnl:bitmap({
 			texture = "guis/textures/menu_arrows",
@@ -814,7 +814,7 @@ function PocoUIValue:val(set)
 		if not self.value or self:isValid(set) then
 			self.value = set
 			_.l(self.valLbl,set,true)
-			self.valLbl:set_center_x(3*self.config.w/4)
+			self.valLbl:set_center_x(11*self.config.w/16)
 			return set
 		else
 			return false

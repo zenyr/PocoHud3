@@ -423,6 +423,7 @@ function TPocoHud3:Menu(dismiss,...)
 			local tab = gui:add('About')
 			PocoUIButton:new(tab,{
 				onPressed = function()
+					self:Menu(true)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
 				x = 10, y = 10, w = 400,h=100,
@@ -431,13 +432,45 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 			PocoUIButton:new(tab,{
 				onPressed = function()
+					self:Menu(true)
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 				end,
 				x = 10, y = 120, w = 400,h=40,
 				text={'@zenyr',cl.OrangeRed},
-				hintText = {'Not in English but feel free to ask in English.',{' :)',cl.DarkKhaki}}
+				hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki}}
 			})
 
+			PocoUIButton:new(tab,{
+				onPressed = function()
+					self:Menu(true)
+					Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
+				end,
+				x = 10, y = 170, w = 400,h=40,
+				text={
+					{'C', cl.Beige},
+					{'o', cl.BurlyWood},
+					{'l', cl.PowderBlue},
+					{'o', cl.LightBlue},
+					{'r', cl.MediumAquamarine},
+					{'C', cl.MediumPurple},
+					{'o', cl.Orchid},
+					{'d', cl.PaleVioletRed},
+					{'e', cl.IndianRed},
+					{'N', cl.Peru},
+					{'a', cl.MediumTurquoise},
+					{'m', cl.SlateBlue},
+					{'e', cl.MediumOrchid},
+					{'s', cl.Brown},
+					{'!', cl.Sienna}
+				},
+				hintText = {{'M', cl.SeaGreen}, {'S', cl.LightSteelBlue}, {'D', cl.Plum}, {'N ', cl.Tan},
+					{'r', cl.MediumSeaGreen}, {'e', cl.SteelBlue}, {'f', cl.DarkKhaki}, {'e', cl.DarkOliveGreen},
+					{'r', cl.DarkSlateBlue}, {'e', cl.Thistle}, {'n', cl.RoyalBlue}, {'c', cl.BlueViolet},
+					{'e ', cl.Chocolate}, {'p', cl.Goldenrod}, {'a', cl.SaddleBrown}, {'g', cl.Linen},
+					{'e', cl.Lavender},
+				}
+			})
+			--Because WHY THE FUQ NOT
 			tab = gui:add('Options')
 			PocoUIHintLabel:new(tab,{
 				x = 10, y = 10, h=40,
