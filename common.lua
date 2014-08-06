@@ -25,6 +25,13 @@ function _pairs(t, f) -- pairs but sorted
 		end
   end
 end
+table.sorted_keys = function(map)
+	local r = {}
+	for key,val in _pairs(map) do
+		r[#r+1] = key
+	end
+	return r
+end
 local clr = function(bgr)
 	return Color(bgr%0x100 /255,math.floor(bgr/0x100) % 0x100 /255,math.floor(bgr/0x10000) /255)
 end
