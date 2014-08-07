@@ -342,6 +342,11 @@ _ = {
 	end,
 	W = function(...)io.stderr:write(_.S(...)..'\n')end
 }
+if type(_) ~= 'table' then
+	io.stderr:write('Type of _ is not a table,', type(_) ,'\n')
+	_ = nil
+	return
+end
 setmetatable(_,{__call = function(__,...) return _.W(...) end})
 UNDERSCORE = _
 for k,v in pairs(table.deepcopy(_)) do

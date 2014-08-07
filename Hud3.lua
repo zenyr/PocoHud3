@@ -25,8 +25,17 @@ end
 PocoHud3Class = nil
 _req ('poco/Hud3_class.lua')
 if not PocoHud3Class then return end
+local TBuff, TPop, TFloat, THitDirection =
+	PocoHud3Class.TBuff, PocoHud3Class.TPop, PocoHud3Class.TFloat, PocoHud3Class.THitDirection
+
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
+local inO = {
+	debug = {
+		color = {'color','White'},
+		size = {'number',22},
+	}
+}
 local O = {
 	enable = YES, -- YES/NO : 포코허드 전체 스위치
 	debug = {
@@ -47,7 +56,6 @@ local O = {
 		gap = 10,   -- 자연수 : 버프 아이콘 간격 (단, "바닐라 스타일"에서는 무시)
 		align = 1,  -- [1,2,3] : 아이콘 정렬방향 1왼쪽 2중앙 3오른쪽
 		style = 2,  -- [1,2]: 버프아이콘 스타일 1포코허드(컬러) 2바닐라(순정Feel)
-
 
 		noSprintDelay = YES,
 		hideInteractionCircle = NO,
@@ -412,9 +420,11 @@ function TPocoHud3:Menu(dismiss,...)
 	local r,err = pcall(function()
 		local menu = self.menuGui
 		if menu then -- Remove
-			managers.menu_component:post_event("menu_exit")
-			menu:destroy()
-			self.menuGui = nil
+			if not self._stringFocused or (now()-self._stringFocused > 0.1) then
+				managers.menu_component:post_event("menu_exit")
+				menu:destroy()
+				self.menuGui = nil
+			end
 		elseif not dismiss then -- Show
 			managers.menu_component:post_event("menu_enter")
 			local gui = PocoMenu:new(self._ws)
@@ -422,8 +432,7 @@ function TPocoHud3:Menu(dismiss,...)
 			--- Install tabs here ---
 			local tab = gui:add('About')
 			PocoUIButton:new(tab,{
-				onPressed = function()
-					self:Menu(true)
+				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
 				x = 10, y = 10, w = 400,h=100,
@@ -431,8 +440,7 @@ function TPocoHud3:Menu(dismiss,...)
 				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
 			PocoUIButton:new(tab,{
-				onPressed = function()
-					self:Menu(true)
+				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 				end,
 				x = 10, y = 120, w = 400,h=40,
@@ -441,8 +449,7 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 
 			PocoUIButton:new(tab,{
-				onPressed = function()
-					self:Menu(true)
+				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 				end,
 				x = 10, y = 170, w = 400,h=40,
@@ -451,11 +458,11 @@ function TPocoHud3:Menu(dismiss,...)
 					{'o', cl.BurlyWood},
 					{'l', cl.PowderBlue},
 					{'o', cl.LightBlue},
-					{'r', cl.MediumAquamarine},
+					{'r ', cl.MediumAquamarine},
 					{'C', cl.MediumPurple},
 					{'o', cl.Orchid},
 					{'d', cl.PaleVioletRed},
-					{'e', cl.IndianRed},
+					{'e ', cl.IndianRed},
 					{'N', cl.Peru},
 					{'a', cl.MediumTurquoise},
 					{'m', cl.SlateBlue},
@@ -480,19 +487,25 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 
 			PocoUINumValue:new(tab,{
-				x = 10, y = 50, w = 400, h=25, min = 0, value = 5, max = 10,
+				x = 10, y = 50, w = 400, h=30, min = 0, value = 5, max = 10,
 				text='TestA', hintText ='This is something'
 			})
 
 			PocoUIColorValue:new(tab,{
-				x = 10, y = 80, w = 400, h=40, value = 'Red',
+				x = 10, y = 80, w = 400, h=30, value = 'Red',
 				text='TestB',hintText ='This is something'
 			})
 
 			PocoUIReversedBooleanValue:new(tab,{
-				x = 10, y = 110, w = 400, h=40, value = 'YES',
+				x = 10, y = 110, w = 400, h=30, value = 'YES',
 				text='TestB',hintText ='This is something'
 			})
+
+			PocoUIStringValue:new(tab,{
+				x = 10, y = 140, w = 400, h=30, value = 'HI there',
+				text='TestB',hintText ='This is something'
+			})
+
 
 			tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
@@ -1306,12 +1319,15 @@ function TPocoHud3:_hook()
 	if not inGame then
 		-- Moved Heist stat to DbgLbl
 	else
-		--PlayerStandards
-		hook( PlayerStandard, '_update_check_actions', function( self ,...)
+		--PlayerStandard
+		hook( PlayerStandard, '_get_input', function( self ,...)
+			return me.menuGui and {} or Run('_get_input', self,... )
+		end)
+		--[[hook( PlayerStandard, '_update_check_actions', function( self ,...)
 			if not me.menuGui then
 				Run('_update_check_actions', self,... )
 			end
-		end)
+		end)]]
 
 		hook( PlayerStandard, '_start_action_unequip_weapon', function( self,t ,data)
 			Run('_start_action_unequip_weapon', self, t,data)
@@ -2076,8 +2092,14 @@ function TPocoHud3:_hook()
 		return Run('mouse_released', ...)
 	end)
 	hook( MenuManager, 'toggle_menu_state', function( ... )
-		me:Menu(true) -- dismiss Menu when actual game-menu is called
-		return Run('toggle_menu_state', ...)
+		if me.menuGui then
+			me:Menu(true) -- dismiss Menu when actual game-menu is called
+		else
+			return Run('toggle_menu_state', ...)
+		end
+	end)
+	hook( MenuInput, 'update**', function( ... )
+		return me.menuGui or Run('update**', ...)
 	end)
 
 end
