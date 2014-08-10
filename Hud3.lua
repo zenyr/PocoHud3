@@ -1701,10 +1701,10 @@ function TPocoHud3:_hook()
 			me:_show(true)
 		end)
 
-		hook( ECMJammerBase, 'set_active', function( self,active )
+		hook( ECMJammerBase, 'set_active', function( self, active )
 			Run('set_active', self, active )
 			local et = self:battery_life()
-			if et then
+			if active and et then
 				pcall(me.Buff,me,({
 					key='ecm', good=true,
 					icon=skillIcon,
