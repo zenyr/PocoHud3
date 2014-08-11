@@ -611,8 +611,7 @@ end
 local Layers = {
 	Blur = 1001,
 	Bg = 1002,
-	TabHeader = 1003,
-	TabBody = 1004
+	TabHeader = 1003
 }
 local PocoUIElem = class()
 local PocoUIHintLabel -- forward-declared
@@ -1346,7 +1345,7 @@ function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 	self.pnl = ws:panel():panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h, layer = Layers.TabHeader}
 
 	self.items = {} -- array of PocoTab
-	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th, layer = Layers.TabBody }
+	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th}
 	BoxGuiObject:new(self.sPnl, {
 		sides = {
 			1,

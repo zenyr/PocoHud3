@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 71
-local TAG = '0.121'
+local REV = 72
+local TAG = '0.121-1-g08df733'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -1666,14 +1666,15 @@ function TPocoHud3:_hook()
 
 		hook( ECMJammerBase, 'set_active', function( self, active )
 			Run('set_active', self, active )
-			local et = self:battery_life()
-			if active and et then
+			local et = self:battery_life() + now()
+			if active and (me._lastECM or 0 < et)then
+				me._lastECM = et
 				pcall(me.Buff,me,({
 					key='ecm', good=true,
 					icon=skillIcon,
 					iconRect = { 1*64, 4*64,64,64 },
 					text='',
-					st=now(), et=et+now()
+					st=now(), et=et
 				}) )
 			end
 		end)
