@@ -5,6 +5,8 @@ local FONTLARGE = 'fonts/font_large_mf'
 local clGood =  cl.YellowGreen
 local clBad =  cl.Gold
 local isNil = function(a) return a == nil end
+local inGame = CopDamage ~= nil
+
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
 	Skull = 57364, Ghost = 57363, Dot = 1031, Chapter = 1015, Div = 1014, BigDot = 1012,
@@ -769,10 +771,12 @@ function PocoUIValue:init(parent,config,inherited)
 			pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 24,
 			color = config.fontColor or cl.White },config.text,true)
 	self.lbl = lbl
+	self.lbl:set_center_y(config.h/2)
 	local __, lbl = _.l({
 			pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 24,
 			color = config.fontColor or cl.White },config.text,true)
 	self.valLbl = lbl
+	self.valLbl:set_center_y(config.h/2)
 
 	if not config.noArrow then
 		self.arrowLeft = self.pnl:bitmap({
@@ -781,14 +785,14 @@ function PocoUIValue:init(parent,config,inherited)
 				0,
 				5,
 				15,
-				30
+				20
 			},
 			color = cl.White,
 			x = 0,
 			y = 0,
 			blend_mode = 'add'
 		})
-		self.arrowLeft:set_center_x(7*dx)
+		self.arrowLeft:set_center(7*dx,config.h/2)
 
 		self.arrowRight = self.pnl:bitmap({
 			texture = 'guis/textures/menu_icons',
@@ -796,7 +800,7 @@ function PocoUIValue:init(parent,config,inherited)
 				10,
 				5,
 				20,
-				30
+				20
 			},
 			color = cl.White,
 			x = 20,
@@ -804,7 +808,7 @@ function PocoUIValue:init(parent,config,inherited)
 			blend_mode = 'add',
 			--rotation = 180,
 		})
-		self.arrowRight:set_center_x(15*dx)
+		self.arrowRight:set_center(15*dx,config.h/2)
 
 		self:_bind(PocoEvent.Pressed,function(self,x,y)
 			if self.arrowRight:inside(x,y) then
@@ -929,17 +933,29 @@ function PocoUINumValue:init(parent,config,inherited)
 	end
 end
 
-function PocoUINumValue:next()
-	self:val(self:val()+(self.config.step or 1))
+function PocoUINumValue:next(predict)
+	local tVal = self:val()+(self.config.step or 1)
+	if predict then
+		return self:isValid(tVal,1)
+	else
+		return self:val(tVal)
+	end
 end
 
-function PocoUINumValue:prev()
-	self:val(self:val()-(self.config.step or 1))
+function PocoUINumValue:prev(predict)
+	local tVal = self:val()-(self.config.step or 1)
+	if predict then
+		return self:isValid(tVal,1)
+	else
+		return self:val(tVal)
+	end
 end
 
-function PocoUINumValue:isValid(val)
+function PocoUINumValue:isValid(val,silent)
 	local result = (type(val) == 'number') and (val <= (self.config.max or 100)) and (val >= (self.config.min or 0))
-	self.result = result
+	if not silent then
+		self.result = result
+	end
 	return result
 end
 
@@ -949,6 +965,10 @@ function PocoUINumValue:val(set)
 		_.l(self.valLbl,self.config.vanity[self:val()+1],true)
 		self.valLbl:set_center_x(11*self.config.w/16)
 		self.valLbl:set_x(math.floor(self.valLbl:x()))
+		if self.arrowLeft then
+			self.arrowLeft:set_visible(self:prev(1))
+			self.arrowRight:set_visible(self:next(1))
+		end
 	end
 	return result
 end
@@ -1272,6 +1292,18 @@ function PocoTab:init(parent,ppnl,tabName)
 	self.wrapper = ppnl:panel({ x=0, y=parent.config.th,w = ppnl:w(), h = ppnl:h()-parent.config.th, name = tabName})
 	self.pnl = self.wrapper:panel({ x=0, y=0, w = ppnl:w(), h = ppnl:h(), name = 'content'})
 	self.hotZones = {}
+
+	local function t(panel)
+		while true do
+			local tY,cY = self.y or 0,panel:y()
+			if tY ~= cY then
+				panel:set_y(math.floor(cY + ((tY-cY)/5)))
+			end
+			coroutine.yield()
+		end
+	end
+	self.pnl:stop()
+	self.pnl:animate(t)
 end
 
 function PocoTab:insideTab(x,y)
@@ -1299,23 +1331,24 @@ function PocoTab:isHot(event, x, y, autoFire)
 end
 
 function PocoTab:scroll(val, force)
-	local tVal = force and 0 or self.pnl:y() + val
+	local tVal = force and 0 or (self.y or 0) + val
 	local pVal = math.clamp(tVal,self.wrapper:h()-self.pnl:h()-100,0)
 	if pVal ~= tVal then
 		self._errCnt = 1+ (self._errCnt or 0)
 	else
 		self._errCnt = 0
 		if not force then
-			managers.menu_component:post_event('slider_grab')
+			managers.menu_component:post_event(val>0 and 'slider_increase' or 'slider_decrease')
 		end
 	end
-	return self.pnl:set_y(pVal)
+	self.y = pVal
+--	return self.pnl:set_y(pVal)
 end
 
 function PocoTab:canScroll(down,x,y)
 	local result = self:isLarge() and self.wrapper:inside(x,y)
 	if (self._errCnt or 0) > 1 then
-		local pos = self.pnl:y()
+		local pos = self.y or 0
 		if (pos == 0) ~= down then
 			managers.menu_component:post_event('menu_error')
 			result = false
@@ -1433,10 +1466,11 @@ end
 ------------
 local PocoMenu = class()
 PocoHud3Class.PocoMenu = PocoMenu
-
+tt =  1
 function PocoMenu:init(ws)
 	self._ws = ws
-	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = 700})
+
+	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = ws:height()-20})
 
 	self.pnl = ws:panel():panel({ name = 'bg' })
 	self.pnl:rect{color = cl.Black:with_alpha(0.7),layer = Layers.Bg}
@@ -1455,9 +1489,9 @@ function PocoMenu:init(ws)
 	PocoMenu.__active = managers.mouse_pointer._active
 	managers.mouse_pointer:use_mouse{
 		id = PocoMenu.m_id,
-		mouse_move = callback(self, self, 'mouse_moved'),
-		mouse_press = callback(self, self, 'mouse_pressed'),
-		mouse_release = callback(self, self, 'mouse_released')
+		mouse_move = callback(self, self, 'mouse_moved',true),
+		mouse_press = callback(self, self, 'mouse_pressed',true),
+		mouse_release = callback(self, self, 'mouse_released',true)
 	}
 	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
 	if camBase then
@@ -1496,9 +1530,17 @@ function PocoMenu:destroy()
 
 end
 
-function PocoMenu:mouse_moved(panel, x, y)
+function PocoMenu:mouse_moved(alt, panel, x, y)
+	local ret = function (a,b)
+		if alt then
+			managers.mouse_pointer:set_pointer_image(b)
+		end
+		return a, b
+	end
 	if self.dead then return end
+	if not inGame and alt then return end
 	local isNewPos = self._x ~= x or self._y ~= y
+
 	self._x = x
 	self._y = y
 	local _fireMouseOut = function()
@@ -1509,7 +1551,7 @@ function PocoMenu:mouse_moved(panel, x, y)
 	end
 	for ind,tab in pairs(self.gui.items) do
 		if tab:insideTab(x,y) and self.tabIndex ~= ind then
-			return true, 'link'
+			return ret(true, 'link')
 		end
 	end
 	local currentTab = self.gui and self.gui.currentTab
@@ -1531,13 +1573,16 @@ function PocoMenu:mouse_moved(panel, x, y)
 	end
 	local hotElem = currentTab and currentTab:isHot(PocoEvent.Pressed, x,y)
 	if hotElem then
-		return true, hotElem.cursor or 'link'
+		return ret(true, hotElem.cursor or 'link')
 	end
-	return true, 'arrow'
+	return ret( true, 'arrow' )
 end
 
-function PocoMenu:mouse_pressed(panel, button, x, y)
+function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 	if self.dead then return end
+	if not inGame and alt then
+		x, y = managers.mouse_pointer:convert_fullscreen_16_9_mouse_pos(x,y)
+	end
 	pcall(function()
 		local scrollStep = 40
 		local currentTab = self.gui and self.gui.currentTab
@@ -1582,7 +1627,7 @@ function PocoMenu:mouse_pressed(panel, button, x, y)
 	end)
 end
 
-function PocoMenu:mouse_released(panel, button, x, y)
+function PocoMenu:mouse_released(alt, panel, button, x, y)
 	if self.dead then return end
 	local currentTab = self.gui and self.gui.currentTab
 	if button == Idstring('0') then

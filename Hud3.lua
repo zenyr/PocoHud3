@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 72
-local TAG = '0.121-1-g08df733'
+local REV = 73
+local TAG = '0.121-2-gb6c61ea'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -402,7 +402,11 @@ function TPocoHud3:Menu(dismiss,...)
 				})
 				for name,values in _pairs(objects,function(a,b)
 					local t1, t2 = O:_type(category,a),O:_type(category,b)
-					if t1 == 'bool' and t2 ~= 'bool' then
+					if a == 'enable' then
+						return true
+					elseif b == 'enable' then
+						return  false
+					elseif t1 == 'bool' and t2 ~= 'bool' then
 						return true
 					elseif t1 ~= 'bool' and t2 == 'bool' then
 						return false
@@ -415,14 +419,14 @@ function TPocoHud3:Menu(dismiss,...)
 						local hint = O:_hint(category,name)
 						if type == 'bool' then
 							objs[#objs+1] = PocoHud3Class.PocoUIBoolean:new(tab,{
-								x = x()+10, y = y(25), w=390, h=20,
+								x = x()+10, y = y(30), w=390, h=30,
 								fontSize = 20, text=name, value = value ,
 								hintText = hint
 							})
 						end
 						if type == 'color' then
 							objs[#objs+1] = PocoHud3Class.PocoUIColorValue:new(tab,{
-								x = x()+10, y = y(25), w=390, h=20,
+								x = x()+10, y = y(30), w=390, h=30,
 								fontSize = 20, text=name, value = value,
 								hintText = hint
 							})
@@ -432,14 +436,16 @@ function TPocoHud3:Menu(dismiss,...)
 							local vanity = O:_vanity(category,name)
 							local _vanity = {
 								ChatSend = 'never,readOnly,serverSend,clientFullSend,clientMidSend,alwaysSend',
-								Verbose	= 'never,verbose,always',
-								MidStat	= 'never,50,100',
+								Verbose = 'Never,Verbose only,Always',
+								MidStat = 'Never,50,100',
+								align = 'none,Start,Middle,End',
+								style = 'N/A,PocoHud,Vanilla',
 							}
 							if vanity then
 								vanity = (_vanity[vanity] or '?'):split(',')
 							end
 							objs[#objs+1] = PocoHud3Class.PocoUINumValue:new(tab,{
-								x = x()+10, y = y(25), w=390, h=20,
+								x = x()+10, y = y(30), w=390, h=30,
 								fontSize = 20, text=name, value = value, min = range[1], max = range[2], vanity = vanity,
 								hintText = hint
 							})
@@ -456,19 +462,6 @@ function TPocoHud3:Menu(dismiss,...)
 				hintText = 'Please note that this screen is bound to be changed in the future.'
 			})
 			tab:set_h(y+90)
-			tab = gui:add('TEST')
-
-			local a = tab.pnl:bitmap({
-				texture = 'guis/textures/menu_tickbox',
-				color = cl.Green,
-				x = 20,
-				y = 1,
-				blend_mode = 'add',
-				--rotation = 180,
-			})
-			tab.pnl:rect{
-				x  = 20, y =  1, w = a:w(), h  = a:h(),   color = cl.Gray:with_alpha(0.1)
-			}
 
 			tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
@@ -2030,7 +2023,12 @@ function TPocoHud3:_hook()
 	hook( MenuComponentManager, 'mouse_moved', function( ... )
 		local self, o, x, y = unpack{...}
 		if me.menuGui then
-			return me.menuGui:mouse_moved(o, managers.gui_data:safe_to_full(x,y))
+			if not inGame then
+				x,y = managers.gui_data:safe_to_full_16_9(x,y)
+				return me.menuGui:mouse_moved(false, o, x,y)
+			else
+				return true
+			end
 		else
 			return Run('mouse_moved', ...)
 		end
@@ -2038,7 +2036,7 @@ function TPocoHud3:_hook()
 	hook( MenuComponentManager, 'mouse_pressed', function( ... )
 		local self, o, button, x, y = unpack{...}
 		if me.menuGui and me.menuGui.mouse_pressed then
-			local used, pointer = me.menuGui:mouse_pressed(o, button, x, y)
+			local used, pointer = me.menuGui:mouse_pressed(false, o, button, x,y)
 			if used then
 				return true, pointer
 			end
@@ -2048,7 +2046,7 @@ function TPocoHud3:_hook()
 	hook( MenuComponentManager, 'mouse_released', function( ... )
 		local self, o, button, x, y = unpack{...}
 		if me.menuGui and me.menuGui.mouse_released then
-			local used, pointer = me.menuGui:mouse_released(o, button, x, y)
+			local used, pointer = me.menuGui:mouse_released(false, o, button, x,y)
 			if used then
 				return true, pointer
 			end
@@ -2064,7 +2062,7 @@ function TPocoHud3:_hook()
 	end)
 	hook( MenuInput, 'update**', function( ... )
 		if me.menuGui and self.mouse_moved then
-			return me.menuGui:mouse_moved(managers.mouse_pointer:mouse(), managers.mouse_pointer:world_position())
+			return --me.menuGui:mouse_moved(managers.mouse_pointer:mouse(), managers.mouse_pointer:world_position())
 		end
 		return Run('update**', ...)
 	end)
