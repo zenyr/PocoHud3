@@ -427,11 +427,11 @@ function TPocoHud3:Menu(dismiss,...)
 			end
 		elseif not dismiss then -- Show
 			managers.menu_component:post_event("menu_enter")
-			local gui = PocoMenu:new(self._ws)
+			local gui = PocoHud3Class.PocoMenu:new(self._ws)
 			self.menuGui = gui
 			--- Install tabs here ---
 			local tab = gui:add('About')
-			PocoUIButton:new(tab,{
+			PocoHud3Class.PocoUIButton:new(tab,{
 				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
@@ -439,7 +439,7 @@ function TPocoHud3:Menu(dismiss,...)
 				text={{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise}},
 				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
-			PocoUIButton:new(tab,{
+			PocoHud3Class.PocoUIButton:new(tab,{
 				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 				end,
@@ -448,7 +448,7 @@ function TPocoHud3:Menu(dismiss,...)
 				hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki}}
 			})
 
-			PocoUIButton:new(tab,{
+			PocoHud3Class.PocoUIButton:new(tab,{
 				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 				end,
@@ -2100,7 +2100,10 @@ function TPocoHud3:_hook()
 		end
 	end)
 	hook( MenuInput, 'update**', function( ... )
-		return me.menuGui or Run('update**', ...)
+		if me.menuGui and self.mouse_moved then
+			return me.menuGui:mouse_moved(managers.mouse_pointer:mouse(), managers.mouse_pointer:world_position())
+		end
+		return Run('update**', ...)
 	end)
 
 end

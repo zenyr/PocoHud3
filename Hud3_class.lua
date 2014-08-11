@@ -610,8 +610,8 @@ local Layers = {
 	TabHeader = 1003,
 	TabBody = 1004
 }
-PocoUIElem = PocoUIElem or class()
-DBG = 1
+local PocoUIElem = class()
+local PocoUIHintLabel -- forward-declared
 function PocoUIElem:init(parent,config)
 	config = _.m({
 		w = 400,h = 20,
@@ -681,7 +681,8 @@ function PocoUIElem:fire(event,x,y)
 	end
 end
 
-PocoUIHintLabel = PocoUIHintLabel or class(PocoUIElem)
+PocoUIHintLabel = class(PocoUIElem) -- Forward-declared
+PocoHud3Class.PocoUIHintLabel = PocoUIHintLabel
 function PocoUIHintLabel:init(parent,config,inherited)
 	self.super.init(self,parent,config,true)
 
@@ -720,7 +721,9 @@ function PocoUIHintLabel:makeHintPanel()
 end
 
 
-PocoUIButton = PocoUIButton or class(PocoUIElem)
+local PocoUIButton = class(PocoUIElem)
+PocoHud3Class.PocoUIButton = PocoUIButton
+
 function PocoUIButton:init(parent,config,inherited)
 	self.super.init(self,parent,config,true)
 
@@ -744,7 +747,8 @@ function PocoUIButton:init(parent,config,inherited)
 	end
 end
 
-PocoUIValue = PocoUIValue or class(PocoUIElem)
+local PocoUIValue = class(PocoUIElem)
+PocoHud3Class.PocoUIValue = PocoUIValue
 function PocoUIValue:init(parent,config,inherited)
 	local dx = config.w/16
 	PocoUIElem.init(self,parent,config,true)
@@ -838,7 +842,9 @@ function PocoUIValue:val(set)
 end
 
 
-PocoUINumValue = PocoUINumValue or class(PocoUIValue)
+local PocoUINumValue = class(PocoUIValue)
+PocoHud3Class.PocoUINumValue = PocoUINumValue
+
 function PocoUINumValue:init(parent,config,inherited)
 	self.super.init(self,parent,config,true)
 	self:val(config.value or 0)
@@ -862,7 +868,8 @@ function PocoUINumValue:isValid(val)
 	return result
 end
 
-PocoUIChooseValue = PocoUIChooseValue or class(PocoUIValue)
+local PocoUIChooseValue = class(PocoUIValue)
+PocoHud3Class.PocoUIChooseValue = PocoUIChooseValue
 function PocoUIChooseValue:init(parent,config,inherited)
 	PocoUIValue.init(self,parent,config,true)
 	-- abstract
@@ -899,7 +906,9 @@ function PocoUIChooseValue:innerVal(set)
 	end
 end
 
-PocoUIBooleanValue = PocoUIBooleanValue or class(PocoUIChooseValue)
+local PocoUIBooleanValue = class(PocoUIChooseValue)
+PocoHud3Class.PocoUIBooleanValue = PocoUIBooleanValue
+
 function PocoUIBooleanValue:init(parent,config,inherited)
 	PocoUIChooseValue.init(self,parent,config,true)
 	self:val(config.value or 'YES')
@@ -912,11 +921,14 @@ function PocoUIBooleanValue:selection()
 	return {YES=true,NO=false}
 end
 
-PocoUIReversedBooleanValue = PocoUIReversedBooleanValue or class(PocoUIBooleanValue)
+local PocoUIReversedBooleanValue = class(PocoUIBooleanValue)
+PocoHud3Class.PocoUIReversedBooleanValue = PocoUIReversedBooleanValue
+
 function PocoUIReversedBooleanValue:selection()
 	return {YES=true,NO=false}
 end
-PocoUIColorValue = PocoUIColorValue or class(PocoUIChooseValue)
+local PocoUIColorValue = class(PocoUIChooseValue)
+PocoHud3Class.PocoUIColorValue = PocoUIColorValue
 function PocoUIColorValue:init(parent,config,inherited)
 	self.super.init(self,parent,config,true)
 	self:val(config.value or 'White')
@@ -939,7 +951,9 @@ function PocoUIColorValue:val(set)
 	return val
 end
 
-PocoUIStringValue = PocoUIStringValue or class(PocoUIValue)
+local PocoUIStringValue = class(PocoUIValue)
+PocoHud3Class.PocoUIStringValue = PocoUIStringValue
+
 function PocoUIStringValue:init(parent,config,inherited)
 	config.noArrow = true
 	self.super.init(self,parent,config,true)
@@ -1164,7 +1178,9 @@ end
 
 
 
-PocoTab = PocoTab or class()
+local PocoTab = class()
+PocoHud3Class.PocoTab = PocoTab
+
 function PocoTab:init(parent,ppnl,tabName)
 	self.ppnl = ppnl
 	self.name = tabName
@@ -1231,7 +1247,9 @@ function PocoTab:destroy()
 	self.dead = true
 end
 
-PocoTabs = PocoTabs or class()
+local PocoTabs = class()
+PocoHud3Class.PocoTabs = PocoTabs
+
 function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 	self._ws = ws
 	self.config = config
@@ -1324,7 +1342,9 @@ function PocoTabs:destroy(ws)
 	self._ws:panel():remove(self.pnl)
 end
 ------------
-PocoMenu = PocoMenu or class()
+local PocoMenu = class()
+PocoHud3Class.PocoMenu = PocoMenu
+
 function PocoMenu:init(ws)
 	self._ws = ws
 	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = 700})
@@ -1488,3 +1508,5 @@ function PocoMenu:mouse_released(panel, button, x, y)
 		return hot or me:Menu(true)
 	end
 end
+
+local PocoOptions = PocoOptions
