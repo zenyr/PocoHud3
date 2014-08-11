@@ -478,6 +478,7 @@ function TPocoHud3:Menu(dismiss,...)
 				}
 			})
 			--Because WHY THE FUQ NOT
+			--[[ Commenting out to merge into master branch
 			tab = gui:add('Options')
 			PocoUIHintLabel:new(tab,{
 				x = 10, y = 10, h=40,
@@ -504,7 +505,7 @@ function TPocoHud3:Menu(dismiss,...)
 			PocoUIStringValue:new(tab,{
 				x = 10, y = 140, w = 400, h=30, value = 'HI there',
 				text='TestB',hintText ='This is something'
-			})
+			})]]
 
 
 			tab = gui:add('Heist Status')
