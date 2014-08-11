@@ -25,156 +25,154 @@ function _pairs(t, f) -- pairs but sorted
 		end
   end
 end
-local clr = function(bgr)
-	return Color(bgr%0x100 /255,math.floor(bgr/0x100) % 0x100 /255,math.floor(bgr/0x10000) /255)
+table.sorted_keys = function(map)
+	local r = {}
+	for key,val in _pairs(map) do
+		r[#r+1] = key
+	end
+	return r
 end
 cl = {
-	AliceBlue=clr(0xFFF8F0),
-	AntiqueWhite=clr(0xD7EBFA),
-	Aqua=clr(0xFFFF00),
-	Aquamarine=clr(0xD4FF7F),
-	Azure=clr(0xFFFFF0),
-	Beige=clr(0xDCF5F5),
-	Bisque=clr(0xC4E4FF),
-	Black=clr(0x000000),
-	BlanchedAlmond=clr(0xCDEBFF),
-	Blue=clr(0xFF0000),
-	BlueViolet=clr(0xE22B8A),
-	Brown=clr(0x2A2AA5),
-	Burlywood=clr(0x87B8DE),
-	CadetBlue=clr(0xA09E5F),
-	Chartreuse=clr(0x00FF7F),
-	Chocolate=clr(0x1E69D2),
-	Coral=clr(0x507FFF),
-	CornFlowerBlue=clr(0xED9564),
-	CornSilk=clr(0xDCF8FF),
-	Cream=clr(0xF0FBFF),
-	Crimson=clr(0x3C14DC),
-	Cyan=clr(0xFFFF00),
-	DarkBlue=clr(0x8B0000),
-	DarkCyan=clr(0x8B8B00),
-	DarkGoldenRod=clr(0x0B86B8),
-	DarkGray=clr(0xA9A9A9),
-	Darkgreen=clr(0x006400),
-	DarkKhaki=clr(0x6BB7BD),
-	DarkMagenta=clr(0x8B008B),
-	DarkOliveGreen=clr(0x2F6B55),
-	DarkOrange=clr(0x008CFF),
-	DarkOrchid=clr(0xCC3299),
-	DarkRed=clr(0x00008B),
-	DarkSalmon=clr(0x7A96E9),
-	DarkSeaGreen=clr(0x8FBC8F),
-	DarkSlateBlue=clr(0x8B3D48),
-	DarkSlategray=clr(0x4F4F2F),
-	DarkTurquoise=clr(0xD1CE00),
-	DarkViolet=clr(0xD30094),
-	DeepPink=clr(0x9314FF),
-	DeepskyBlue=clr(0xFFBF00),
-	DimGray=clr(0x696969),
-	DkGray=clr(0x808080),
-	DodgerBlue=clr(0xFF901E),
-	Firebrick=clr(0x2222B2),
-	FloralWhite=clr(0xF0FAFF),
-	ForestGreen=clr(0x228B22),
-	Fuchsia=clr(0xFF00FF),
-	Gainsboro=clr(0xDCDCDC),
-	GhostWhite=clr(0xFFF8F8),
-	Gold=clr(0x00D7FF),
-	GoldenRod=clr(0x20A5DA),
-	Gray=clr(0x808080),
-	Green=clr(0x008000),
-	GreenYellow=clr(0x2FFFAD),
-	Honeydew=clr(0xF0FFF0),
-	HotPink=clr(0xB469FF),
-	IndianRed=clr(0x5C5CCD),
-	Indigo=clr(0x82004B),
-	Ivory=clr(0xF0FFFF),
-	Khaki=clr(0x8CE6F0),
-	Lavender=clr(0xFAE6E6),
-	LavenderBlush=clr(0xF5F0FF),
-	LawnGreen=clr(0x00FC7C),
-	LemonChiffon=clr(0xCDFAFF),
-	LightBlue=clr(0xE6D8AD),
-	LightCoral=clr(0x8080F0),
-	LightCyan=clr(0xFFFFE0),
-	LightGoldenrodYellow=clr(0xD2FAFA),
-	LightGreen=clr(0x90EE90),
-	Lightgrey=clr(0xD3D3D3),
-	LightPink=clr(0xC1B6FF),
-	LightSalmon=clr(0x7AA0FF),
-	LightSeaGreen=clr(0xAAB220),
-	LightSkyBlue=clr(0xFACE87),
-	LightSlateGray=clr(0x998877),
-	LightSteelBlue=clr(0xDEC4B0),
-	LightYellow=clr(0xE0FFFF),
-	Lime=clr(0x00FF00),
-	LimeGreen=clr(0x32CD32),
-	Linen=clr(0xE6F0FA),
-	LtGray=clr(0xC0C0C0),
-	Magenta=clr(0xFF00FF),
-	Maroon=clr(0x000080),
-	MedGray=clr(0xA4A0A0),
-	MediumAquamarine=clr(0xAACD66),
-	MediumBlue=clr(0xCD0000),
-	MediumOrchid=clr(0xD355BA),
-	MediumPurple=clr(0xDB7093),
-	MediumSeaGreen=clr(0x71B33C),
-	MediumSlateBlue=clr(0xEE687B),
-	MediumSpringGreen=clr(0x9AFA00),
-	MediumTurquoise=clr(0xCCD148),
-	MediumVioletRed=clr(0x8515C7),
-	MidnightBlue=clr(0x701919),
-	Mintcream=clr(0xFAFFF5),
-	MistyRose=clr(0xE1E4FF),
-	Moccasin=clr(0xB5E4FF),
-	MoneyGreen=clr(0xC0DCC0),
-	NavajoWhite=clr(0xADDEFF),
-	Navy=clr(0x800000),
-	OldLace=clr(0xE6F5FD),
-	Olive=clr(0x008080),
-	OliveDrab=clr(0x238E6B),
-	Orange=clr(0x00A5FF),
-	OrangeRed=clr(0x0045FF),
-	Orchid=clr(0xD670DA),
-	PaleGoldenrod=clr(0xAAE8EE),
-	PaleGreen=clr(0x98FB98),
-	PaleTurquoise=clr(0xEEEEAF),
-	PaleVioletRed=clr(0x9370DB),
-	PapayaWhip=clr(0xD5EFFF),
-	PeachPuff=clr(0xB9DAFF),
-	Peru=clr(0x3F85CD),
-	Pink=clr(0xCBC0FF),
-	Plum=clr(0xDDA0DD),
-	PowderBlue=clr(0xE6E0B0),
-	Purple=clr(0x800080),
-	Red=clr(0x0000FF),
-	RosyBrown=clr(0x8F8FBC),
-	RoyalBlue=clr(0xE16941),
-	SaddleBrown=clr(0x13458B),
-	Salmon=clr(0x7280FA),
-	SandyBrown=clr(0x60A4F4),
-	SeaGreen=clr(0x578B2E),
-	Seashell=clr(0xEEF5FF),
-	Sienna=clr(0x2D52A0),
-	Silver=clr(0xC0C0C0),
-	SkyBlue=clr(0xEBCE87),
-	SkyBlue=clr(0xF0CAA6),
-	SlateBlue=clr(0xCD5A6A),
-	SlateGray=clr(0x908070),
-	Snow=clr(0xFAFAFF),
-	SpringGreen=clr(0x7FFF00),
-	SteelBlue=clr(0xB48246),
-	Tan=clr(0x8CB4D2),
-	Teal=clr(0x808000),
-	Thistle=clr(0xD8BFD8),
-	Tomato=clr(0x4763FF),
-	Turquoise=clr(0xD0E040),
-	Violet=clr(0xEE82EE),
-	Wheat=clr(0xB3DEF5),
-	White=clr(0xFFFFFF),
-	WhiteSmoke=clr(0xF5F5F5),
-	Yellow=clr(0x00FFFF),
-	YellowGreen=clr(0x32CD9A),
+	AliceBlue = Color(16/17,248/255,1),
+	AntiqueWhite = Color(50/51,47/51,43/51),
+	Aqua = Color(0,1,1),
+	Aquamarine = Color(127/255,1,212/255),
+	Azure = Color(16/17,1,1),
+	Beige = Color(49/51,49/51,44/51),
+	Bisque = Color(1,76/85,196/255),
+	Black = Color(0,0,0),
+	BlanchedAlmond = Color(1,47/51,41/51),
+	Blue = Color(0,0,1),
+	BlueViolet = Color(46/85,43/255,226/255),
+	Brown = Color(11/17,14/85,14/85),
+	Burlywood = Color(74/85,184/255,9/17),
+	CadetBlue = Color(19/51,158/255,32/51),
+	Chartreuse = Color(127/255,1,0),
+	Chocolate = Color(14/17,7/17,2/17),
+	Coral = Color(1,127/255,16/51),
+	CornFlowerBlue = Color(20/51,149/255,79/85),
+	CornSilk = Color(1,248/255,44/51),
+	Crimson = Color(44/51,4/51,4/17),
+	Cyan = Color(0,1,1),
+	DarkBlue = Color(0,0,139/255),
+	DarkCyan = Color(0,139/255,139/255),
+	DarkGoldenRod = Color(184/255,134/255,11/255),
+	DarkGray = Color(169/255,169/255,169/255),
+	Darkgreen = Color(0,20/51,0),
+	DarkKhaki = Color(63/85,61/85,107/255),
+	DarkMagenta = Color(139/255,0,139/255),
+	DarkOliveGreen = Color(1/3,107/255,47/255),
+	DarkOrange = Color(1,28/51,0),
+	DarkOrchid = Color(3/5,10/51,4/5),
+	DarkRed = Color(139/255,0,0),
+	DarkSalmon = Color(233/255,10/17,122/255),
+	DarkSeaGreen = Color(143/255,188/255,139/255),
+	DarkSlateBlue = Color(24/85,61/255,139/255),
+	DarkSlategray = Color(47/255,79/255,79/255),
+	DarkTurquoise = Color(0,206/255,209/255),
+	DarkViolet = Color(148/255,0,211/255),
+	DeepPink = Color(1,4/51,49/85),
+	DeepskyBlue = Color(0,191/255,1),
+	DimGray = Color(7/17,7/17,7/17),
+	DodgerBlue = Color(2/17,48/85,1),
+	Firebrick = Color(178/255,2/15,2/15),
+	FloralWhite = Color(1,50/51,16/17),
+	ForestGreen = Color(2/15,139/255,2/15),
+	Fuchsia = Color(1,0,1),
+	Gainsboro = Color(44/51,44/51,44/51),
+	GhostWhite = Color(248/255,248/255,1),
+	Gold = Color(1,43/51,0),
+	GoldenRod = Color(218/255,11/17,32/255),
+	Gray = Color(128/255,128/255,128/255),
+	Green = Color(0,128/255,0),
+	GreenYellow = Color(173/255,1,47/255),
+	Honeydew = Color(16/17,1,16/17),
+	HotPink = Color(1,7/17,12/17),
+	IndianRed = Color(41/51,92/255,92/255),
+	Indigo = Color(5/17,0,26/51),
+	Ivory = Color(1,1,16/17),
+	Khaki = Color(16/17,46/51,28/51),
+	Lavender = Color(46/51,46/51,50/51),
+	LavenderBlush = Color(1,16/17,49/51),
+	LawnGreen = Color(124/255,84/85,0),
+	LemonChiffon = Color(1,50/51,41/51),
+	LightBlue = Color(173/255,72/85,46/51),
+	LightCoral = Color(16/17,128/255,128/255),
+	LightCyan = Color(224/255,1,1),
+	LightGoldenrodYellow = Color(50/51,50/51,14/17),
+	LightGray = Color(211/255,211/255,211/255),
+	LightGreen = Color(48/85,14/15,48/85),
+	LightPink = Color(1,182/255,193/255),
+	LightSalmon = Color(1,32/51,122/255),
+	LightSeaGreen = Color(32/255,178/255,2/3),
+	LightSkyBlue = Color(9/17,206/255,50/51),
+	LightSlateGray = Color(7/15,8/15,3/5),
+	LightSteelBlue = Color(176/255,196/255,74/85),
+	LightYellow = Color(1,1,224/255),
+	Lime = Color(0,1,0),
+	LimeGreen = Color(10/51,41/51,10/51),
+	Linen = Color(50/51,16/17,46/51),
+	Magenta = Color(1,0,1),
+	Maroon = Color(128/255,0,0),
+	MediumAquamarine = Color(2/5,41/51,2/3),
+	MediumBlue = Color(0,0,41/51),
+	MediumOrchid = Color(62/85,1/3,211/255),
+	MediumPurple = Color(49/85,112/255,73/85),
+	MediumSeaGreen = Color(4/17,179/255,113/255),
+	MediumSlateBlue = Color(41/85,104/255,14/15),
+	MediumSpringGreen = Color(0,50/51,154/255),
+	MediumTurquoise = Color(24/85,209/255,4/5),
+	MediumVioletRed = Color(199/255,7/85,133/255),
+	MidnightBlue = Color(5/51,5/51,112/255),
+	Mintcream = Color(49/51,1,50/51),
+	MistyRose = Color(1,76/85,15/17),
+	Moccasin = Color(1,76/85,181/255),
+	NavajoWhite = Color(1,74/85,173/255),
+	Navy = Color(0,0,128/255),
+	OldLace = Color(253/255,49/51,46/51),
+	Olive = Color(128/255,128/255,0),
+	OliveDrab = Color(107/255,142/255,7/51),
+	Orange = Color(1,11/17,0),
+	OrangeRed = Color(1,23/85,0),
+	Orchid = Color(218/255,112/255,214/255),
+	PaleGoldenrod = Color(14/15,232/255,2/3),
+	PaleGreen = Color(152/255,251/255,152/255),
+	PaleTurquoise = Color(35/51,14/15,14/15),
+	PaleVioletRed = Color(73/85,112/255,49/85),
+	PapayaWhip = Color(1,239/255,71/85),
+	PeachPuff = Color(1,218/255,37/51),
+	Peru = Color(41/51,133/255,21/85),
+	Pink = Color(1,64/85,203/255),
+	Plum = Color(13/15,32/51,13/15),
+	PowderBlue = Color(176/255,224/255,46/51),
+	Purple = Color(128/255,0,128/255),
+	Red = Color(1,0,0),
+	RosyBrown = Color(188/255,143/255,143/255),
+	RoyalBlue = Color(13/51,7/17,15/17),
+	SaddleBrown = Color(139/255,23/85,19/255),
+	Salmon = Color(50/51,128/255,38/85),
+	SandyBrown = Color(244/255,164/255,32/85),
+	SeaGreen = Color(46/255,139/255,29/85),
+	Seashell = Color(1,49/51,14/15),
+	Sienna = Color(32/51,82/255,3/17),
+	Silver = Color(64/85,64/85,64/85),
+	SkyBlue = Color(9/17,206/255,47/51),
+	SlateBlue = Color(106/255,6/17,41/51),
+	SlateGray = Color(112/255,128/255,48/85),
+	Snow = Color(1,50/51,50/51),
+	SpringGreen = Color(0,1,127/255),
+	SteelBlue = Color(14/51,26/51,12/17),
+	Tan = Color(14/17,12/17,28/51),
+	Teal = Color(0,128/255,128/255),
+	Thistle = Color(72/85,191/255,72/85),
+	Tomato = Color(1,33/85,71/255),
+	Turquoise = Color(64/255,224/255,208/255),
+	Violet = Color(14/15,26/51,14/15),
+	Wheat = Color(49/51,74/85,179/255),
+	White = Color(1,1,1),
+	WhiteSmoke = Color(49/51,49/51,49/51),
+	Yellow = Color(1,1,0),
+	YellowGreen = Color(154/255,41/51,10/51)
 }
 
 _ = {
@@ -298,7 +296,7 @@ _ = {
 					end
 				end
 				lbl:set_text(result)
-				for _,range in ipairs(ranges) do
+				for __,range in ipairs(ranges) do
 					lbl:set_range_color( range[1], range[2], range[3] or cl.Green)
 				end
 				if autoSize then
@@ -313,14 +311,46 @@ _ = {
 		end
 		return result, lbl
 	end,
+	M = function(orig,new,copy)
+		if copy then
+			orig = table.deepcopy(orig)
+		end
+		local merge_task = {}
+		 merge_task[orig] = new
+
+		 local left = orig
+		 while left ~= nil do
+				local right = merge_task[left]
+				for new_key, new_val in pairs(right) do
+					 local old_val = left[new_key]
+					 if old_val == nil then
+							left[new_key] = new_val
+					 else
+							local old_type = type(old_val)
+							local new_type = type(new_val)
+							if (old_type == "table" and new_type == "table") then
+								 merge_task[old_val] = new_val
+							else
+								 left[new_key] = new_val
+							end
+					 end
+				end
+				merge_task[left] = nil
+				left = next(merge_task)
+		 end
+		 return orig
+	end,
 	W = function(...)io.stderr:write(_.S(...)..'\n')end
 }
+if type(_) ~= 'table' then
+	io.stderr:write('Type of _ is not a table,', type(_) ,'\n')
+	_ = nil
+	return
+end
 setmetatable(_,{__call = function(__,...) return _.W(...) end})
 UNDERSCORE = _
-if clone then
-	for k,v in pairs(clone(_)) do
-		_[k:lower()] = v
-	end
+for k,v in pairs(table.deepcopy(_)) do
+	_[k:lower()] = v
 end
 _assert = _assert or assert
 assert = function()	end

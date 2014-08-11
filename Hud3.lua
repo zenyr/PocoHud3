@@ -22,10 +22,20 @@ local function _req(name)
 	end
 	return __req(name) or __req(name..'c')
 end
+PocoHud3Class = nil
 _req ('poco/Hud3_class.lua')
+if not PocoHud3Class then return end
+local TBuff, TPop, TFloat, THitDirection =
+	PocoHud3Class.TBuff, PocoHud3Class.TPop, PocoHud3Class.TFloat, PocoHud3Class.THitDirection
 
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
+local inO = {
+	debug = {
+		color = {'color','White'},
+		size = {'number',22},
+	}
+}
 local O = {
 	enable = YES, -- YES/NO : 포코허드 전체 스위치
 	debug = {
@@ -46,7 +56,6 @@ local O = {
 		gap = 10,   -- 자연수 : 버프 아이콘 간격 (단, "바닐라 스타일"에서는 무시)
 		align = 1,  -- [1,2,3] : 아이콘 정렬방향 1왼쪽 2중앙 3오른쪽
 		style = 2,  -- [1,2]: 버프아이콘 스타일 1포코허드(컬러) 2바닐라(순정Feel)
-
 
 		noSprintDelay = YES,
 		hideInteractionCircle = NO,
@@ -141,10 +150,11 @@ local O = {
 }
 local ALTFONT= PocoHud3Class.ALTFONT
 local FONT= PocoHud3Class.FONT
+local FONTLARGE = PocoHud3Class.FONTLARGE
 local clGood= PocoHud3Class.clGood
 local clBad= PocoHud3Class.clBad
 local Icon= PocoHud3Class.Icon
-local MouseEvent= PocoHud3Class.MouseEvent
+local PocoEvent= PocoHud3Class.PocoEvent
 
 local _BAGS = {}
 _BAGS['8f59e19e1e45a05e']='Ammo'
@@ -341,7 +351,7 @@ function TPocoHud3:Menu(dismiss,...)
 		pnl:text{
 			x = 10, y = offsetY+10, w = 600, h = 30,
 			name = 'tab_desc', text = Icon.Chapter..' '..desc,
-			font = 'fonts/font_large_mf', font_size = 25, color = cl.CornFlowerBlue,
+			font = FONTLARGE, font_size = 25, color = cl.CornFlowerBlue,
 		}
 		local large = 5
 		local y,fontSize,w = offsetY+35, 19, 970
@@ -410,9 +420,11 @@ function TPocoHud3:Menu(dismiss,...)
 	local r,err = pcall(function()
 		local menu = self.menuGui
 		if menu then -- Remove
-			managers.menu_component:post_event("menu_exit")
-			menu:destroy()
-			self.menuGui = nil
+			if not self._stringFocused or (now()-self._stringFocused > 0.1) then
+				managers.menu_component:post_event("menu_exit")
+				menu:destroy()
+				self.menuGui = nil
+			end
 		elseif not dismiss then -- Show
 			managers.menu_component:post_event("menu_enter")
 			local gui = PocoMenu:new(self._ws)
@@ -420,19 +432,81 @@ function TPocoHud3:Menu(dismiss,...)
 			--- Install tabs here ---
 			local tab = gui:add('About')
 			PocoUIButton:new(tab,{
-				onPressed = function()
+				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
 				x = 10, y = 10, w = 400,h=100,
-				text={{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\nDiscuss/suggest at PocoMods steam group!',cl.LightSkyBlue},{'\n\n(Click here to visit)',cl.Tomato}}
+				text={{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise}},
+				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
 			PocoUIButton:new(tab,{
-				onPressed = function()
+				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 				end,
 				x = 10, y = 120, w = 400,h=40,
-				text={'@zenyr',cl.OrangeRed}
+				text={'@zenyr',cl.OrangeRed},
+				hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki}}
 			})
+
+			PocoUIButton:new(tab,{
+				onPressed = function(self)
+					Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
+				end,
+				x = 10, y = 170, w = 400,h=40,
+				text={
+					{'C', cl.Beige},
+					{'o', cl.BurlyWood},
+					{'l', cl.PowderBlue},
+					{'o', cl.LightBlue},
+					{'r ', cl.MediumAquamarine},
+					{'C', cl.MediumPurple},
+					{'o', cl.Orchid},
+					{'d', cl.PaleVioletRed},
+					{'e ', cl.IndianRed},
+					{'N', cl.Peru},
+					{'a', cl.MediumTurquoise},
+					{'m', cl.SlateBlue},
+					{'e', cl.MediumOrchid},
+					{'s', cl.Brown},
+					{'!', cl.Sienna}
+				},
+				hintText = {{'M', cl.SeaGreen}, {'S', cl.LightSteelBlue}, {'D', cl.Plum}, {'N ', cl.Tan},
+					{'r', cl.MediumSeaGreen}, {'e', cl.SteelBlue}, {'f', cl.DarkKhaki}, {'e', cl.DarkOliveGreen},
+					{'r', cl.DarkSlateBlue}, {'e', cl.Thistle}, {'n', cl.RoyalBlue}, {'c', cl.BlueViolet},
+					{'e ', cl.Chocolate}, {'p', cl.Goldenrod}, {'a', cl.SaddleBrown}, {'g', cl.Linen},
+					{'e', cl.Lavender},
+				}
+			})
+			--Because WHY THE FUQ NOT
+			--[[ Commenting out to merge into master branch
+			tab = gui:add('Options')
+			PocoUIHintLabel:new(tab,{
+				x = 10, y = 10, h=40,
+				fontSize = 30,font = FONTLARGE,
+				text={'Killswitches',cl.OrangeRed},
+				hintText = 'Please note that this screen is bound to be changed in the future.'
+			})
+
+			PocoUINumValue:new(tab,{
+				x = 10, y = 50, w = 400, h=30, min = 0, value = 5, max = 10,
+				text='TestA', hintText ='This is something'
+			})
+
+			PocoUIColorValue:new(tab,{
+				x = 10, y = 80, w = 400, h=30, value = 'Red',
+				text='TestB',hintText ='This is something'
+			})
+
+			PocoUIReversedBooleanValue:new(tab,{
+				x = 10, y = 110, w = 400, h=30, value = 'YES',
+				text='TestB',hintText ='This is something'
+			})
+
+			PocoUIStringValue:new(tab,{
+				x = 10, y = 140, w = 400, h=30, value = 'HI there',
+				text='TestB',hintText ='This is something'
+			})]]
+
 
 			tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
@@ -1246,12 +1320,15 @@ function TPocoHud3:_hook()
 	if not inGame then
 		-- Moved Heist stat to DbgLbl
 	else
-		--PlayerStandards
-		hook( PlayerStandard, '_update_check_actions', function( self ,...)
+		--PlayerStandard
+		hook( PlayerStandard, '_get_input', function( self ,...)
+			return me.menuGui and {} or Run('_get_input', self,... )
+		end)
+		--[[hook( PlayerStandard, '_update_check_actions', function( self ,...)
 			if not me.menuGui then
 				Run('_update_check_actions', self,... )
 			end
-		end)
+		end)]]
 
 		hook( PlayerStandard, '_start_action_unequip_weapon', function( self,t ,data)
 			Run('_start_action_unequip_weapon', self, t,data)
@@ -1625,10 +1702,10 @@ function TPocoHud3:_hook()
 			me:_show(true)
 		end)
 
-		hook( ECMJammerBase, 'set_active', function( self,active )
+		hook( ECMJammerBase, 'set_active', function( self, active )
 			Run('set_active', self, active )
 			local et = self:battery_life()
-			if et then
+			if active and et then
 				pcall(me.Buff,me,({
 					key='ecm', good=true,
 					icon=skillIcon,
@@ -1965,7 +2042,7 @@ function TPocoHud3:_hook()
 	-- Kick menu
 	hook( KickPlayer, 'modify_node', function( ... )
 		local self, node, up = unpack{...}
-		local new_node = deep_clone( node )
+		local new_node = table.deepcopy( node )
 		if managers.network:session() then
 			for __,peer in pairs( managers.network:session():peers() ) do
 				local rank = peer:rank()
@@ -2016,8 +2093,14 @@ function TPocoHud3:_hook()
 		return Run('mouse_released', ...)
 	end)
 	hook( MenuManager, 'toggle_menu_state', function( ... )
-		me:Menu(true) -- dismiss Menu when actual game-menu is called
-		return Run('toggle_menu_state', ...)
+		if me.menuGui then
+			me:Menu(true) -- dismiss Menu when actual game-menu is called
+		else
+			return Run('toggle_menu_state', ...)
+		end
+	end)
+	hook( MenuInput, 'update**', function( ... )
+		return me.menuGui or Run('update**', ...)
 	end)
 
 end

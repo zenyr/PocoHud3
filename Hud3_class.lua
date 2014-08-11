@@ -1,6 +1,7 @@
 ---
 local ALTFONT = 'fonts/font_eroded'
-local FONT =  'fonts/font_medium_mf' -- or tweak_data.hud_present.title_font or tweak_data.hud_players.name_font or "fonts/font_eroded" or 'core/fonts/system_font'
+local FONT =  'fonts/font_medium_mf' -- or tweak_data.hud_present.title_font or tweak_data.hud_players.name_font or 'fonts/font_eroded' or 'core/fonts/system_font'
+local FONTLARGE = 'fonts/font_large_mf'
 local clGood =  cl.YellowGreen
 local clBad =  cl.Gold
 local Icon = {
@@ -12,7 +13,7 @@ for k,v in pairs(Icon) do
 	Icon[k] = utf8.char(v)
 end
 local now = function () return managers.player:player_timer():time() --[[TimerManager:game():time()]] end
-local MouseEvent = {
+local PocoEvent = {
 	In = 'onEnter',
 	Out = 'onExit',
 	Pressed = 'onPressed',
@@ -21,15 +22,17 @@ local MouseEvent = {
 	ReleasedAlt = 'onReleasedAlt',
 	WheelUp = 'onWheelUp',
 	WheelDown = 'onWheelDown',
+	Move = 'onMove',
 }
 local O, me
 PocoHud3Class = {
 	ALTFONT	= ALTFONT	,
 	FONT		= FONT		,
+	FONTLARGE = FONTLARGE,
 	clGood	= clGood	,
 	clBad		= clBad		,
 	Icon		= Icon		,
-	MouseEvent = MouseEvent,
+	PocoEvent = PocoEvent,
 }
 PocoHud3Class.loadVar = function(_O,_me)
 	O = _O
@@ -38,6 +41,7 @@ end
 
 --- miniClass start ---
 local TBuff = class()
+PocoHud3Class.TBuff = TBuff
 function TBuff:init(owner,data)
 	self.owner = owner
 	self.ppnl = owner.pnl.buff
@@ -61,16 +65,16 @@ function TBuff:_make()
 		local simpleRadius = O.buff.simpleBusyRadius
 		local pnl = self.ppnl:panel({x = self.owner.ww/2-simpleRadius,y=self.owner.hh/2-simpleRadius, w=simpleRadius*2,h=simpleRadius*2})
 		self.pnl = pnl
-		local texture = data.good and "guis/textures/pd2/hud_progress_active" or "guis/textures/pd2/hud_progress_invalid"
-		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = simpleRadius, sides = 64, current = 20, total = 64, blend_mode = "add", layer = 0} )
+		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
+		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = simpleRadius, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
 	elseif style == 2 then
 		local pnl = self.ppnl:panel({x = 0,y=0, w=100,h=100})
 		self.pnl = pnl
 		self.lbl = pnl:text{text='', font=FONT, align='center', font_size = size/2, color = data.color or data.good and clGood or clBad, x=1,y=1, layer=2, blend_mode = 'normal'}
 		self.bg = HUDBGBox_create( pnl, { w = size, h = size, x = 0, y = 0 }, { color = cl.White, blend_mode = 'normal' } )
 		self.bmp = data.icon and pnl:bitmap( { name='icon', texture=data.icon, texture_rect=data.iconRect, blend_mode = 'add', layer=1, x=0,y=0, color=style==2 and cl.White or data.good and clGood or clBad } ) or nil
-		local texture = data.good and "guis/textures/pd2/hud_progress_active" or "guis/textures/pd2/hud_progress_invalid"
-		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = "add", layer = 0} )
+		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
+		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
 		self.pie:set_position( -size, 0)
 		if self.bmp then
 			local mul = style==2 and 1 or 0.7
@@ -87,8 +91,8 @@ function TBuff:_make()
 		self.lbl = pnl:text{text='', font=FONT, font_size = size/4, color = data.color or data.good and clGood or clBad, x=1,y=1, layer=2, blend_mode = 'normal'}
 		self.bg = pnl:bitmap( { name='bg', texture= 'guis/textures/pd2/hud_tabs',texture_rect=  { 105, 34, 19, 19 }, color= cl.Black:with_alpha(0.2), layer=0, x=0,y=0 } )
 		self.bmp = data.icon and pnl:bitmap( { name='icon', texture=data.icon, texture_rect=data.iconRect, blend_mode = 'add', layer=1, x=0,y=0, color=data.good and clGood or clBad } ) or nil
-		local texture = data.good and "guis/textures/pd2/hud_progress_active" or "guis/textures/pd2/hud_progress_invalid"
-		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = "add", layer = 0} )
+		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
+		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
 		self.pie:set_position( 0, 0)
 		if self.bmp then
 			if self.bmp:width() > 0.7*size then
@@ -189,7 +193,7 @@ function TBuff:destroy(skipAnim)
 			if not self.dying then
 				self.dying = true
 				pnl:stop()
-				pnl:animate( callback( self, self, "_fade" ), callback( self, self, "destroy" , true), 0.25 )
+				pnl:animate( callback( self, self, '_fade' ), callback( self, self, 'destroy' , true), 0.25 )
 			end
 		else
 			self.ppnl:remove(self.pnl)
@@ -199,6 +203,8 @@ function TBuff:destroy(skipAnim)
 end
 	-------
 local TPop = class()
+PocoHud3Class.TPop = TPop
+
 function TPop:init(owner,data)
 	self.owner = owner
 	self.data = data
@@ -261,6 +267,7 @@ function TPop:destroy(key)
 end
 
 local TFloat = class()
+PocoHud3Class.TFloat = TFloat
 function TFloat:init(owner,data)
 	self.owner = owner
 	self.category = data.category
@@ -289,7 +296,7 @@ function TFloat:_make()
 	self.pnl = pnl
 	self.bg = O.float.border
 		and HUDBGBox_create(pnl, {x= 0,y= 0,w= 1,h= 1},{color=cl.White:with_alpha(1)})
-		or pnl:bitmap( { name='blur', texture="guis/textures/test_blur_df", render_template="VertexColorTexturedBlur3D", layer=-1, x=0,y=0 } )
+		or pnl:bitmap( { name='blur', texture='guis/textures/test_blur_df', render_template='VertexColorTexturedBlur3D', layer=-1, x=0,y=0 } )
 	self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=m,y=m,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'normal', layer = 4} )
 	self.pieBg = pnl:bitmap( { name='pieBg', texture='guis/textures/pd2/hud_progress_active', w = size, h = size, layer=3, x=m,y=m, color=cl.Black:with_alpha(0.5) } )
 	self.lbl = pnl:text{text='text', font=FONT, font_size = size, color = cl.White, x=size+m*2,y=m, layer=3, blend_mode = 'normal'}
@@ -492,7 +499,7 @@ function TFloat:destroy(skipAnim)
 			if not self.dying then
 				self.dying = true
 				pnl:stop()
-				pnl:animate( callback( self, TBuff, "_fade" ), callback( self, self, "destroy" , true), 0.2 )
+				pnl:animate( callback( self, TBuff, '_fade' ), callback( self, self, 'destroy' , true), 0.2 )
 			end
 		else
 			self.ppnl:remove(self.pnl)
@@ -501,6 +508,7 @@ function TFloat:destroy(skipAnim)
 	end
 end
 local THitDirection = class()
+PocoHud3Class.THitDirection = THitDirection
 function THitDirection:init(owner,data)
 	self.owner = owner
 	self.ppnl = owner.pnl.buff
@@ -511,10 +519,10 @@ function THitDirection:init(owner,data)
 	local color = data.shield and Opt.color.shield or Opt.color.health
 	self.pnl = pnl
 	local bmp = pnl:bitmap{
-		name = "hit", rotation = 360, visible = true,
-		texture = "guis/textures/pd2/hitdirection",
+		name = 'hit', rotation = 360, visible = true,
+		texture = 'guis/textures/pd2/hitdirection',
 		color = color,
-		blend_mode="add", alpha = 1, halign = "right"
+		blend_mode='add', alpha = 1, halign = 'right'
 	}
 	self.bmp = bmp
 	bmp:set_center(100,100)
@@ -526,7 +534,7 @@ function THitDirection:init(owner,data)
 			w = nSize*3, h = nSize,
 			text = '-'.._.f(data.dmg*10),
 			color = color,
-			align = "center",
+			align = 'center',
 			layer = 1
 		}
 		lbl:set_center(100,100)
@@ -536,7 +544,7 @@ function THitDirection:init(owner,data)
 			w = nSize*3, h = nSize,
 			text = '-'.._.f(data.dmg*10),
 			color = cl.Black:with_alpha(0.2),
-			align = "center",
+			align = 'center',
 			layer = 1
 		}
 		lbl:set_center(101,101)
@@ -546,7 +554,7 @@ function THitDirection:init(owner,data)
 			w = nSize*3, h = nSize,
 			text = '-'.._.f(data.dmg*10),
 			color = cl.Black:with_alpha(0.2),
-			align = "center",
+			align = 'center',
 			layer = 1
 		}
 		lbl:set_center(99,101)
@@ -596,66 +604,565 @@ function THitDirection:destroy()
 end
 
 --- GUI start ---
+local Layers = {
+	Blur = 1001,
+	Bg = 1002,
+	TabHeader = 1003,
+	TabBody = 1004
+}
 PocoUIElem = PocoUIElem or class()
 DBG = 1
 function PocoUIElem:init(parent,config)
+	config = _.m({
+		w = 400,h = 20,
+	}, config)
+
 	self.parent = parent
 	self.config = config or {}
 	self.ppnl = parent.pnl
 	self.pnl = self.ppnl:panel({ name = config.name, x=config.x, y=config.y, w = config.w, h = config.h})
 	self.status = 0
+
+	if config.hintText then
+		PocoUIHintLabel.makeHintPanel(self)
+	end
 end
 
 function PocoUIElem:postInit()
-	self.config.elem = self
-	for event,eventVal in pairs(MouseEvent) do
+	for event,eventVal in pairs(PocoEvent) do
 		if self.config[eventVal] then
 			self.parent:addHotZone(eventVal,self)
 		end
 	end
+	self._bind = function()
+		_('Warning:PocoUIElem._bind was called too late')
+	end
 end
 
+function PocoUIElem:_bind(eventVal,cbk)
+	if not self.config[eventVal] then
+		self.config[eventVal] = cbk
+	else
+		local _old = self.config[eventVal]
+		self.config[eventVal] = function(...)
+			_old(...)
+			cbk(...)
+		end
+	end
+	return self
+end
+
+function PocoUIElem:sound(sound)
+	managers.menu:post_event(sound)
+end
 function PocoUIElem:isHot(event,x,y)
 	return self.pnl:inside(x,y)
 end
 
 function PocoUIElem:fire(event,x,y)
+	if self.parent.dead then return end
+	local result = {self.config[event](self,x,y)}
 	local sound = {
-		onEnter = 'highlight',
 		onPressed = 'prompt_enter'
 	}
 	if self.config[event] then
-		if sound[event] then
-			managers.menu:post_event(sound[event])
+		if self.result == false then
+			managers.menu:post_event('menu_error')
+			self.result = nil
+			return true
+		elseif self.mute then
+			self.mute = nil
+			return true
 		end
-		return true, self.config[event](self,x,y)
+		if sound[event] then
+			self:sound(sound[event])
+		end
+		return true, unpack(result)
 	end
 end
 
-function PocoUIElem:draw()
-	-- abstract
+PocoUIHintLabel = PocoUIHintLabel or class(PocoUIElem)
+function PocoUIHintLabel:init(parent,config,inherited)
+	self.super.init(self,parent,config,true)
+
+	local __, lbl = _.l({
+		pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = config.fontColor or cl.White,
+		align = config.align or 'center', vertical = config.vAlign or 'center'
+	},config.text or 'Err: No text given',config.autoSize)
+	self.lbl = lbl
+
+	if not inherited then
+		self:postInit(self)
+	end
 end
 
-PocoUIButton = PocoUIButton or class(PocoUIElem)
-function PocoUIButton:init(parent,config)
-	self.super.init(self,parent,config)
+function PocoUIHintLabel:makeHintPanel()
+	local config = self.config
+	local hintPnl = self.ppnl:panel{
+		x = 0, y = 0, w = 500, h = 200,
+		visible = false
+	}
+	hintPnl:rect{ color = cl.Black:with_alpha(0.7), layer = 1005}
+	local __, hintLbl = _.l({
+		pnl = hintPnl,x=5, y=5, font = config.hintFont or FONT, font_size = config.hintFontSize or 20, color = config.hintFontColor or cl.White,
+		align = config.align, vertical = config.vAlign, layer = 1006
+	},config.hintText or '',true)
+	hintPnl:set_size(hintLbl:size())
+	hintPnl:grow(10,10)
+	self:_bind(PocoEvent.In, function(self,x,y)
+		hintPnl:set_visible(true)
+	end):_bind(PocoEvent.Out, function(self,x,y)
+		hintPnl:set_visible(false)
+	end):_bind(PocoEvent.Move, function(self,x,y)
+		hintPnl:set_world_position(x+10,y+20)
+	end)
 
-	self.bg = BoxGuiObject:new(self.pnl, {sides = {1,1,1,1}})
-	self.bg:set_visible(false)
+end
+
+
+PocoUIButton = PocoUIButton or class(PocoUIElem)
+function PocoUIButton:init(parent,config,inherited)
+	self.super.init(self,parent,config,true)
+
+	local bg = BoxGuiObject:new(self.pnl, {sides = {1,1,1,1}})
+	bg:set_visible(false)
 	local __, lbl = _.l({
 		pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 20, color = config.fontColor or cl.White,
 		align = config.align or 'center', vertical = config.vAlign or 'center'
 	},config.text,config.autoSize)
 
-	self.config[MouseEvent.In] = function(self,x,y)
-		self.bg:set_visible(true)
-	end
-	self.config[MouseEvent.Out] = function(self,x,y)
-		self.bg:set_visible(false)
-	end
+	self:_bind(PocoEvent.In, function(self,x,y)
+		bg:set_visible(true)
+		self:sound('slider_grab')
+	end):_bind(PocoEvent.Out, function(self,x,y)
+		bg:set_visible(false)
+	end)
+
 	self.lbl = lbl
-	self.super.postInit(self)
+	if not inherited then
+		self:postInit(self)
+	end
 end
+
+PocoUIValue = PocoUIValue or class(PocoUIElem)
+function PocoUIValue:init(parent,config,inherited)
+	local dx = config.w/16
+	PocoUIElem.init(self,parent,config,true)
+	local __, lbl = _.l({
+			pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 24,
+			color = config.fontColor or cl.White },config.text,true)
+	self.lbl = lbl
+	local __, lbl = _.l({
+			pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 24,
+			color = config.fontColor or cl.White },config.text,true)
+	self.valLbl = lbl
+
+	if not config.noArrow then
+		self.arrowLeft = self.pnl:bitmap({
+			texture = 'guis/textures/menu_arrows',
+			texture_rect = {
+				0,
+				0,
+				24,
+				24
+			},
+			color = cl.White,
+			x = 0,
+			y = 0,
+			blend_mode = 'add'
+		})
+		self.arrowLeft:set_center_x(7*dx)
+
+		self.arrowRight = self.pnl:bitmap({
+			texture = 'guis/textures/menu_arrows',
+			texture_rect = {
+				0,
+				0,
+				24,
+				24
+			},
+			color = cl.White,
+			x = 20,
+			y = 1,
+			blend_mode = 'add',
+			rotation = 180,
+		})
+		self.arrowRight:set_center_x(15*dx)
+
+		self:_bind(PocoEvent.Pressed,function(self,x,y)
+			if self.arrowRight:inside(x,y) then
+				self:next()
+			elseif self.arrowLeft:inside(x,y) then
+				self:prev()
+			else
+				self.mute = true
+			end
+		end):_bind(PocoEvent.Move,function(self,x,y)
+			if self.arrowRight:inside(x,y) or self.arrowLeft:inside(x,y) then
+				self.cursor = 'link'
+			else
+				self.cursor = 'arrow'
+			end
+		end):_bind(PocoEvent.WheelUp,self.next):_bind(PocoEvent.WheelDown,self.prev)
+	end
+
+	-- Always inherited though
+end
+
+function PocoUIValue:next()
+	self.result = false
+end
+
+function PocoUIValue:prev()
+	self.result = false
+end
+
+function PocoUIValue:isValid(val)
+	return true
+end
+
+function PocoUIValue:val(set)
+	if set ~= nil then
+		if not self.value or self:isValid(set) then
+			self.value = set
+			_.l(self.valLbl,set,true)
+			self.valLbl:set_center_x(11*self.config.w/16)
+			self.valLbl:set_x(math.floor(self.valLbl:x()))
+			return set
+		else
+			return false
+		end
+	else
+		return self.value
+	end
+end
+
+
+PocoUINumValue = PocoUINumValue or class(PocoUIValue)
+function PocoUINumValue:init(parent,config,inherited)
+	self.super.init(self,parent,config,true)
+	self:val(config.value or 0)
+
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
+function PocoUINumValue:next()
+	self:val(self:val()+(self.config.step or 1))
+end
+
+function PocoUINumValue:prev()
+	self:val(self:val()-(self.config.step or 1))
+end
+
+function PocoUINumValue:isValid(val)
+	local result = (type(val) == 'number') and (val <= (self.config.max or 100)) and (val >= (self.config.min or 0))
+	self.result = result
+	return result
+end
+
+PocoUIChooseValue = PocoUIChooseValue or class(PocoUIValue)
+function PocoUIChooseValue:init(parent,config,inherited)
+	PocoUIValue.init(self,parent,config,true)
+	-- abstract
+end
+
+function PocoUIChooseValue:selection()
+	return {}
+end
+
+function PocoUIChooseValue:go(delta)
+	local val = self:val()
+	local sel = self:selection()
+	local keys = table.sorted_keys(sel)
+	local ind = table.index_of(keys,val)
+	self:val(keys[ind+delta] or delta>0 and keys[1] or keys[#keys] )
+end
+
+function PocoUIChooseValue:next()
+	self:go(1)
+end
+
+function PocoUIChooseValue:prev(val)
+	self:go(-1)
+end
+
+function PocoUIChooseValue:innerVal(set)
+	if set then
+		local key = table.get_key(self:selection(),set)
+		if key then
+			return self:val(key)
+		end
+	else
+		return self:selection()[self:val()]
+	end
+end
+
+PocoUIBooleanValue = PocoUIBooleanValue or class(PocoUIChooseValue)
+function PocoUIBooleanValue:init(parent,config,inherited)
+	PocoUIChooseValue.init(self,parent,config,true)
+	self:val(config.value or 'YES')
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
+function PocoUIBooleanValue:selection()
+	return {YES=true,NO=false}
+end
+
+PocoUIReversedBooleanValue = PocoUIReversedBooleanValue or class(PocoUIBooleanValue)
+function PocoUIReversedBooleanValue:selection()
+	return {YES=true,NO=false}
+end
+PocoUIColorValue = PocoUIColorValue or class(PocoUIChooseValue)
+function PocoUIColorValue:init(parent,config,inherited)
+	self.super.init(self,parent,config,true)
+	self:val(config.value or 'White')
+
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
+function PocoUIColorValue:selection()
+	return cl
+end
+
+function PocoUIColorValue:val(set)
+	local val = PocoUIValue.val(self,set)
+	if set then
+		local color = cl[val] or cl.White
+		_.l(self.valLbl,{val,color})
+	end
+	return val
+end
+
+PocoUIStringValue = PocoUIStringValue or class(PocoUIValue)
+function PocoUIStringValue:init(parent,config,inherited)
+	config.noArrow = true
+	self.super.init(self,parent,config,true)
+	self:_initLayout()
+	self:val(config.value or '')
+	self.box = self.pnl:rect{color = cl.White:with_alpha(0.3), visible = false}
+	self:_bind(PocoEvent.Pressed,function(self,x,y)
+		if not self._editing then
+			self:startEdit()
+		else
+			if now() - (self._lastClick or 0) < 0.3 then
+				self:selectAll()
+			end
+		end
+		self._lastClick = now()
+	end):_bind(PocoEvent.WheelUp,self.next):_bind(PocoEvent.WheelDown,self.prev)
+
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
+function PocoUIStringValue:_initLayout()
+	-- valLbl 아래로 이동 등등
+end
+
+function PocoUIStringValue:val(...)
+	local result =  PocoUIValue.val(self,...)
+	self:repaint()
+	return result
+end
+function PocoUIStringValue:startEdit()
+	self._editing = true
+	self.box:set_visible(true)
+	me._ws:connect_keyboard(Input:keyboard())
+	self.pnl:enter_text(callback(self, self, 'enter_text'))
+	self.pnl:key_press(callback(self, self, 'key_press'))
+	self.pnl:key_release(callback(self, self, 'key_release'))
+	local l = utf8.len(self:val())
+	self.valLbl:set_selection(l,l)
+	self._rename_caret = self.pnl:rect({
+		name = 'caret',
+		layer = 1006,
+		x = 10,
+		y = 10,
+		w = 2,
+		h = 2,
+		color = cl.Red
+	})
+	self:repaint()
+	self._rename_caret:animate(self.blink)
+	self.beforeVal = self:val()
+end
+
+function PocoUIStringValue:selectAll()
+	self:_select(0, utf8.len(self:val()))
+	self:repaint()
+end
+
+function PocoUIStringValue:_select(tS,tE)
+	local s,e = self.valLbl:selection()
+	local l = utf8.len(self:val())
+	if tS and tE then
+		s, e = math.max(0,tS),math.min(tE,l)
+		if s == e then
+			self._start = s
+		end
+		self.valLbl:set_selection(s,e)
+	else
+		return s,e
+	end
+end
+function PocoUIStringValue:select(delta,shift)
+	local s, e = self:_select()
+	if shift then -- start Shift
+		self._start = s
+		self._shift = true
+		_('ShiftOn')
+	elseif shift == false then
+		self._shift = nil
+		_('ShiftOff')
+	elseif self._shift then -- grow selection
+		_('GROW')
+		local ss = self._start
+		if delta > 0 then
+			if ss == s then
+				self:_select(ss,e+delta)
+			else
+				self:_select(s+delta,ss)
+			end
+		elseif delta < 0 then
+			if ss == e then
+				self:_select(s+delta,ss)
+			else
+				self:_select(ss,e+delta)
+			end
+		end
+	else -- simpleMove
+		_('SimpleMove')
+		self:_select(s+delta,s+delta)
+	end
+
+end
+
+function PocoUIStringValue:_setCaret(worldX)
+	local lbl = self.valLbl
+	local l = utf8.len(self:val())
+	if l == 0 then
+		self:select(0,0)
+	end
+	local x, y, w, h = self.valLbl:selection_rect()
+	self:repaint()
+end
+
+function PocoUIStringValue:endEdit(cancel)
+	self._editing = nil
+	self.box:set_visible(false)
+	me._ws:disconnect_keyboard()
+	self:_select(0,0)
+	self.pnl:enter_text(nil)
+	self.pnl:key_press(nil)
+	self.pnl:key_release(nil)
+	self.pnl:remove(self._rename_caret)
+	self._rename_caret = nil
+	if cancel then
+		self:val(self.beforeVal)
+	end
+	self.beforeVal = nil
+end
+
+function PocoUIStringValue:repaint()
+	me._stringFocused = now()
+	if self.box then
+		local x,y,w,h = self.valLbl:shape()
+		x, y, w, h = x-5, y-5, w+10, math.max(h+10,self.config.h)
+		self.box:set_shape(x,y,w,h)
+	end
+	if self._rename_caret then
+		local x, y, w, h = self.valLbl:selection_rect()
+		if x == 0 then
+			x,y = self.valLbl:world_position()
+		end
+		w = math.max(w,3)
+		h = math.max(h,20)
+		self._rename_caret:set_world_shape(x,y,w,h)
+	end
+end
+
+function PocoUIStringValue.blink(o)
+	while alive(o) do
+		o:set_color(cl.White:with_alpha(0.1))
+		wait(0.2)
+		o:set_color(cl.White:with_alpha(0.5))
+		wait(0.3)
+	end
+end
+function PocoUIStringValue:enter_text(o, s)
+	if self._editing then
+		self.valLbl:replace_text(s)
+		self:val(self.valLbl:text())
+	end
+end
+
+function PocoUIStringValue:key_release(o, k)
+	if k == Idstring('left shift') or k == Idstring('right shift') then
+		self:select(0,false)
+	elseif k == Idstring('left ctrl') or k == Idstring('right ctrl') then
+		self._key_ctrl_pressed = false
+	end
+end
+
+function PocoUIStringValue:key_press(o, k)
+	local lbl = self.valLbl
+	local n = utf8.len(lbl:text())
+	local s, e = lbl:selection()
+	if k == Idstring('delete') then
+		if s == e and s > 0 then
+			lbl:set_selection(s, e+1)
+		end
+		self:enter_text('')
+	elseif k == Idstring('backspace') then
+		if s == e and s > 0 then
+			lbl:set_selection(s - 1, e)
+		end
+		self:enter_text('')
+	elseif k == Idstring('left') then
+		self:select(-1)
+		--[[
+		if s < e then
+			lbl:set_selection(s, s)
+		elseif s > 0 then
+			lbl:set_selection(s - 1, s - 1)
+		end]]
+
+	elseif k == Idstring('right') then
+		self:select(1)
+		--[[
+		if s < e then
+			lbl:set_selection(e, e)
+		elseif s < n then
+			lbl:set_selection(s + 1, s + 1)
+		end]]
+	elseif k == Idstring('end') then
+		lbl:set_selection(n, n)
+	elseif k == Idstring('home') then
+		lbl:set_selection(0, 0)
+	elseif k == Idstring('enter') then
+		self:endEdit()
+	elseif k == Idstring('esc') then
+		self:endEdit(true)
+		return
+	elseif k == Idstring('left shift') or k == Idstring('right shift') then
+		self:select(0,true)
+	elseif k == Idstring('left ctrl') or k == Idstring('right ctrl') then
+		self._key_ctrl_pressed = true
+	elseif self._key_ctrl_pressed == true then
+		return
+	end
+	self:repaint()
+end
+
+
+
 
 PocoTab = PocoTab or class()
 function PocoTab:init(parent,ppnl,tabName)
@@ -667,7 +1174,7 @@ function PocoTab:init(parent,ppnl,tabName)
 end
 
 function PocoTab:insideTab(x,y)
-	return self.bg and self.bg:inside(x, y)
+	return self.bg and alive(self.bg) and self.bg:inside(x, y)
 end
 
 function PocoTab:addHotZone(event,item)
@@ -675,18 +1182,8 @@ function PocoTab:addHotZone(event,item)
 	table.insert(self.hotZones[event],item)
 end
 
-function PocoTab:registerHotZone(config) -- Deprecated
-	if not config then
-		return false
-	end
-	if config.hoverElem then
-		hoverElem:set_visible(false)
-	end
-	table.insert(self.hotZones,config)
-end
-
 function PocoTab:isHot(event, x, y, autoFire)
-	if self.hotZones[event] and self.wrapper:inside(x,y) then
+	if self.hotZones[event] and alive(self.wrapper) and self.wrapper:inside(x,y) then
 		for i,hotZone in pairs(self.hotZones[event]) do
 			if hotZone:isHot(event, x,y) then
 				if autoFire then
@@ -700,17 +1197,6 @@ function PocoTab:isHot(event, x, y, autoFire)
 	end
 end
 
-function PocoTab:isHotOld(x,y) -- Deprecated
-	if self.wrapper:inside(x,y) then
-		for i,hotZone in pairs(self.hotZones) do
-			if hotZone.elem and hotZone.elem:inside(x,y) then
-				return true, hotZone
-			end
-		end
-	end
-	return false
-end
-
 function PocoTab:scroll(val, force)
 	local tVal = force and 0 or self.pnl:y() + val
 	local pVal = math.clamp(tVal,self.wrapper:h()-self.pnl:h()-100,0)
@@ -718,6 +1204,9 @@ function PocoTab:scroll(val, force)
 		self._errCnt = 1+ (self._errCnt or 0)
 	else
 		self._errCnt = 0
+		if not force then
+			managers.menu_component:post_event('slider_grab')
+		end
 	end
 	return self.pnl:set_y(pVal)
 end
@@ -727,6 +1216,7 @@ function PocoTab:canScroll(down,x,y)
 	if (self._errCnt or 0) > 1 then
 		local pos = self.pnl:y()
 		if (pos == 0) ~= down then
+			managers.menu_component:post_event('menu_error')
 			result = false
 		end
 	end
@@ -738,23 +1228,23 @@ function PocoTab:isLarge()
 end
 
 function PocoTab:destroy()
-	-- does nothing yet
+	self.dead = true
 end
 
 PocoTabs = PocoTabs or class()
 function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 	self._ws = ws
 	self.config = config
-	self.pnl = ws:panel():panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h, layer = 1005}
-	self.items = {} -- array of PocoTab
-	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th }
+	self.pnl = ws:panel():panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h, layer = Layers.TabHeader}
 
+	self.items = {} -- array of PocoTab
+	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th, layer = Layers.TabBody }
 	BoxGuiObject:new(self.sPnl, {
 		sides = {
 			1,
 			1,
 			2,
-			2
+			1
 		}
 	})
 end
@@ -766,7 +1256,7 @@ function PocoTabs:goTo(index)
 		index = 1
 	end
 	if index ~= self.tabIndex then
-		managers.menu_component:post_event("highlight")
+		managers.menu_component:post_event('slider_release' or 'Play_star_hit')
 		self.tabIndex = index
 		self:repaint()
 	end
@@ -792,7 +1282,7 @@ function PocoTabs:repaint()
 		if isSelected then
 			self.currentTab = itm
 		end
-		local hPnl = self.pnl:panel{w = 200, h = self.config.th, x = x, y = 0}
+		local hPnl = self.pnl:panel{w = 200, h = self.config.th, x = x, y = 0,layer = 5}
 		if itm.hPnl then
 			self.pnl:remove(itm.hPnl)
 		end
@@ -803,7 +1293,7 @@ function PocoTabs:repaint()
 			color = cl.White:with_alpha(isSelected and 1 or 0.1)
 		})
 		local lbl = hPnl:text({
-			x = 10, y = 10, w = 200, h = self.config.th,
+			x = 10, y = 5, w = 200, h = self.config.th,
 			name = 'tab_name', text = itm.name,
 			font = FONT,
 			font_size = 20,
@@ -837,14 +1327,15 @@ end
 PocoMenu = PocoMenu or class()
 function PocoMenu:init(ws)
 	self._ws = ws
-	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 40, h = 700})
+	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = 700})
 
-	self.pnl = ws:panel():panel({ name = 'bg' , layer = 1005})
-	self.pnl:rect{color = cl.Black:with_alpha(0.7)}
+	self.pnl = ws:panel():panel({ name = 'bg' })
+	self.pnl:rect{color = cl.Black:with_alpha(0.7),layer = Layers.Bg}
 	self.pnl:bitmap({
-		texture = "guis/textures/test_blur_df",
+		layer = Layers.Blur,
+		texture = 'guis/textures/test_blur_df',
 		w = self.pnl:w(),h = self.pnl:h(),
-		render_template = "VertexColorTexturedBlur3D"
+		render_template = 'VertexColorTexturedBlur3D'
 	})
 	local active_menu = managers.menu:active_menu()
 	if active_menu then
@@ -856,8 +1347,8 @@ function PocoMenu:init(ws)
 	managers.mouse_pointer:use_mouse{
 		id = PocoMenu.m_id,
 		mouse_move = callback(self, self, 'mouse_moved'),
-		mouse_press = callback(self, self, "mouse_pressed"),
-		mouse_release = callback(self, self, "mouse_released")
+		mouse_press = callback(self, self, 'mouse_pressed'),
+		mouse_release = callback(self, self, 'mouse_released')
 	}
 	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
 	if camBase then
@@ -865,6 +1356,7 @@ function PocoMenu:init(ws)
 	end
 	self._lastMove = 0
 end
+
 function PocoMenu:add(...)
 	return self.gui:add(...)
 end
@@ -900,65 +1392,74 @@ function PocoMenu:destroy()
 end
 
 function PocoMenu:mouse_moved(panel, x, y)
-	local xx,yy = x, y
-	local isNewPos = self._x ~= xx or self._y ~= yy
-	self._x = xx
-	self._y = yy
+	if self.dead then return end
+	local isNewPos = self._x ~= x or self._y ~= y
+	self._x = x
+	self._y = y
 	local _fireMouseOut = function()
 		if self.lastHot then
-			self.lastHot:fire(MouseEvent.Out,x,y)
+			self.lastHot:fire(PocoEvent.Out,x,y)
 			self.lastHot = nil
 		end
 	end
 	for ind,tab in pairs(self.gui.items) do
-		if tab:insideTab(xx,yy) and self.tabIndex ~= ind then
+		if tab:insideTab(x,y) and self.tabIndex ~= ind then
 			return true, 'link'
 		end
 	end
 	local currentTab = self.gui and self.gui.currentTab
-	local hotElem = currentTab and currentTab:isHot(MouseEvent.In, xx,yy)
+
+	local hotElem = isNewPos and currentTab and currentTab:isHot(PocoEvent.Move, x,y)
 	if hotElem then
-		if isNewPos and hotElem ~= self.lastHot then
+		hotElem:fire(PocoEvent.Move,x,y)
+	end
+
+	local hotElem = isNewPos and currentTab and currentTab:isHot(PocoEvent.In, x,y)
+	if hotElem then
+		if hotElem ~= self.lastHot then
 			_fireMouseOut()
 			self.lastHot = hotElem
-			hotElem:fire(MouseEvent.In,x,y)
+			hotElem:fire(PocoEvent.In,x,y)
 		end
-		return true, 'link'
-	else
+	elseif isNewPos then
 		_fireMouseOut()
+	end
+	local hotElem = currentTab and currentTab:isHot(PocoEvent.Pressed, x,y)
+	if hotElem then
+		return true, hotElem.cursor or 'link'
 	end
 	return true, 'arrow'
 end
 
 function PocoMenu:mouse_pressed(panel, button, x, y)
+	if self.dead then return end
 	pcall(function()
 		local scrollStep = 40
 		local currentTab = self.gui and self.gui.currentTab
-		if button == Idstring("mouse wheel down") then
-			if currentTab:isHot(MouseEvent.WheelDown, x,y, true) then
+		if button == Idstring('mouse wheel down') then
+			if currentTab:isHot(PocoEvent.WheelDown, x,y, true) then
+				managers.menu_componenet:post_event('slider_grab')
 				return true
 			end
 			if currentTab and currentTab:canScroll(true,x,y) then
 				return currentTab:scroll(-scrollStep)
 			end
-			if now() - self._lastMove > 0.1 then
+			if currentTab and not currentTab.wrapper:inside(x,y) and now() - self._lastMove > 0.1 then
 				self._lastMove = now()
 				self.gui:move(1)
 			end
-			return
-		elseif button == Idstring("mouse wheel up") then
-			if currentTab:isHot(MouseEvent.WheelUp, x,y, true) then
+		elseif button == Idstring('mouse wheel up') then
+			if currentTab:isHot(PocoEvent.WheelUp, x,y, true) then
+				managers.menu_componenet:post_event('slider_grab')
 				return true
 			end
 			if currentTab and currentTab:canScroll(false,x,y) then
 				return currentTab:scroll(scrollStep)
 			end
-			if now() - self._lastMove > 0.1 then
+			if currentTab and not currentTab.wrapper:inside(x,y) and now() - self._lastMove > 0.1 then
 				self._lastMove = now()
 				self.gui:move(-1)
 			end
-
-			return
 		end
 
 		if button == Idstring('0') then
@@ -968,21 +1469,22 @@ function PocoMenu:mouse_pressed(panel, button, x, y)
 					return true
 				end
 			end
-			return currentTab and currentTab:isHot(MouseEvent.Pressed, x,y, true)
+			return currentTab and currentTab:isHot(PocoEvent.Pressed, x,y, true)
 		end
 		if button == Idstring('1') then
-			return currentTab and currentTab:isHot(MouseEvent.PressedAlt, x,y, true)
+			return currentTab and currentTab:isHot(PocoEvent.PressedAlt, x,y, true)
 		end
 	end)
 end
 
 function PocoMenu:mouse_released(panel, button, x, y)
+	if self.dead then return end
 	local currentTab = self.gui and self.gui.currentTab
 	if button == Idstring('0') then
-		return currentTab and currentTab:isHot(MouseEvent.Released, x,y, true)
+		return currentTab and currentTab:isHot(PocoEvent.Released, x,y, true)
 	end
 	if button == Idstring('1') then
-		local hot = currentTab and currentTab:isHot(MouseEvent.ReleasedAlt, x,y, true)
+		local hot = currentTab and currentTab:isHot(PocoEvent.ReleasedAlt, x,y, true)
 		return hot or me:Menu(true)
 	end
 end
