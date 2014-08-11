@@ -1,15 +1,11 @@
 -- PocoHud3 by zenyr@zenyr.com
 if not TPocoBase then return end
 local disclamer = [[
-Okay, you're trying to read my code and I know it is unavoidable, but frankly speaking I did not want to let malicious people to get access to certain things.
-As I already promised I will open my source code someday, and for extreme early adopters like YOU, I did not put any kind of DRM, obfuscation or countermeasure to protect the code other than BASIC compilation.
-I understand your curiosity. I would've do the same. This basic luac would not bar you from what you want, I just wanted to avoid script kids' code-theft a bit. I expect you the guru would not need to do such thing.
-Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
+feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.120
-local REV = 0
-local VRR = 'T'
+local REV = 76
+local TAG = 'v0.111T'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -26,9 +22,6 @@ end
 PocoHud3Class = nil
 _req ('poco/Hud3_class.lua')
 if not PocoHud3Class then return end
-local TBuff, TPop, TFloat, THitDirection =
-	PocoHud3Class.TBuff, PocoHud3Class.TPop, PocoHud3Class.TFloat, PocoHud3Class.THitDirection
-
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
 local inO = {
@@ -437,7 +430,7 @@ function TPocoHud3:Menu(dismiss,...)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
 				x = 10, y = 10, w = 400,h=100,
-				text={{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise}},
+				text={{'PocoHud3 r'},{REV,cl.Gray},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\n'..TAG,cl.Silver}},
 				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
 			PocoHud3Class.PocoUIButton:new(tab,{
@@ -542,7 +535,7 @@ function TPocoHud3:Menu(dismiss,...)
 end
 function TPocoHud3:AnnounceStat(midgame)
 	local txt = {}
-	table.insert(txt,Icon.LC..'PocoHud³ v'.._.f(VR,3).. ' '.. VRR ..Icon.RC..' '..' Crew Kills:'..self.killa..Icon.Skull)
+	table.insert(txt,Icon.LC..'PocoHud³ r'..REV.. ' '.. Icon.RC..' '..' Crew Kills:'..self.killa..Icon.Skull)
 	for pid = 0,4 do
 		local kill = self:Stat(pid,'kill')
 		local killS = self:Stat(pid,'killS')
@@ -638,7 +631,7 @@ function TPocoHud3:HitDirection(col_ray,data)
 	managers.environment_controller._hit_some = math.min(managers.environment_controller._hit_some + managers.environment_controller._hit_amount, 1)
 	if mobPos then
 		-- TODO: Change intensity according to dmg?
-		table.insert(self.hits,THitDirection:new(self,{mobPos=mobPos,shield=data.shield,dmg=data.dmg,time=data.time}))
+		table.insert(self.hits,PocoHud3Class.THitDirection:new(self,{mobPos=mobPos,shield=data.shield,dmg=data.dmg,time=data.time}))
 	end
 end
 function TPocoHud3:Minion(pid,unit)
@@ -675,7 +668,7 @@ function TPocoHud3:Float(unit,category,temp,tag)
 		if category == 1 and not O.float.drills then
 			--
 		else
-			self.floats[key] = TFloat:new(self,{category=category,key=key,unit=unit,temp=temp, tag=tag})
+			self.floats[key] = PocoHud3Class.TFloat:new(self,{category=category,key=key,unit=unit,temp=temp, tag=tag})
 		end
 	end
 end
@@ -686,7 +679,7 @@ function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
 		buff = nil
 	end
 	if not buff then
-		buff = TBuff:new(self,data)
+		buff = PocoHud3Class.TBuff:new(self,data)
 		self.buffs[data.key] = buff
 	else
 		buff:set(data)
@@ -694,7 +687,7 @@ function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
 end
 
 function TPocoHud3:Popup(data) -- {pos=pos,text={{},{}},stay=true,st,et}
-	table.insert(self.pops ,TPop:new(self,data))
+	table.insert(self.pops ,PocoHud3Class.TPop:new(self,data))
 end
 
 function TPocoHud3:_checkBuff(t)
