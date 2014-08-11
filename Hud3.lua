@@ -1,14 +1,11 @@
 -- PocoHud3 by zenyr@zenyr.com
 if not TPocoBase then return end
 local disclamer = [[
-Okay, you're trying to read my code and I know it is unavoidable, but frankly speaking I did not want to let malicious people to get access to certain things.
-As I already promised I will open my source code someday, and for extreme early adopters like YOU, I did not put any kind of DRM, obfuscation or countermeasure to protect the code other than BASIC compilation.
-I understand your curiosity. I would've do the same. This basic luac would not bar you from what you want, I just wanted to avoid script kids' code-theft a bit. I expect you the guru would not need to do such thing.
-Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
+feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local VR = 0.120
-local VRR = 'T'
+local REV = 73
+local TAG = '0.121-2-gb6c61ea'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -25,9 +22,9 @@ end
 PocoHud3Class = nil
 _req ('poco/Hud3_class.lua')
 if not PocoHud3Class then return end
-local TBuff, TPop, TFloat, THitDirection =
-	PocoHud3Class.TBuff, PocoHud3Class.TPop, PocoHud3Class.TFloat, PocoHud3Class.THitDirection
-
+_req ('poco/Hud3_Options.lua')
+if not PocoHud3Class.Option then return end
+local O = PocoHud3Class.Option:new()
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
 local inO = {
@@ -35,118 +32,6 @@ local inO = {
 		color = {'color','White'},
 		size = {'number',22},
 	}
-}
-local O = {
-	enable = YES, -- YES/NO : 포코허드 전체 스위치
-	debug = {
-		color = cl.White:with_alpha(0.5),
-		size = 22,
-		defaultFont = NO,
-		verboseOnly = NO,
-		showFPS = YES,
-		showClockIngame = NO,
-		showClockOutgame = YES,
-	},
-	buff = {			-- === 버프 설정 === >> 재장전, 스태미너, ECM, 버서커, 불렛스톰등 표현
-		show = YES,	-- YES/NO : 버프 표현기능 사용
-		left = 10,  -- 0~100% : 버프 기준점 가로 %
-		top  = 22,  -- 0~100% : 버프 기준점 세로 %
-		maxFPS = 50,-- 자연수 : 버프 갱신주기
-		size = 70,  -- 자연수 : 버프 아이콘 크기 (단, "바닐라 스타일"에서는 무시)
-		gap = 10,   -- 자연수 : 버프 아이콘 간격 (단, "바닐라 스타일"에서는 무시)
-		align = 1,  -- [1,2,3] : 아이콘 정렬방향 1왼쪽 2중앙 3오른쪽
-		style = 2,  -- [1,2]: 버프아이콘 스타일 1포코허드(컬러) 2바닐라(순정Feel)
-
-		noSprintDelay = YES,
-		hideInteractionCircle = NO,
-		simpleBusy = YES,
-		simpleBusyRadius = 10,
-	},
-	popup = {			-- === 데미지팝업 설정 ===
-		show = YES,		-- YES/NO : 데미지팝업 사용
-		size = 20,		-- 자연수 : 팝업 글자크기
-		damageDecay = 10,	-- 초 : 팝업 지속시간
-		myDamage = YES,   	-- YES/NO : 내 데미지 표시
-		crewDamage = YES, 	-- YES/NO : 동료 플레이어 데미지 표시
-		AIDamage = YES,	-- YES/NO : 동료 AI 데미지 표시
-		handsUp = YES,		-- YES/NO : 몹이 투항하려 할 때 표시
-		dominated = YES,	-- YES/NO : 투항 완료시 표시
-	},
-	float = {				-- === 가리킨 대상 정보 설정 ===
-		show = YES,			-- YES/NO : 사용여부
-		border = NO,			-- YES/NO : 모서리 표시 사용
-		size = 15,			-- 자연수 : 정보 글자크기
-		margin = 3,			-- 자연수 : 정보 항목간 간격
-		keepOnScreen = YES,		-- YES/NO : 화면 내 유지여부
-		keepOnScreenMargin = {2,15},	-- {%,%} : 화면 내 유지시 가로, 세로 여백
-		maxOpacity = 0.9,		-- 0-1 : 불투명도
-		unit = YES,			-- YES/NO : 유닛정보 표시
-		drills = YES,			-- YES/NO : 드릴정보 표시
-	},
-	info = {				-- === 플레이어 정보 ===
-		size = 17,			-- 자연수 : 정보 글자크기
-		clock = YES,			-- YES/NO : 내 정보란 빈칸을 활용해 (현실)시간 표시
-		verboseKey = '`',		-- 문자 : 자세히 보기 모드 단축키
-	},
-	minion = {			-- === 미니언 정보 === >> Float을 활용해 Joker스킬 사용한 미니언 표시
-		show = YES		-- YES/NO
-	},
-	chat = {		-- === 주요 이벤트 채팅 방송기능 === >> 이벤트별로 중요도를 할당해, 내 자격에 따라 방송 여부 결정가능
-		readThreshold = 2,			-- 이 수치보다 높은 이벤트 발생시 내 채팅창에만 표시
-		serverSendThreshold = 3,		-- 내가 방장인 경우 플레이어에게 모두 방송
-		clientFullGameSendThreshold = 4,	-- 내가 방장이 아니지만 방장과 동시에 시작했을 경우 플레이어에게 모두 방송
-		clientMidGameSendThreshold = 5,	-- 내가 방장도 아니고 중간에 입장했지만 플레이어에게 모두 방송
-		alwaysSendThreshold = 8, -- Mute상태에서도 무조건 방송
-
-		midgameAnnounce = 50,			-- 팀원+AI합산한 킬수마다 게임 중간 통계 출력 (이벤트 중요도에 따라 방송여부 결정)
-
-		index = { -- Index: 이벤트별 중요도 할당. 높은 수치는 '많은 사람들이 알아야 하는 중요한 정보', 낮은 수치는 '별로 필요 없는 사소한 정보'를 의미
-			midStat = 3,			-- 게임 중간통계 (*게임중 입장시 부정확)
-			endStat = 4,			-- 게임 최종통계 (*게임중 입장시 부정확)
-			endStatCredit = 4, -- 게임 최종통계 후 모드 특성 설명
-			dominated = 4,			-- 몹이 투항했을 경우
-			converted = 4,			-- 플레이어가 몹을 미니언으로 변환한 경우
-			minionLost = 4,		-- 미니언 사망
-			minionShot = 4,		-- 플레이어에 의한 미니언 피격
-			hostageChanged = 1,		-- 몹 인질 수 변동
-			custody = 5,			-- 플레이어 체포
-			downed = 2,			-- 플레이어 다운(단, 클로커/테이저 등 다운카운트 감소시키는 경우만)
-			downedWarning = 5,		-- 플레이어가 3회 이상 다운
-			replenished = 5,		-- 플레이어가 의료킷으로 체력&다운카운트 복구
-			messiah = 8,			-- 플레이어가 피스톨메시아 사용
-		}
-	},
-	hitDirection = {			-- === 피격 표시 설정 ===
-		replace = YES,			-- YES/NO : 사용여부
-		duration = YES,		-- YES/초 : 지속시간을 초로 입력. YES로 설정시 쉴드 복구시간으로 자동설정(권장)
-		opacity = 0.5,			-- 0-1 : 투명도
-		number = YES,			-- YES/NO : 피해량 표시
-		numberSize = 25,		-- 피해량 글자 크기
-		numberDefaultFont = NO,	-- 피해량 폰트를 기본폰트로
-		sizeStart = 100,		-- 최초 크기
-		sizeEnd = 200,			-- 사라지기 직전의 크기
-		color = {
-			shield = cl.Aqua,	-- Color('RRGGBB') : 쉴드 손실시 색상
-			health = cl.Red	-- Color('RRGGBB') : 체력 손실시 색상
-		}
-	},
-	conv = {	-- === 미니언 사망 원인 표현용, 변경할 필요 없음 ===
-		city_swat = 'a Gensec Elite',
-		cop = 'a cop',
-		fbi = 'an FBI agent',
-		fbi_heavy_swat = 'an FBI heavy SWAT',
-		fbi_swat = 'an FBI SWAT',
-		gangster = 'a gangster',
-		gensec = 'a Gensec guard',
-		heavy_swat = 'a heavy SWAT',
-		security = 'a guard',
-		shield = 'a shield',
-		sniper = 'a sniper',
-		spooc = 'a cloaker',
-		swat = 'a SWAT',
-		tank = 'a bulldozer',
-		taser = 'a taser',
-	},
 }
 local ALTFONT= PocoHud3Class.ALTFONT
 local FONT= PocoHud3Class.FONT
@@ -164,17 +49,32 @@ _BAGS['a163786a6ddb0291']='Body'
 local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = Icon.Div,Icon.Ghost
 local skillIcon = 'guis/textures/pd2/skilltree/icons_atlas'
 local now = function () return managers.player:player_timer():time() --[[TimerManager:game():time()]] end
-
+local _conv = {	-- === 미니언 사망 원인 표현용, 변경할 필요 없음 ===
+	city_swat = 'a Gensec Elite',
+	cop = 'a cop',
+	fbi = 'an FBI agent',
+	fbi_heavy_swat = 'an FBI heavy SWAT',
+	fbi_swat = 'an FBI SWAT',
+	gangster = 'a gangster',
+	gensec = 'a Gensec guard',
+	heavy_swat = 'a heavy SWAT',
+	security = 'a guard',
+	shield = 'a shield',
+	sniper = 'a sniper',
+	spooc = 'a cloaker',
+	swat = 'a SWAT',
+	tank = 'a bulldozer',
+	taser = 'a taser',
+}
 --- Class Start ---
 local TPocoHud3 = class(TPocoBase)
 TPocoHud3.className = 'Hud'
 TPocoHud3.classVersion = 3
 --- Inherited ---
 function TPocoHud3:onInit() -- ★설정
-	Poco:LoadOptions(self:name(1),O)
-	if not O.enable then
-		return false
-	end
+--	Poco:LoadOptions(self:name(1),O)
+	O:load()
+
 	self._ws = inGame and managers.gui_data:create_fullscreen_workspace() or managers.gui_data:create_fullscreen_16_9_workspace()
 	error = function(msg)
 		if self.dead then
@@ -200,10 +100,10 @@ function TPocoHud3:onInit() -- ★설정
 	self.hits = {} -- to prevent HitDirection markers gc
 	self.gadget = self.gadget or {}
 --	self.tmp = self.pnl.dbg:bitmap{name='x', blend_mode = 'add', layer=1, x=0,y=40, color=clGood ,texture = "guis/textures/hud_icons"}
-	local dbgO = O.debug
+	local dbgO = O:get('corner')
 	self.dbgLbl = self.pnl.dbg:text{text='HUD '..(inGame and 'Ingame' or 'Outgame'), font= dbgO.defaultFont and FONT or ALTFONT, font_size = dbgO.size, color = dbgO.color, x=0,y=self.pnl.dbg:height()-dbgO.size, layer=0}
 	self:_hook()
-	local verboseKey = O.info.verboseKey
+	local verboseKey = O:get('root','verboseKey')
 	if verboseKey then
 		Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose',true),callback(self,self,'toggleVerbose',false))
 	end
@@ -258,8 +158,8 @@ function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 end
 local _lastAttk, _lastAttkpid = 0,0
 function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType)
-	local Opt = O.popup
-	if self.dead or not Opt.show then return end
+	local Opt = O:get('popup')
+	if self.dead then return end
 	local pid = self:_pid(sender)
 
 	local isPercent = damage<0
@@ -319,7 +219,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 				if isSpecial then
 					self:Stat(pid,'killS',1,true)
 				end
-				if Network:is_server() and (self.killa % O.chat.midgameAnnounce == 0) then
+				if Network:is_server() and (self.killa % O:get('chat','midstatAnnounce')*50 == 0 ) then
 					self:AnnounceStat(true)
 				end
 			end
@@ -331,7 +231,9 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 				return
 			end
 		end
-		self:Popup( {pos=pos, text=texts, stay=false, et=now()+dmgTime })
+		if Opt.enable then
+			self:Popup( {pos=pos, text=texts, stay=false, et=now()+dmgTime })
+		end
 	end)
 	if not r then _(err) end
 end
@@ -427,19 +329,19 @@ function TPocoHud3:Menu(dismiss,...)
 			end
 		elseif not dismiss then -- Show
 			managers.menu_component:post_event("menu_enter")
-			local gui = PocoMenu:new(self._ws)
+			local gui = PocoHud3Class.PocoMenu:new(self._ws)
 			self.menuGui = gui
 			--- Install tabs here ---
 			local tab = gui:add('About')
-			PocoUIButton:new(tab,{
+			PocoHud3Class.PocoUIButton:new(tab,{
 				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
 				x = 10, y = 10, w = 400,h=100,
-				text={{'PocoHud3 '},{_.f(VR,4)..VRR,cl.Green},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise}},
+				text={{'PocoHud3 r'},{REV,cl.Gray},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\n'..TAG,cl.Silver}},
 				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
-			PocoUIButton:new(tab,{
+			PocoHud3Class.PocoUIButton:new(tab,{
 				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 				end,
@@ -448,7 +350,7 @@ function TPocoHud3:Menu(dismiss,...)
 				hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki}}
 			})
 
-			PocoUIButton:new(tab,{
+			PocoHud3Class.PocoUIButton:new(tab,{
 				onPressed = function(self)
 					Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 				end,
@@ -478,35 +380,88 @@ function TPocoHud3:Menu(dismiss,...)
 				}
 			})
 			--Because WHY THE FUQ NOT
-			--[[ Commenting out to merge into master branch
+
 			tab = gui:add('Options')
-			PocoUIHintLabel:new(tab,{
-				x = 10, y = 10, h=40,
+			local y1, y2, m, col = 10, 10, 2, true
+			local x,y =function()
+				return col and (m+10) or m + 520
+			end, function(h)
+				if col then
+					y1 = y1 + h + m
+				else
+					y2 = y2 + h + m
+				end
+				return (col and y1 or y2) - h - m
+			end
+			local objs = {}
+			for category, objects in pairs(O.scheme) do
+				PocoHud3Class.PocoUIHintLabel:new(tab,{
+					x = x(), y = y(25), w=400, h=25,
+					fontSize = 25,font = FONTLARGE, align='left',
+					text={category,cl.OrangeRed}, hintText = objects[1]
+				})
+				for name,values in _pairs(objects,function(a,b)
+					local t1, t2 = O:_type(category,a),O:_type(category,b)
+					if a == 'enable' then
+						return true
+					elseif b == 'enable' then
+						return  false
+					elseif t1 == 'bool' and t2 ~= 'bool' then
+						return true
+					elseif t1 ~= 'bool' and t2 == 'bool' then
+						return false
+					end
+					return tostring(a) <= tostring(b)
+				end) do
+					if type(name) ~= 'number' then
+						local type = O:_type(category,name)
+						local value = O:get(category,name,true)
+						local hint = O:_hint(category,name)
+						if type == 'bool' then
+							objs[#objs+1] = PocoHud3Class.PocoUIBoolean:new(tab,{
+								x = x()+10, y = y(30), w=390, h=30,
+								fontSize = 20, text=name, value = value ,
+								hintText = hint
+							})
+						end
+						if type == 'color' then
+							objs[#objs+1] = PocoHud3Class.PocoUIColorValue:new(tab,{
+								x = x()+10, y = y(30), w=390, h=30,
+								fontSize = 20, text=name, value = value,
+								hintText = hint
+							})
+						end
+						if type == 'num' then
+							local range = O:_range(category,name) or {}
+							local vanity = O:_vanity(category,name)
+							local _vanity = {
+								ChatSend = 'never,readOnly,serverSend,clientFullSend,clientMidSend,alwaysSend',
+								Verbose = 'Never,Verbose only,Always',
+								MidStat = 'Never,50,100',
+								align = 'none,Start,Middle,End',
+								style = 'N/A,PocoHud,Vanilla',
+							}
+							if vanity then
+								vanity = (_vanity[vanity] or '?'):split(',')
+							end
+							objs[#objs+1] = PocoHud3Class.PocoUINumValue:new(tab,{
+								x = x()+10, y = y(30), w=390, h=30,
+								fontSize = 20, text=name, value = value, min = range[1], max = range[2], vanity = vanity,
+								hintText = hint
+							})
+						end
+					end
+				end
+				col = y1 <= y2
+			end
+			local y = math.max(y1,y2)
+			PocoHud3Class.PocoUIHintLabel:new(tab,{
+				x = 10, y = y, h=40,
 				fontSize = 30,font = FONTLARGE,
-				text={'Killswitches',cl.OrangeRed},
+				text={'SAVE',cl.White},
 				hintText = 'Please note that this screen is bound to be changed in the future.'
 			})
-
-			PocoUINumValue:new(tab,{
-				x = 10, y = 50, w = 400, h=30, min = 0, value = 5, max = 10,
-				text='TestA', hintText ='This is something'
-			})
-
-			PocoUIColorValue:new(tab,{
-				x = 10, y = 80, w = 400, h=30, value = 'Red',
-				text='TestB',hintText ='This is something'
-			})
-
-			PocoUIReversedBooleanValue:new(tab,{
-				x = 10, y = 110, w = 400, h=30, value = 'YES',
-				text='TestB',hintText ='This is something'
-			})
-
-			PocoUIStringValue:new(tab,{
-				x = 10, y = 140, w = 400, h=30, value = 'HI there',
-				text='TestB',hintText ='This is something'
-			})]]
-
+			tab:set_h(y+90)
 
 			tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
@@ -541,7 +496,7 @@ function TPocoHud3:Menu(dismiss,...)
 end
 function TPocoHud3:AnnounceStat(midgame)
 	local txt = {}
-	table.insert(txt,Icon.LC..'PocoHud³ v'.._.f(VR,3).. ' '.. VRR ..Icon.RC..' '..' Crew Kills:'..self.killa..Icon.Skull)
+	table.insert(txt,Icon.LC..'PocoHud³ r'..REV.. ' '.. Icon.RC..' '..' Crew Kills:'..self.killa..Icon.Skull)
 	for pid = 0,4 do
 		local kill = self:Stat(pid,'kill')
 		local killS = self:Stat(pid,'killS')
@@ -637,7 +592,7 @@ function TPocoHud3:HitDirection(col_ray,data)
 	managers.environment_controller._hit_some = math.min(managers.environment_controller._hit_some + managers.environment_controller._hit_amount, 1)
 	if mobPos then
 		-- TODO: Change intensity according to dmg?
-		table.insert(self.hits,THitDirection:new(self,{mobPos=mobPos,shield=data.shield,dmg=data.dmg,time=data.time}))
+		table.insert(self.hits,PocoHud3Class.THitDirection:new(self,{mobPos=mobPos,shield=data.shield,dmg=data.dmg,time=data.time}))
 	end
 end
 function TPocoHud3:Minion(pid,unit)
@@ -649,13 +604,12 @@ function TPocoHud3:Minion(pid,unit)
 	end
 end
 function TPocoHud3:Chat(category,text)
-	local Opt = O.chat
-	local catInd = Opt.index[category] or -1
-	local forceSend = catInd >= Opt.alwaysSendThreshold
-	if Opt.muted and not forceSend then return _('Muted:',text) end
-	local canRead = catInd >= Opt.readThreshold
+	local catInd = O:get('chat',category) or -1
+	local forceSend = catInd >= 5
+	if self.muted and not forceSend then return _('Muted:',text) end
+	local canRead = catInd >= 1
 	local isFullGame = not managers.statistics:is_dropin()
-	local canSend = catInd >= (Network:is_server() and Opt.serverSendThreshold or isFullGame and Opt.clientFullGameSendThreshold or Opt.clientMidGameSendThreshold)
+	local canSend = catInd >= (Network:is_server() and 2 or isFullGame and 3 or 4)
 	local tStr = _.g('managers.hud._hud_heist_timer._timer_text:text()')
 	if canRead or canSend then
 		_.c(tStr..(canSend and '' or _BROADCASTHDR_HIDDEN), text , canSend and self:_color(self.pid) or nil)
@@ -671,10 +625,10 @@ function TPocoHud3:Float(unit,category,temp,tag)
 	if float then
 		float:renew({tag=tag,temp=temp})
 	else
-		if category == 1 and not O.float.drills then
+		if category == 1 and not O:get('float','drills') then
 			--
 		else
-			self.floats[key] = TFloat:new(self,{category=category,key=key,unit=unit,temp=temp, tag=tag})
+			self.floats[key] = PocoHud3Class.TFloat:new(self,{category=category,key=key,unit=unit,temp=temp, tag=tag})
 		end
 	end
 end
@@ -685,7 +639,7 @@ function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
 		buff = nil
 	end
 	if not buff then
-		buff = TBuff:new(self,data)
+		buff = PocoHud3Class.TBuff:new(self,data)
 		self.buffs[data.key] = buff
 	else
 		buff:set(data)
@@ -693,7 +647,7 @@ function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
 end
 
 function TPocoHud3:Popup(data) -- {pos=pos,text={{},{}},stay=true,st,et}
-	table.insert(self.pops ,TPop:new(self,data))
+	table.insert(self.pops ,PocoHud3Class.TPop:new(self,data))
 end
 
 function TPocoHud3:_checkBuff(t)
@@ -713,7 +667,7 @@ function TPocoHud3:_checkBuff(t)
 					iconRect = { 2*64, 2*64,64,64 },
 					text=text,
 					color=cl.Red,
-					st=O.buff.style==2 and damage_ratio or 1-damage_ratio, et=1
+					st=O:get('buff','style')==2 and damage_ratio or 1-damage_ratio, et=1
 				})
 			end
 		else
@@ -808,11 +762,11 @@ function TPocoHud3:_updatePlayers(t)
 						pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=80}
 						local wp = {bPnl._player_panel:world_position()}
 						pnl:set_world_position(wp[1],wp[2]-30)
-
+						local fontSize = O:get('playerBottom','size')
 						--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture="guis/textures/test_blur_df", render_template="VertexColorTexturedBlur3D", layer=-1, x=0,y=0 } )
-						self['pnl_lbl'..i] = pnl:text{name='lbl',align='right', text='-', font=FONT, font_size = O.info.size, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
-						self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = O.info.size, color = cl.Black:with_alpha(0.4), x=0,y=0, layer=1, blend_mode = 'normal'}
-						self['pnl_lblB'..i] = pnl:text{name='lblB',align='right', text='-', font=FONT, font_size = O.info.size, color = cl.Black:with_alpha(0.4), x=2,y=0, layer=1, blend_mode = 'normal'}
+						self['pnl_lbl'..i] = pnl:text{name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
+						self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=0,y=0, layer=1, blend_mode = 'normal'}
+						self['pnl_lblB'..i] = pnl:text{name='lblB',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=2,y=0, layer=1, blend_mode = 'normal'}
 						self['pnl_'..i] = pnl
 					end
 				end
@@ -871,7 +825,7 @@ function TPocoHud3:_updatePlayers(t)
 			txts[#txts+1]={ping,cl.White:with_alpha(0.5)}
 			txts[#txts+1]={' '..Icon.Ghost..downs..(lives>0 and '/4' or ''),downs<3 and clGood or Color.red}
 
-			if isMe and O.info.clock then
+			if isMe and O:get('playerBottom','clock') then
 				txts[#txts+1]={os.date(' %X'),Color.white}
 			end
 			txts[#txts+1] = {' ',cl.White}
@@ -913,7 +867,7 @@ function TPocoHud3:_updatePlayers(t)
 	end
 end
 function TPocoHud3:_isSimple(key)
-	return O.buff.simpleBusy and (key == 'transition' or key == 'charge')
+	return O:get('buff','simpleBusy') and (key == 'transition' or key == 'charge')
 end
 local _mask = World:make_slot_mask(1, 2, 8, 11, 12, 14, 16, 18, 21, 22, 25, 26, 33, 34, 35 )
 --1, 11, 38
@@ -925,7 +879,7 @@ function TPocoHud3:_updateItems(t,dt)
 	self:_scanSmoke(t)
 	self:_updatePlayers(t)
 	-- ScanFloat
-	if O.float.unit then
+	if O:get('float','unit') then
 		local r = _.r(_mask)
 		if r and r.unit then
 			local unit = r.unit
@@ -956,12 +910,13 @@ function TPocoHud3:_updateItems(t,dt)
 	end
 	-- ScanBuff
 	self:_checkBuff(t)
-	if t - (self._lastBuff or 0) >= 1/O.buff.maxFPS then
+	if t - (self._lastBuff or 0) >= 1/O:get('buff','maxFPS') then
 		self._lastBuff = t
-		local style = O.buff.style
+		local buffO = O:get('buff')
+		local style = buffO.style
 		local vanilla = style == 2
-		local align = O.buff.align
-		local size = (vanilla and 40 or O.buff.size) + O.buff.gap
+		local align = buffO.align
+		local size = (vanilla and 40 or buffO.size) + buffO.gap
 		local count = 0
 		for key,buff in pairs(self.buffs) do
 			if not (buff.dead or buff.dying or self:_isSimple(key)) then
@@ -969,8 +924,8 @@ function TPocoHud3:_updateItems(t,dt)
 			end
 		end
 		local x,y,move = self._ws:size()
-		x = x * O.buff.left/100 - size/2
-		y = y * O.buff.top/100 - size/2
+		x = x * buffO.left/100 - size/2
+		y = y * buffO.top/100 - size/2
 		local oX,oY = x,y
 		if align == 1 then
 			move = size
@@ -1022,7 +977,7 @@ end
 
 function TPocoHud3:_upd_dbgLbl(t,dt)
 	if self.dead then return end
-	local dO = O.debug
+	local dO = O:get('corner')
 	if dO.verboseOnly then
 		self.dbgLbl:set_visible(self.verbose)
 	end
@@ -1228,7 +1183,7 @@ function TPocoHud3:_name(something)
 		if pName then
 			return self:_name(pName)
 		else
-			local conv = O.conv
+			local conv = _conv
 			return conv[something] or 'AI'
 		end
 	end
@@ -1437,7 +1392,7 @@ function TPocoHud3:_hook()
 		hook( PlayerStandard, '_end_action_running', function( self,t, input, complete  )
 			Run('_end_action_running', self, t, input, complete )
 			local et = self._end_running_expire_t
-			if not (self.RUN_AND_SHOOT or O.buff.noSprintDelay) and et then
+			if not (self.RUN_AND_SHOOT or O:get('buff','noSprintDelay')) and et then
 				pcall(me.Buff,me,({
 					key='transition', good=false,
 					icon=skillIcon,
@@ -1575,7 +1530,7 @@ function TPocoHud3:_hook()
 			me._lastAttkUnit = attacker_unit
 			return Run('_look_for_friendly_fire', self, attacker_unit)
 		end)
-		if O.hitDirection.replace then
+		if O:get('hit','enable') then
 			hook( PlayerDamage, '_hit_direction', function( self, col_ray )
 				if not col_ray then
 					Run('_hit_direction', self, col_ray)
@@ -1673,10 +1628,10 @@ function TPocoHud3:_hook()
 		--CopMovement
 		hook( CopMovement, 'action_request', function( ...  )
 			local self, action_desc = unpack({...})
-			local dmgTime = O.popup.damageDecay
-			if action_desc.variant == 'hands_up' and O.popup.handsUp then
+			local dmgTime = O:get('popup','damageDecay')
+			if action_desc.variant == 'hands_up' and O:get('popup','handsUp') then
 				me:Popup({pos=me:_pos(self._unit),text={{'Hands-Up',cl.White}},stay=false,et=now()+dmgTime})
-			elseif action_desc.variant == 'tied' and O.popup.dominated then
+			elseif action_desc.variant == 'tied' and O:get('popup','dominated') then
 				if not managers.enemy:is_civilian( self._unit ) then
 					me:Popup({pos=me:_pos(self._unit),text={{'Intimidated',cl.White}},stay=false,et=now()+dmgTime})
 					me:Chat('dominated',me:_name(self._unit)..' around '..me:_name(me:_pos(self._unit))..' has been captured.'..(me._hostageTxt or ''))
@@ -1704,14 +1659,15 @@ function TPocoHud3:_hook()
 
 		hook( ECMJammerBase, 'set_active', function( self, active )
 			Run('set_active', self, active )
-			local et = self:battery_life()
-			if active and et then
+			local et = self:battery_life() + now()
+			if active and (me._lastECM or 0 < et)then
+				me._lastECM = et
 				pcall(me.Buff,me,({
 					key='ecm', good=true,
 					icon=skillIcon,
 					iconRect = { 1*64, 4*64,64,64 },
 					text='',
-					st=now(), et=et+now()
+					st=now(), et=et
 				}) )
 			end
 		end)
@@ -1757,9 +1713,9 @@ function TPocoHud3:_hook()
 		end)
 		hook( ChatManager, '_receive_message', function( self, ... )
 			local channel_id, name, message, color, icon = unpack({...})
-			if not O.chat.muted and (name ~= me:_name(me.pid)) and (name ~= _BROADCASTHDR) and message and not Network:is_server() and message:find(_BROADCASTHDR) then
+			if not me._muted and (name ~= me:_name(me.pid)) and (name ~= _BROADCASTHDR) and message and not Network:is_server() and message:find(_BROADCASTHDR) then
 				_.c(_BROADCASTHDR_HIDDEN,'PocoHud broadcast Muted.')
-				O.chat.muted = true
+				me._muted = true
 			end
 			return Run('_receive_message', self,  ...)
 		end)
@@ -2010,7 +1966,7 @@ function TPocoHud3:_hook()
 			end
 		end)
 		-- Hide interaction circle
-		if O.buff.hideInteractionCircle then
+		if O:get('buff','hideInteractionCircle') then
 			hook( HUDInteraction, 'show_interaction_bar', function( ... )
 				local self, current, total = unpack{...}
 				Run('show_interaction_bar', ...)
@@ -2049,9 +2005,9 @@ function TPocoHud3:_hook()
 				local params = {
 								name			= peer:name(),
 								text_id			= _.s((rank and rank..'-' or '')..(peer:level() or '?'),peer:name()),
-								callback		= "kick_player",
+								callback		= 'kick_player',
 								to_upper		= false,
-								localize		= "false",
+								localize		= 'false',
 								rpc				= peer:rpc(),
 								peer			= peer,
 								}
@@ -2067,7 +2023,12 @@ function TPocoHud3:_hook()
 	hook( MenuComponentManager, 'mouse_moved', function( ... )
 		local self, o, x, y = unpack{...}
 		if me.menuGui then
-			return me.menuGui:mouse_moved(o, managers.gui_data:safe_to_full(x,y))
+			if not inGame then
+				x,y = managers.gui_data:safe_to_full_16_9(x,y)
+				return me.menuGui:mouse_moved(false, o, x,y)
+			else
+				return true
+			end
 		else
 			return Run('mouse_moved', ...)
 		end
@@ -2075,7 +2036,7 @@ function TPocoHud3:_hook()
 	hook( MenuComponentManager, 'mouse_pressed', function( ... )
 		local self, o, button, x, y = unpack{...}
 		if me.menuGui and me.menuGui.mouse_pressed then
-			local used, pointer = me.menuGui:mouse_pressed(o, button, x, y)
+			local used, pointer = me.menuGui:mouse_pressed(false, o, button, x,y)
 			if used then
 				return true, pointer
 			end
@@ -2085,7 +2046,7 @@ function TPocoHud3:_hook()
 	hook( MenuComponentManager, 'mouse_released', function( ... )
 		local self, o, button, x, y = unpack{...}
 		if me.menuGui and me.menuGui.mouse_released then
-			local used, pointer = me.menuGui:mouse_released(o, button, x, y)
+			local used, pointer = me.menuGui:mouse_released(false, o, button, x,y)
 			if used then
 				return true, pointer
 			end
@@ -2100,7 +2061,10 @@ function TPocoHud3:_hook()
 		end
 	end)
 	hook( MenuInput, 'update**', function( ... )
-		return me.menuGui or Run('update**', ...)
+		if me.menuGui and self.mouse_moved then
+			return --me.menuGui:mouse_moved(managers.mouse_pointer:mouse(), managers.mouse_pointer:world_position())
+		end
+		return Run('update**', ...)
 	end)
 
 end

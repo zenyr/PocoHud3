@@ -347,8 +347,8 @@ if type(_) ~= 'table' then
 	_ = nil
 	return
 end
-setmetatable(_,{__call = function(__,...) return _.W(...) end})
 UNDERSCORE = _
+setmetatable(_,{__call = function(__,...) return UNDERSCORE.W(...) end})
 for k,v in pairs(table.deepcopy(_)) do
 	_[k:lower()] = v
 end
