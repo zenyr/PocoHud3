@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 70
-local TAG = 'v0.111T-20-g3711840'
+local REV = 71
+local TAG = '0.121'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -23,6 +23,7 @@ PocoHud3Class = nil
 _req ('poco/Hud3_class.lua')
 if not PocoHud3Class then return end
 _req ('poco/Hud3_Options.lua')
+if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
@@ -48,7 +49,23 @@ _BAGS['a163786a6ddb0291']='Body'
 local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = Icon.Div,Icon.Ghost
 local skillIcon = 'guis/textures/pd2/skilltree/icons_atlas'
 local now = function () return managers.player:player_timer():time() --[[TimerManager:game():time()]] end
-
+local _conv = {	-- === 미니언 사망 원인 표현용, 변경할 필요 없음 ===
+	city_swat = 'a Gensec Elite',
+	cop = 'a cop',
+	fbi = 'an FBI agent',
+	fbi_heavy_swat = 'an FBI heavy SWAT',
+	fbi_swat = 'an FBI SWAT',
+	gangster = 'a gangster',
+	gensec = 'a Gensec guard',
+	heavy_swat = 'a heavy SWAT',
+	security = 'a guard',
+	shield = 'a shield',
+	sniper = 'a sniper',
+	spooc = 'a cloaker',
+	swat = 'a SWAT',
+	tank = 'a bulldozer',
+	taser = 'a taser',
+}
 --- Class Start ---
 local TPocoHud3 = class(TPocoBase)
 TPocoHud3.className = 'Hud'
@@ -57,6 +74,7 @@ TPocoHud3.classVersion = 3
 function TPocoHud3:onInit() -- ★설정
 --	Poco:LoadOptions(self:name(1),O)
 	O:load()
+
 	self._ws = inGame and managers.gui_data:create_fullscreen_workspace() or managers.gui_data:create_fullscreen_16_9_workspace()
 	error = function(msg)
 		if self.dead then
@@ -141,7 +159,7 @@ end
 local _lastAttk, _lastAttkpid = 0,0
 function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType)
 	local Opt = O:get('popup')
-	if self.dead or not Opt.show then return end
+	if self.dead then return end
 	local pid = self:_pid(sender)
 
 	local isPercent = damage<0
@@ -201,7 +219,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 				if isSpecial then
 					self:Stat(pid,'killS',1,true)
 				end
-				if Network:is_server() and (self.killa % O:get('chat','midgameAnnounce') == 0 ) then
+				if Network:is_server() and (self.killa % O:get('chat','midstatAnnounce')*50 == 0 ) then
 					self:AnnounceStat(true)
 				end
 			end
@@ -213,7 +231,9 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 				return
 			end
 		end
-		self:Popup( {pos=pos, text=texts, stay=false, et=now()+dmgTime })
+		if Opt.enable then
+			self:Popup( {pos=pos, text=texts, stay=false, et=now()+dmgTime })
+		end
 	end)
 	if not r then _(err) end
 end
@@ -360,35 +380,95 @@ function TPocoHud3:Menu(dismiss,...)
 				}
 			})
 			--Because WHY THE FUQ NOT
-			--[[ Commenting out to merge into master branch
+
 			tab = gui:add('Options')
-			PocoUIHintLabel:new(tab,{
-				x = 10, y = 10, h=40,
+			local y1, y2, m, col = 10, 10, 2, true
+			local x,y =function()
+				return col and (m+10) or m + 520
+			end, function(h)
+				if col then
+					y1 = y1 + h + m
+				else
+					y2 = y2 + h + m
+				end
+				return (col and y1 or y2) - h - m
+			end
+			local objs = {}
+			for category, objects in pairs(O.scheme) do
+				PocoHud3Class.PocoUIHintLabel:new(tab,{
+					x = x(), y = y(25), w=400, h=25,
+					fontSize = 25,font = FONTLARGE, align='left',
+					text={category,cl.OrangeRed}, hintText = objects[1]
+				})
+				for name,values in _pairs(objects,function(a,b)
+					local t1, t2 = O:_type(category,a),O:_type(category,b)
+					if t1 == 'bool' and t2 ~= 'bool' then
+						return true
+					elseif t1 ~= 'bool' and t2 == 'bool' then
+						return false
+					end
+					return tostring(a) <= tostring(b)
+				end) do
+					if type(name) ~= 'number' then
+						local type = O:_type(category,name)
+						local value = O:get(category,name,true)
+						local hint = O:_hint(category,name)
+						if type == 'bool' then
+							objs[#objs+1] = PocoHud3Class.PocoUIBoolean:new(tab,{
+								x = x()+10, y = y(25), w=390, h=20,
+								fontSize = 20, text=name, value = value ,
+								hintText = hint
+							})
+						end
+						if type == 'color' then
+							objs[#objs+1] = PocoHud3Class.PocoUIColorValue:new(tab,{
+								x = x()+10, y = y(25), w=390, h=20,
+								fontSize = 20, text=name, value = value,
+								hintText = hint
+							})
+						end
+						if type == 'num' then
+							local range = O:_range(category,name) or {}
+							local vanity = O:_vanity(category,name)
+							local _vanity = {
+								ChatSend = 'never,readOnly,serverSend,clientFullSend,clientMidSend,alwaysSend',
+								Verbose	= 'never,verbose,always',
+								MidStat	= 'never,50,100',
+							}
+							if vanity then
+								vanity = (_vanity[vanity] or '?'):split(',')
+							end
+							objs[#objs+1] = PocoHud3Class.PocoUINumValue:new(tab,{
+								x = x()+10, y = y(25), w=390, h=20,
+								fontSize = 20, text=name, value = value, min = range[1], max = range[2], vanity = vanity,
+								hintText = hint
+							})
+						end
+					end
+				end
+				col = y1 <= y2
+			end
+			local y = math.max(y1,y2)
+			PocoHud3Class.PocoUIHintLabel:new(tab,{
+				x = 10, y = y, h=40,
 				fontSize = 30,font = FONTLARGE,
-				text={'Killswitches',cl.OrangeRed},
+				text={'SAVE',cl.White},
 				hintText = 'Please note that this screen is bound to be changed in the future.'
 			})
+			tab:set_h(y+90)
+			tab = gui:add('TEST')
 
-			PocoUINumValue:new(tab,{
-				x = 10, y = 50, w = 400, h=30, min = 0, value = 5, max = 10,
-				text='TestA', hintText ='This is something'
+			local a = tab.pnl:bitmap({
+				texture = 'guis/textures/menu_tickbox',
+				color = cl.Green,
+				x = 20,
+				y = 1,
+				blend_mode = 'add',
+				--rotation = 180,
 			})
-
-			PocoUIColorValue:new(tab,{
-				x = 10, y = 80, w = 400, h=30, value = 'Red',
-				text='TestB',hintText ='This is something'
-			})
-
-			PocoUIReversedBooleanValue:new(tab,{
-				x = 10, y = 110, w = 400, h=30, value = 'YES',
-				text='TestB',hintText ='This is something'
-			})
-
-			PocoUIStringValue:new(tab,{
-				x = 10, y = 140, w = 400, h=30, value = 'HI there',
-				text='TestB',hintText ='This is something'
-			})]]
-
+			tab.pnl:rect{
+				x  = 20, y =  1, w = a:w(), h  = a:h(),   color = cl.Gray:with_alpha(0.1)
+			}
 
 			tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
@@ -531,13 +611,12 @@ function TPocoHud3:Minion(pid,unit)
 	end
 end
 function TPocoHud3:Chat(category,text)
-	local Opt = O:get('chat')
-	local catInd = Opt.index[category] or -1
-	local forceSend = catInd >= Opt.alwaysSendThreshold
-	if Opt.muted and not forceSend then return _('Muted:',text) end
-	local canRead = catInd >= Opt.readThreshold
+	local catInd = O:get('chat',category) or -1
+	local forceSend = catInd >= 5
+	if self.muted and not forceSend then return _('Muted:',text) end
+	local canRead = catInd >= 1
 	local isFullGame = not managers.statistics:is_dropin()
-	local canSend = catInd >= (Network:is_server() and Opt.serverSendThreshold or isFullGame and Opt.clientFullGameSendThreshold or Opt.clientMidGameSendThreshold)
+	local canSend = catInd >= (Network:is_server() and 2 or isFullGame and 3 or 4)
 	local tStr = _.g('managers.hud._hud_heist_timer._timer_text:text()')
 	if canRead or canSend then
 		_.c(tStr..(canSend and '' or _BROADCASTHDR_HIDDEN), text , canSend and self:_color(self.pid) or nil)
@@ -838,12 +917,13 @@ function TPocoHud3:_updateItems(t,dt)
 	end
 	-- ScanBuff
 	self:_checkBuff(t)
-	if t - (self._lastBuff or 0) >= 1/O.buff.maxFPS then
+	if t - (self._lastBuff or 0) >= 1/O:get('buff','maxFPS') then
 		self._lastBuff = t
-		local style = O.buff.style
+		local buffO = O:get('buff')
+		local style = buffO.style
 		local vanilla = style == 2
-		local align = O.buff.align
-		local size = (vanilla and 40 or O.buff.size) + O.buff.gap
+		local align = buffO.align
+		local size = (vanilla and 40 or buffO.size) + buffO.gap
 		local count = 0
 		for key,buff in pairs(self.buffs) do
 			if not (buff.dead or buff.dying or self:_isSimple(key)) then
@@ -851,8 +931,8 @@ function TPocoHud3:_updateItems(t,dt)
 			end
 		end
 		local x,y,move = self._ws:size()
-		x = x * O.buff.left/100 - size/2
-		y = y * O.buff.top/100 - size/2
+		x = x * buffO.left/100 - size/2
+		y = y * buffO.top/100 - size/2
 		local oX,oY = x,y
 		if align == 1 then
 			move = size
@@ -904,7 +984,7 @@ end
 
 function TPocoHud3:_upd_dbgLbl(t,dt)
 	if self.dead then return end
-	local dO = O.debug
+	local dO = O:get('corner')
 	if dO.verboseOnly then
 		self.dbgLbl:set_visible(self.verbose)
 	end
@@ -1110,7 +1190,7 @@ function TPocoHud3:_name(something)
 		if pName then
 			return self:_name(pName)
 		else
-			local conv = O.conv
+			local conv = _conv
 			return conv[something] or 'AI'
 		end
 	end
@@ -1319,7 +1399,7 @@ function TPocoHud3:_hook()
 		hook( PlayerStandard, '_end_action_running', function( self,t, input, complete  )
 			Run('_end_action_running', self, t, input, complete )
 			local et = self._end_running_expire_t
-			if not (self.RUN_AND_SHOOT or O.buff.noSprintDelay) and et then
+			if not (self.RUN_AND_SHOOT or O:get('buff','noSprintDelay')) and et then
 				pcall(me.Buff,me,({
 					key='transition', good=false,
 					icon=skillIcon,
@@ -1457,7 +1537,7 @@ function TPocoHud3:_hook()
 			me._lastAttkUnit = attacker_unit
 			return Run('_look_for_friendly_fire', self, attacker_unit)
 		end)
-		if O.hitDirection.replace then
+		if O:get('hit','enable') then
 			hook( PlayerDamage, '_hit_direction', function( self, col_ray )
 				if not col_ray then
 					Run('_hit_direction', self, col_ray)
@@ -1555,10 +1635,10 @@ function TPocoHud3:_hook()
 		--CopMovement
 		hook( CopMovement, 'action_request', function( ...  )
 			local self, action_desc = unpack({...})
-			local dmgTime = O.popup.damageDecay
-			if action_desc.variant == 'hands_up' and O.popup.handsUp then
+			local dmgTime = O:get('popup','damageDecay')
+			if action_desc.variant == 'hands_up' and O:get('popup','handsUp') then
 				me:Popup({pos=me:_pos(self._unit),text={{'Hands-Up',cl.White}},stay=false,et=now()+dmgTime})
-			elseif action_desc.variant == 'tied' and O.popup.dominated then
+			elseif action_desc.variant == 'tied' and O:get('popup','dominated') then
 				if not managers.enemy:is_civilian( self._unit ) then
 					me:Popup({pos=me:_pos(self._unit),text={{'Intimidated',cl.White}},stay=false,et=now()+dmgTime})
 					me:Chat('dominated',me:_name(self._unit)..' around '..me:_name(me:_pos(self._unit))..' has been captured.'..(me._hostageTxt or ''))
@@ -1639,9 +1719,9 @@ function TPocoHud3:_hook()
 		end)
 		hook( ChatManager, '_receive_message', function( self, ... )
 			local channel_id, name, message, color, icon = unpack({...})
-			if not O.chat.muted and (name ~= me:_name(me.pid)) and (name ~= _BROADCASTHDR) and message and not Network:is_server() and message:find(_BROADCASTHDR) then
+			if not me._muted and (name ~= me:_name(me.pid)) and (name ~= _BROADCASTHDR) and message and not Network:is_server() and message:find(_BROADCASTHDR) then
 				_.c(_BROADCASTHDR_HIDDEN,'PocoHud broadcast Muted.')
-				O.chat.muted = true
+				me._muted = true
 			end
 			return Run('_receive_message', self,  ...)
 		end)
@@ -1892,7 +1972,7 @@ function TPocoHud3:_hook()
 			end
 		end)
 		-- Hide interaction circle
-		if O.buff.hideInteractionCircle then
+		if O:get('buff','hideInteractionCircle') then
 			hook( HUDInteraction, 'show_interaction_bar', function( ... )
 				local self, current, total = unpack{...}
 				Run('show_interaction_bar', ...)
@@ -1931,9 +2011,9 @@ function TPocoHud3:_hook()
 				local params = {
 								name			= peer:name(),
 								text_id			= _.s((rank and rank..'-' or '')..(peer:level() or '?'),peer:name()),
-								callback		= "kick_player",
+								callback		= 'kick_player',
 								to_upper		= false,
-								localize		= "false",
+								localize		= 'false',
 								rpc				= peer:rpc(),
 								peer			= peer,
 								}

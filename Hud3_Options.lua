@@ -1,109 +1,115 @@
+local TRUE,FALSE = true,false
 local scheme = {
-	root = {
-		enable = {'bool',TRUE}
-		verboseKey = {'key','`',nil,'Keybind for verbose mode'}
-		verboseToggle = {'bool',FALSE,nil,'Toggle verbose mode'}
+	root = {	{'PocoHud3 Main configuration'},
+		enable = {'bool',TRUE},
+		verboseKey = {'key','`',nil,'Keybind for verbose mode'},
+		verboseToggle = {'bool',FALSE,nil,'Toggle verbose mode'},
 	}, corner = {
-		color  = {'color','white','color'}
-		size  = {'num',22,{10,30},'Font size'}
-		defaultFont  = {'bool',FALSE}
-		verboseOnly  = {'bool',FALSE}
-		showFPS  = {'bool',TRUE}
-		showClockIngame  = {'bool',FALSE}
-		showClockOutgame  = {'bool',TRUE}
+		color  = {'color','White','color'},
+		size  = {'num',22,{10,30},'Font size'},
+		defaultFont  = {'bool',FALSE},
+		verboseOnly  = {'bool',FALSE},
+		showFPS  = {'bool',TRUE},
+		showClockIngame  = {'bool',FALSE},
+		showClockOutgame  = {'bool',TRUE},
 	}, buff = {
-		enable = {'bool',TRUE}
+		enable = {'bool',TRUE},
 
-		left  = {'num',10,{0,100}}
-		top   = {'num',22,{0,100}}
-		maxFPS  = {'num',50}
-		size  = {'num',70}
-		gap  = {'num',10}
-		align  = {'num',1,{1,3}}
-		style  = {'num',2,{1,2}}
+		left  = {'num',10,{0,100}},
+		top   = {'num',22,{0,100}},
+		maxFPS  = {'num',50},
+		size  = {'num',70},
+		gap  = {'num',10},
+		align  = {'num',1,{1,3}},
+		style  = {'num',2,{1,2}},
 
-		noSprintDelay  = {'bool',TRUE}
-		hideInteractionCircle  = {'bool',FALSE}
-		simpleBusy  = {'bool',TRUE}
-		simpleBusyRadius  = {'num',10,{5,30}}
+		noSprintDelay  = {'bool',TRUE},
+		hideInteractionCircle  = {'bool',FALSE},
+		simpleBusy  = {'bool',TRUE},
+		simpleBusyRadius  = {'num',10,{5,30}},
 	}, playerFloat = {
-		enable = {'bool',TRUE}
-		showRank = {'num',2,{0,2},nil,'Verbose'}
-		showDistance = {'num',2,{0,2},nil,'Verbose'}
-		showInspire = {'num',2,{0,2},nil,'Verbose'}
+		enable = {'bool',TRUE},
+		showRank = {'num',2,{0,2},nil,'Verbose'},
+		showDistance = {'num',2,{0,2},nil,'Verbose'},
+		showInspire = {'num',2,{0,2},nil,'Verbose'},
 	}, playerBottom = {
-		enable = {'bool',TRUE}
-		size = {'num',17}
-		clock = {'bool',TRUE}
-		showRank = {'bool',TRUE}
-		showInteraction = {'num',2,{0,2},nil,'Verbose'}
-		showKill = {'num',2,{0,2},nil,'Verbose'}
-		showSpecial = {'num',1,{0,2},nil,'Verbose'}
-		showInspire = {'num',2,{0,2},nil,'Verbose'}
-		showDistance = {'num',2,{0,2},nil,'Verbose'}
-		showPing = {'num',1,{0,2},nil,'Verbose'}
-		showMinion = {'num',1,{0,2},nil,'Verbose'}
+		enable = {'bool',TRUE},
+		size = {'num',17},
+		clock = {'bool',TRUE},
+		showRank = {'bool',TRUE},
+		showInteraction = {'num',2,{0,2},nil,'Verbose'},
+		showKill = {'num',2,{0,2},nil,'Verbose'},
+		showSpecial = {'num',1,{0,2},nil,'Verbose'},
+		showInspire = {'num',2,{0,2},nil,'Verbose'},
+		showDistance = {'num',2,{0,2},nil,'Verbose'},
+		showPing = {'num',1,{0,2},nil,'Verbose'},
+		showMinion = {'num',1,{0,2},nil,'Verbose'},
 	}, popup = {
-		enable = {'bool',TRUE}
-		size  = {'num',22,{10,30}}
-		damageDecay  = {'num',10,{3,15}}
-		myDamage  = {'bool',TRUE}
-		crewDamage  = {'bool',TRUE}
-		AIDamage  = {'bool',TRUE}
-		handsUp  = {'bool',TRUE}
-		dominated  = {'bool',TRUE}
+		enable = {'bool',TRUE},
+		size  = {'num',22,{10,30}},
+		damageDecay  = {'num',10,{3,15}},
+		myDamage  = {'bool',TRUE},
+		crewDamage  = {'bool',TRUE},
+		AIDamage  = {'bool',TRUE},
+		handsUp  = {'bool',TRUE},
+		dominated  = {'bool',TRUE},
 
 	}, chat = {
-		enable = {'bool',TRUE}
-		midStat  = {'num',1,{0,5},nil,'ChatSend'}
-		endStat  = {'num',2,{0,5},nil,'ChatSend'}
-		endStatCredit  = {'num',2,{0,5},nil,'ChatSend'}
-		dominated  = {'num',2,{0,5},nil,'ChatSend'}
-		converted  = {'num',2,{0,5},nil,'ChatSend'}
-		minionLost  = {'num',2,{0,5},nil,'ChatSend'}
-		minionShot  = {'num',4,{0,5},nil,'ChatSend'}
-		hostageChanged  = {'num',2,{0,5},nil,'ChatSend'}
-		custody  = {'num',2,{0,5},nil,'ChatSend'}
-		downed  = {'num',1,{0,5},nil,'ChatSend'}
-		downedWarning  = {'num',4,{0,5},nil,'ChatSend'}
-		replenished  = {'num',3,{0,5},nil,'ChatSend'}
-		messiah  = {'num',5,{0,5},nil,'ChatSend'}
+		enable = {'bool',TRUE},
+		midstatAnnounce = {'num',0,{0,2},nil,'MidStat'},
+		midStat  = {'num',1,{0,5},nil,'ChatSend'},
+		endStat  = {'num',2,{0,5},nil,'ChatSend'},
+		endStatCredit  = {'num',2,{0,5},nil,'ChatSend'},
+		dominated  = {'num',2,{0,5},nil,'ChatSend'},
+		converted  = {'num',2,{0,5},nil,'ChatSend'},
+		minionLost  = {'num',2,{0,5},nil,'ChatSend'},
+		minionShot  = {'num',4,{0,5},nil,'ChatSend'},
+		hostageChanged  = {'num',2,{0,5},nil,'ChatSend'},
+		custody  = {'num',2,{0,5},nil,'ChatSend'},
+		downed  = {'num',1,{0,5},nil,'ChatSend'},
+		downedWarning  = {'num',4,{0,5},nil,'ChatSend'},
+		replenished  = {'num',3,{0,5},nil,'ChatSend'},
+		messiah  = {'num',5,{0,5},nil,'ChatSend'},
 	}, hit = {
-		enable = {'bool',TRUE}
-		duration  = {'num',0,{0,5}}
-		opacity  = {'num',50,{0,100}}
-		number  = {'bool',TRUE}
-		numberSize  = {'num',25,{20,30}}
-		numberDefaultFont  = {'bool',FALSE}
-		sizeStart  = {'num',100,{50,150}}
-		sizeEnd  = {'num',200,{100,300}}
-		shieldColor = {'color','Aqua','color'}
-		healthColor = {'color','Red','color'}
+		enable = {'bool',TRUE},
+		duration  = {'num',0,{0,5}},
+		opacity  = {'num',50,{0,100}},
+		number  = {'bool',TRUE},
+		numberSize  = {'num',25,{20,30}},
+		numberDefaultFont  = {'bool',FALSE},
+		sizeStart  = {'num',100,{50,150}},
+		sizeEnd  = {'num',200,{100,300}},
+		shieldColor = {'color','Aqua','color'},
+		healthColor = {'color','Red','color'},
 	}, float = {
-		enable = {'bool',TRUE}
-		border = {'bool',FALSE}
-		size = {'num',15,{10,20}}
-		margin = {'num',3,{0,5}}
-		keepOnScreen = {'bool',TRUE}
-		KeepOnScreenMarginX = {'num',2,{0,20}}
-		KeepOnScreenMarginY = {'num',15,{0,20}}
-		opacity  = {'num',90,{10,100}}
-		unit = {'bool',TRUE}
-		drills = {'bool',TRUE}
-		minion = {'bool',TRUE}
-		bags = {'bool',TRUE}
+		enable = {'bool',TRUE},
+		border = {'bool',FALSE},
+		size = {'num',15,{10,20}},
+		margin = {'num',3,{0,5}},
+		keepOnScreen = {'bool',TRUE},
+		keepOnScreenMarginX = {'num',2,{0,20}},
+		keepOnScreenMarginY = {'num',15,{0,20}},
+		opacity  = {'num',90,{10,100}},
+		unit = {'bool',TRUE},
+		drills = {'bool',TRUE},
+		minion = {'bool',TRUE},
+		bags = {'bool',TRUE},
 	}, game = {
-		fasterDesyncResolve = {'bool',TRUE}
-		showRemaining = {'bool',TRUE}
+		fasterDesyncResolve = {'bool',TRUE},
+		showRemaining = {'bool',TRUE},
 	}
 }
 ----------------------------------------------------
 local JSONFileName = 'poco\\hud3_config.json'
+local isNil = function(a)
+	return a == nil
+end
+
 local Option = class()
 PocoHud3Class.Option = Option
 function Option:init()
 	self:reset()
-	self.scheme = table.deepcopy(self.items)
+	self.scheme = table.deepcopy(scheme)
 end
 
 function Option:reset()
@@ -156,12 +162,19 @@ end
 
 function Option:_get(isScheme, category,name)
 	local o = isScheme and self.scheme or self.items
-	return o[category] and o[category][name] or {}
+	local result = o[category] and o[category][name]
+	if isNil(result) then
+		if isScheme then
+			_('_get was Nil', category, name) -- this should NOT happen
+		end
+		result = isScheme and {} or nil
+	end
+	return result
 end
 
 function Option:get(category,name,raw)
 	if not name then
-		return self:getCategory(category)
+		return self:getCategory(category,raw)
 	end
 	local result = self:_get(false,category,name)
 	if result == nil then
@@ -176,10 +189,10 @@ function Option:get(category,name,raw)
 	return result
 end
 
-function Option:getCategory(category)
+function Option:getCategory(category,raw)
 	local result = {}
 	for name in pairs(self.scheme[category] or {}) do
-		result[name] = self:get(category,name)
+		result[name] = self:get(category,name,raw)
 	end
 	return result
 end

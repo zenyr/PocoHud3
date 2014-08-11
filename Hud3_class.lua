@@ -4,6 +4,7 @@ local FONT =  'fonts/font_medium_mf' -- or tweak_data.hud_present.title_font or 
 local FONTLARGE = 'fonts/font_large_mf'
 local clGood =  cl.YellowGreen
 local clBad =  cl.Gold
+local isNil = function(a) return a == nil end
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
 	Skull = 57364, Ghost = 57363, Dot = 1031, Chapter = 1015, Div = 1014, BigDot = 1012,
@@ -56,13 +57,14 @@ function TBuff:set(data)
 	end
 end
 function TBuff:_make()
-	local style = O.buff.style
-	local size = style==2 and 40 or O.buff.size
+	local buffO = O:get('buff')
+	local style = buffO.style
+	local size = style==2 and 40 or buffO.size
 	local data = self.data
 	local simple = self.owner:_isSimple(data.key)
 	self.created = true
 	if simple then
-		local simpleRadius = O.buff.simpleBusyRadius
+		local simpleRadius = buffO.simpleBusyRadius
 		local pnl = self.ppnl:panel({x = self.owner.ww/2-simpleRadius,y=self.owner.hh/2-simpleRadius, w=simpleRadius*2,h=simpleRadius*2})
 		self.pnl = pnl
 		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
@@ -113,7 +115,7 @@ function TBuff:draw(t,x,y)
 		local data = self.data
 		local st,et = data.st,data.et
 		local prog = (now()-st)/(et-st)
-		local style = O.buff.style
+		local style = O:get('buff','style')
 		local vanilla = style == 2
 		local simple = self.owner:_isSimple(data.key)
 		if (prog >= 1 or prog < 0) and et ~= 1 then
@@ -213,7 +215,7 @@ function TPop:init(owner,data)
 	self:_make()
 end
 function TPop:_make()
-	local size = O.popup.size
+	local size = O:get('popup','size')
 	local pnl = self.ppnl:panel({x = 0, y = 0, w=200, h=100})
 		local data = self.data
 	self.pnl = pnl
@@ -289,12 +291,13 @@ function TFloat:__shadow(x)
 	end
 end
 function TFloat:_make()
-	local size = O.float.size
-	local m = O.float.margin
+	local floatO = O:get('float')
+	local size = floatO.size
+	local m = floatO.margin
 	local pnl = self.ppnl:panel({x = 0,y=-size, w=300,h=100})
 	local texture = 'guis/textures/pd2/hud_health' or 'guis/textures/pd2/hud_progress_32px'
 	self.pnl = pnl
-	self.bg = O.float.border
+	self.bg = floatO.border
 		and HUDBGBox_create(pnl, {x= 0,y= 0,w= 1,h= 1},{color=cl.White:with_alpha(1)})
 		or pnl:bitmap( { name='blur', texture='guis/textures/test_blur_df', render_template='VertexColorTexturedBlur3D', layer=-1, x=0,y=0 } )
 	self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=m,y=m,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'normal', layer = 4} )
@@ -323,10 +326,11 @@ function TFloat:draw(t)
 	if not alive(self.pnl) then
 		return
 	end
+	local floatO = O:get('float')
 	local verbose = self.owner.verbose
-	local onScr = O.float.keepOnScreen
-	local size = O.float.size
-	local m = O.float.margin
+	local onScr = floatO.keepOnScreen
+	local size = floatO.size
+	local m = floatO.margin
 	local isADS = self.owner.ADS
 	local camPos = self.owner.camPos
 	local category = self.category
@@ -343,7 +347,7 @@ function TFloat:draw(t)
 	local pPos = self.owner:_v2p(pos)
 	local out = false
 	if onScr and (category == 1 or self.temp) then
-		local _sm = O.float.keepOnScreenMargin
+		local _sm = {floatO.keepOnScreenMarginX,floatO.keepOnScreenMarginY}
 		local sm = {x = _sm[1]/100, y = _sm[2]/100}
 		local xm = {x = 1-sm.x, y = 1-sm.y}
 		if dot < 0
@@ -515,8 +519,8 @@ function THitDirection:init(owner,data)
 	self.data = data
 	self.sT = now()
 	local pnl = self.ppnl:panel{x = 0,y=0, w=200,h=200}
-	local Opt = O.hitDirection
-	local color = data.shield and Opt.color.shield or Opt.color.health
+	local Opt = O:get('hit')
+	local color = data.shield and Opt.shieldColor or Opt.healthColor
 	self.pnl = pnl
 	local bmp = pnl:bitmap{
 		name = 'hit', rotation = 360, visible = true,
@@ -569,7 +573,7 @@ function THitDirection:init(owner,data)
 end
 function THitDirection:draw(pnl, done_cb, seconds)
 	local pnl = self.pnl
-	local Opt = O.hitDirection
+	local Opt = O:get('hit')
 	local ww,hh = self.owner.ww, self.owner.hh
 	pnl:set_visible( true )
 	self.bmp:set_alpha( 1 )
@@ -752,6 +756,16 @@ PocoHud3Class.PocoUIValue = PocoUIValue
 function PocoUIValue:init(parent,config,inherited)
 	local dx = config.w/16
 	PocoUIElem.init(self,parent,config,true)
+
+	local bg = self.pnl:rect{color = cl.White:with_alpha(0.1)}
+	bg:set_visible(false)
+	self:_bind(PocoEvent.In, function(self,x,y)
+		bg:set_visible(true)
+		self:sound('slider_grab')
+	end):_bind(PocoEvent.Out, function(self,x,y)
+		bg:set_visible(false)
+	end)
+
 	local __, lbl = _.l({
 			pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 24,
 			color = config.fontColor or cl.White },config.text,true)
@@ -763,12 +777,12 @@ function PocoUIValue:init(parent,config,inherited)
 
 	if not config.noArrow then
 		self.arrowLeft = self.pnl:bitmap({
-			texture = 'guis/textures/menu_arrows',
+			texture = 'guis/textures/menu_icons',
 			texture_rect = {
 				0,
-				0,
-				24,
-				24
+				5,
+				15,
+				30
 			},
 			color = cl.White,
 			x = 0,
@@ -778,18 +792,18 @@ function PocoUIValue:init(parent,config,inherited)
 		self.arrowLeft:set_center_x(7*dx)
 
 		self.arrowRight = self.pnl:bitmap({
-			texture = 'guis/textures/menu_arrows',
+			texture = 'guis/textures/menu_icons',
 			texture_rect = {
-				0,
-				0,
-				24,
-				24
+				10,
+				5,
+				20,
+				30
 			},
 			color = cl.White,
 			x = 20,
 			y = 1,
 			blend_mode = 'add',
-			rotation = 180,
+			--rotation = 180,
 		})
 		self.arrowRight:set_center_x(15*dx)
 
@@ -807,8 +821,19 @@ function PocoUIValue:init(parent,config,inherited)
 			else
 				self.cursor = 'arrow'
 			end
-		end):_bind(PocoEvent.WheelUp,self.next):_bind(PocoEvent.WheelDown,self.prev)
+		end):_bind(PocoEvent.WheelUp,function(...)
+			local k = Input:keyboard()
+			if k:down('left shift') or  k:down('right shift') then
+				self.next(...)
+			end
+		end):_bind(PocoEvent.WheelDown,function(...)
+			local k = Input:keyboard()
+			if k:down('left shift') or  k:down('right shift') then
+				self.prev(...)
+			end
+		end)
 	end
+
 
 	-- Always inherited though
 end
@@ -841,13 +866,64 @@ function PocoUIValue:val(set)
 	end
 end
 
+local PocoUIBoolean = class(PocoUIValue)
+PocoHud3Class.PocoUIBoolean = PocoUIBoolean
+function PocoUIBoolean:init(parent,config,inherited)
+	config.noArrow = true
+	self.super.init(self,parent,config,true)
+	self.tick = self.pnl:bitmap({
+		name = 'tick',
+		texture = 'guis/textures/menu_tickbox',
+		texture_rect = {
+			0,
+			0,
+			24,
+			24
+		},
+		w = 24,
+		h = 24,
+		color = cl.White
+	})
+	self.tick:set_center_y(config.h/2)
+
+	self.lbl:set_x(self.lbl:x()+24)
+	self.valLbl:set_visible(false)
+	self:val(config.value or false)
+	self:_bind(PocoEvent.Pressed,function(self,x,y)
+		self:val(not self:val())
+	end)
+
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
+function PocoUIBoolean:val(set)
+	if set ~= nil then
+		if not self.value or self:isValid(set) then
+			self.value = set
+			if self.tick then
+				if not set then
+					self.tick:set_texture_rect(0,0,24,24)
+				else
+					self.tick:set_texture_rect(24,0,24,24)
+				end
+			end
+			return set
+		else
+			return false
+		end
+	else
+		return self.value
+	end
+end
 
 local PocoUINumValue = class(PocoUIValue)
 PocoHud3Class.PocoUINumValue = PocoUINumValue
 
 function PocoUINumValue:init(parent,config,inherited)
 	self.super.init(self,parent,config,true)
-	self:val(config.value or 0)
+	self:val(tonumber(config.value) or 0)
 
 	if not inherited then
 		self:postInit(self)
@@ -865,6 +941,16 @@ end
 function PocoUINumValue:isValid(val)
 	local result = (type(val) == 'number') and (val <= (self.config.max or 100)) and (val >= (self.config.min or 0))
 	self.result = result
+	return result
+end
+
+function PocoUINumValue:val(set)
+	local result = PocoUIValue.val(self,set)
+	if set and self.config.vanity then
+		_.l(self.valLbl,self.config.vanity[self:val()+1],true)
+		self.valLbl:set_center_x(11*self.config.w/16)
+		self.valLbl:set_x(math.floor(self.valLbl:x()))
+	end
 	return result
 end
 
@@ -911,14 +997,14 @@ PocoHud3Class.PocoUIBooleanValue = PocoUIBooleanValue
 
 function PocoUIBooleanValue:init(parent,config,inherited)
 	PocoUIChooseValue.init(self,parent,config,true)
-	self:val(config.value or 'YES')
+	self:val(isNil(config.value) and 'YES' or config.value)
 	if not inherited then
 		self:postInit(self)
 	end
 end
 
 function PocoUIBooleanValue:selection()
-	return {YES=true,NO=false}
+	return {YES = true, NO = false}
 end
 
 local PocoUIReversedBooleanValue = class(PocoUIBooleanValue)
@@ -1243,6 +1329,10 @@ function PocoTab:isLarge()
 	return self.pnl:h() > self.ppnl:h()
 end
 
+function PocoTab:set_h(h)
+	self.pnl:set_h(math.max(self.pnl:h(),h))
+end
+
 function PocoTab:destroy()
 	self.dead = true
 end
@@ -1382,12 +1472,8 @@ function PocoMenu:add(...)
 end
 
 function PocoMenu:update(...)
-	----TEST
-	if self.gui then
-		--self.gui:update(...)
-	end
-	----TESTEND
 end
+
 function PocoMenu:destroy()
 	self.dead = true
 	if PocoMenu.m_id then
