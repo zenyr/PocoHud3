@@ -8,6 +8,7 @@ Have a nice day and feel free to ask me through my mail: zenyr@zenyr.com. But pl
 ]]
 local _ = UNDERSCORE
 local VR = 0.120
+local REV = 0
 local VRR = 'T'
 local inGame = CopDamage ~= nil
 local me
