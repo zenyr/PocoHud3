@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 77
-local TAG = '0.122-2-g534bae4'
+local REV = 78
+local TAG = '0.122-3-g9db9b2d'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -105,7 +105,11 @@ function TPocoHud3:onInit() -- ★설정
 	self:_hook()
 	local verboseKey = O:get('root','verboseKey')
 	if verboseKey then
-		Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose',true),callback(self,self,'toggleVerbose',false))
+		if O:get('root','verboseToggle') then
+			Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose','toggle'))
+		else
+			Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose',true),callback(self,self,'toggleVerbose',false))
+		end
 	end
 	Poco:Bind(self,14,callback(self,self,'Menu',false))
 
@@ -432,9 +436,8 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 			PocoHud3Class.PocoUIButton:new(tab,{
 				onPressed = function()
-					O:default()
 					for __,obj in pairs(objs) do
-						obj[1]:val(O:get(obj[2],obj[3],true))
+						obj[1]:val(O:_default(obj[2],obj[3]))
 					end
 				end,
 				x = 710, y = 10, w = 200, h=50,
@@ -449,7 +452,7 @@ function TPocoHud3:Menu(dismiss,...)
 			for category, objects in _pairs(O.scheme) do
 				PocoHud3Class.PocoUIHintLabel:new(tab,{
 					x = x(), y = y(25), w=400, h=25,
-					fontSize = 25,font = FONTLARGE, align='left',
+					fontSize = 25,font = FONTLARGE, align='left', blend = 'add',
 					text={string.upper(category),cl.CornFlowerBlue}, hintText = objects[1]
 				})
 				for name,values in _pairs(objects,function(a,b)
@@ -506,6 +509,14 @@ function TPocoHud3:Menu(dismiss,...)
 				col = y1 <= y2
 			end
 			local y = math.max(y1,y2)
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onPressed = function(self)
+					self.parent:scroll(0,true)
+				end,
+				x = 0, y = y+10, w = 1000, h=40,
+				fontSize = 25, text={'BACK TO TOP',cl.Gray}
+			})
+
 			tab:set_h(y+90)
 
 			tab = gui:add('Heist Status')
@@ -651,6 +662,7 @@ end
 function TPocoHud3:Chat(category,text)
 	local catInd = O:get('chat',category) or -1
 	local forceSend = catInd >= 5
+	if not O:get('chat','enable') then return end
 	if self.muted and not forceSend then return _('Muted:',text) end
 	local canRead = catInd >= 1
 	local isFullGame = not managers.statistics:is_dropin()
@@ -679,6 +691,7 @@ function TPocoHud3:Float(unit,category,temp,tag)
 end
 function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
 	if not O:get('buff','enable') then return end
+	if O:get('buff','ignore'.. ((data.key):gsub('^%l', string.upper)) ) then return end
 	local buff = self.buffs[data.key]
 	if buff and (buff.data.et ~= data.et or buff.data.good ~= data.good )then
 		buff:destroy(1)
@@ -1027,7 +1040,7 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 	if dO.verboseOnly then
 		self.dbgLbl:set_visible(self.verbose)
 	end
-	self._keyList = ''--_.s(#(Poco._kbd:down_list() or {})>0 and Poco._kbd:down_list() or '')
+	self._keyList = _.s(#(Poco._kbd:down_list() or {})>0 and Poco._kbd:down_list() or '')
 	self._dbgTxt = _.s(self._keyList,self:lastError())
 	local txts = {}
 	if dO.showFPS then
@@ -1371,7 +1384,7 @@ function TPocoHud3:_hook()
 		hook( PlayerManager, 'drop_carry', function( self ,...)
 			Run('drop_carry', self,... )
 			pcall(me.Buff,me,({
-				key='drop_carry', good=false,
+				key='carryDrop', good=false,
 				icon=skillIcon, iconRect = {6*64, 0*64, 64, 64},
 				text='',
 				st=Application:time(), et=managers.player._carry_blocked_cooldown_t
@@ -1709,7 +1722,7 @@ function TPocoHud3:_hook()
 			if active and (me._lastECM or 0 < et)then
 				me._lastECM = et
 				pcall(me.Buff,me,({
-					key='ecm', good=true,
+					key='ECM', good=true,
 					icon=skillIcon,
 					iconRect = { 1*64, 4*64,64,64 },
 					text='',
@@ -1736,7 +1749,7 @@ function TPocoHud3:_hook()
 			local et = tape_loop_t+6
 			if et then
 				pcall(me.Buff,me,({
-					key='tloop', good=true,
+					key='tapeLoop', good=true,
 					icon=skillIcon,
 					iconRect = { 4*64, 2*64,64,64 },
 					text='',
@@ -2116,7 +2129,11 @@ function TPocoHud3:_hook()
 end
 --- Utility functions ---
 function TPocoHud3:toggleVerbose(state)
-	self.verbose = state
+	if state == 'toggle' then
+		self.verbose = not self.verbose
+	else
+		self.verbose = state
+	end
 end
 function TPocoHud3:test()
 -- reserved

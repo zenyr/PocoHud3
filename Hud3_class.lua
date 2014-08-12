@@ -651,8 +651,7 @@ function PocoUIElem:_bind(eventVal,cbk)
 	else
 		local _old = self.config[eventVal]
 		self.config[eventVal] = function(...)
-			_old(...)
-			cbk(...)
+			return cbk(...) or _old(...)
 		end
 	end
 	return self
@@ -751,7 +750,7 @@ function PocoUIButton:init(parent,config,inherited)
 	local bg = BoxGuiObject:new(self.pnl, {sides = {1,1,1,1}})
 	bg:set_visible(false)
 	local __, lbl = _.l({
-		pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 20, color = config.fontColor or cl.White,
+		pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = config.fontColor or cl.White,
 		align = config.align or 'center', vertical = config.vAlign or 'center'
 	},config.text,config.autoSize)
 
@@ -826,6 +825,10 @@ function PocoUIValue:init(parent,config,inherited)
 		})
 		self.arrowRight:set_center(15*dx,config.h/2)
 
+		local shift = function()
+			return Poco._kbd:down(42) or Poco._kbd:down(54)
+		end
+
 		self:_bind(PocoEvent.Pressed,function(self,x,y)
 			if self.arrowRight:inside(x,y) then
 				self:next()
@@ -840,15 +843,13 @@ function PocoUIValue:init(parent,config,inherited)
 			else
 				self.cursor = 'arrow'
 			end
-		end):_bind(PocoEvent.WheelUp,function(...)
-			local k = Input:keyboard()
-			if k:down('left shift') or  k:down('right shift') then
-				self.next(...)
+		end):_bind(PocoEvent.WheelUp,function()
+			if shift() then
+				return true, self:next()
 			end
 		end):_bind(PocoEvent.WheelDown,function(...)
-			local k = Input:keyboard()
-			if k:down('left shift') or  k:down('right shift') then
-				self.prev(...)
+			if shift() then
+				return true, self:prev()
 			end
 		end)
 	end
@@ -873,11 +874,12 @@ function PocoUIValue:isDefault(val)
 	if val == nil then
 		val = self:val()
 	end
-	return O:_default(self.config.category,self.config.name) == val
+	return O:isDefault(self.config.category,self.config.name,val)
 end
 
 function PocoUIValue:_markDefault(set)
-	_.l(self.lbl,{self.config.text,self:isDefault(set) and cl.White or cl.Moccasin})
+	local isChanged = O:isChanged(self.config.category,self.config.name,set)
+	_.l(self.lbl,{self.config.text,self:isDefault(set) and cl.White or (isChanged and cl.LightSkyBlue or cl.DarkKhaki)})
 end
 
 function PocoUIValue:val(set)
@@ -994,10 +996,10 @@ function PocoUINumValue:val(set)
 		_.l(self.valLbl,self.config.vanity[self:val()+1],true)
 		self.valLbl:set_center_x(11*self.config.w/16)
 		self.valLbl:set_x(math.floor(self.valLbl:x()))
-		if self.arrowLeft then
-			self.arrowLeft:set_alpha(self:prev(1) and 1 or 0.1)
-			self.arrowRight:set_alpha(self:next(1) and 1 or 0.1)
-		end
+	end
+	if set and self.arrowLeft then
+		self.arrowLeft:set_alpha(self:prev(1) and 1 or 0.1)
+		self.arrowRight:set_alpha(self:next(1) and 1 or 0.1)
 	end
 	return result
 end
@@ -1165,10 +1167,8 @@ function PocoUIStringValue:select(delta,shift)
 	if shift then -- start Shift
 		self._start = s
 		self._shift = true
-		_('ShiftOn')
 	elseif shift == false then
 		self._shift = nil
-		_('ShiftOff')
 	elseif self._shift then -- grow selection
 		_('GROW')
 		local ss = self._start
@@ -1186,7 +1186,6 @@ function PocoUIStringValue:select(delta,shift)
 			end
 		end
 	else -- simpleMove
-		_('SimpleMove')
 		self:_select(s+delta,s+delta)
 	end
 

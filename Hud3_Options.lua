@@ -15,13 +15,26 @@ local scheme = {
 	}, buff = {	'Shows realtime buff status',
 		enable = {'bool',TRUE},
 
-		originLeft = {'num',10,{0,100},'Origin point X (%)'},
-		originTop = {'num',22,{0,100},'Origin point Y (%)'},
+		originLeft = {'num',10,{0,100},'Origin point X (% of the screen)'},
+		originTop = {'num',22,{0,100},'Origin point Y (% of the screen)'},
 		maxFPS  = {'num',50,nil,'FPS cap to reduce performance hit'},
 		size = {'num',70,nil,'Icon size (ignored with Vanilla style)'},
 		gap = {'num',10,nil,'Icon gap'},
 		align = {'num',1,{1,3},'Icon alignment (vertical for Vanilla style)','align'},
 		style = {'num',1,{1,2},'Buff icon style','style'},
+
+		ignoreBerserker = {'bool',FALSE,nil,'Berserker indicator'},
+		ignoreStamina = {'bool',FALSE,nil,'Stamina indicator'},
+		ignoreCharge = {'bool',FALSE,nil,'Melee charge indicator'},
+		ignoreTransition = {'bool',FALSE,nil,'Transitions like weapon swap, melee cooldown'},
+		ignoreDropCarry = {'bool',FALSE,nil,'Bag interaction cooldown'},
+		ignoreInteract = {'bool',FALSE,nil,'Interaction counter'},
+		ignoreInspire = {'bool',FALSE,nil,'Inspire cooldown (giving end)'},
+		ignoreBoost = {'bool',FALSE,nil,'Inspire duration (receiving end)'},
+		ignoreShield = {'bool',FALSE,nil,'Shield recovery cooldown'},
+		ignoreECM = {'bool',FALSE,nil,'ECM duration'},
+		ignoreFeedback = {'bool',FALSE,nil,'ECM Feedback duration'},
+		ignoreTapeLoop = {'bool',FALSE,nil,'Tapeloop duration'},
 
 		noSprintDelay  = {'bool',TRUE,nil,'Ignore after-sprint delay '},
 		hideInteractionCircle  = {'bool',FALSE,nil,'Hide vanilla game\'s interaction circle'},
@@ -219,4 +232,8 @@ end
 
 function Option:isDefault(category,name,value)
 	return value == self:_default(category,name)
+end
+
+function Option:isChanged(category,name,value)
+	return value ~= self:get(category,name)
 end
