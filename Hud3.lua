@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 73
-local TAG = '0.121-2-gb6c61ea'
+local REV = 75
+local TAG = '0.122'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -313,7 +313,7 @@ function TPocoHud3:Menu(dismiss,...)
 		pnl:text{
 			x = 10, y = offsetY+10, w = 600, h = 30,
 			name = 'tab_desc', text = self:_name(pid),
-			font = 'fonts/font_large_mf', font_size = 25, color = self:_color(pid)
+			font = FONTLARGE, font_size = 25, color = self:_color(pid)
 		}
 		local y,fontSize,w = offsetY+35, 19, 970
 		return y
@@ -334,7 +334,8 @@ function TPocoHud3:Menu(dismiss,...)
 			--- Install tabs here ---
 			local tab = gui:add('About')
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function(self)
+				onPressed = function() end,
+				onReleased = function(self)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
 				x = 10, y = 10, w = 400,h=100,
@@ -342,7 +343,8 @@ function TPocoHud3:Menu(dismiss,...)
 				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function(self)
+				onPressed = function() end,
+				onReleased = function(self)
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 				end,
 				x = 10, y = 120, w = 400,h=40,
@@ -351,7 +353,8 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function(self)
+				onPressed = function() end,
+				onReleased = function(self)
 					Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 				end,
 				x = 10, y = 170, w = 400,h=40,
@@ -382,7 +385,7 @@ function TPocoHud3:Menu(dismiss,...)
 			--Because WHY THE FUQ NOT
 
 			tab = gui:add('Options')
-			local y1, y2, m, col = 10, 10, 2, true
+			local y1, y2, m, col = 70, 70, 2, true
 			local x,y =function()
 				return col and (m+10) or m + 520
 			end, function(h)
@@ -393,12 +396,61 @@ function TPocoHud3:Menu(dismiss,...)
 				end
 				return (col and y1 or y2) - h - m
 			end
+
 			local objs = {}
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onPressed = function(self)
+					self._hot = true
+				end, onReleased = function(self)
+					if not self._hot then return end
+					self._hot = nil
+					O:default()
+					for __,obj in pairs(objs) do
+						if not obj[1]:isDefault() then
+							O:set(obj[2],obj[3],obj[1]:val())
+						end
+					end
+					O:save()
+					me:Menu(true)
+				end,
+				x = 20, y = 10, w = 400, h=50,
+				fontSize = 30,font = FONTLARGE,
+				text={'SAVE & DISMISS',cl.Silver},
+				hintText = 'Some options will not be updated until next session.'
+			})
+
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onPressed = function()
+					for __,obj in pairs(objs) do
+						obj[1]:val(O:get(obj[2],obj[3],true))
+					end
+				end,
+				x = 500, y = 10, w = 200, h=50,
+				fontSize = 25,font = FONTLARGE,
+				text={'DISCARD CHANGES',cl.Gray},
+				hintText = 'Discard temporary changes and revert to previous settings'
+			})
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onPressed = function()
+					O:default()
+					for __,obj in pairs(objs) do
+						obj[1]:val(O:get(obj[2],obj[3],true))
+					end
+				end,
+				x = 710, y = 10, w = 200, h=50,
+				fontSize = 25,font = FONTLARGE,
+				text={'RESET TO DEFAULT',cl.Gray},
+				hintText = 'Revert to the default setting.'
+			})
+			tab.pnl:bitmap({
+				texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
+				color = cl.White, x = 5, y = 65, w = tab.pnl:w()-10, h = 3 })
+
 			for category, objects in _pairs(O.scheme) do
 				PocoHud3Class.PocoUIHintLabel:new(tab,{
 					x = x(), y = y(25), w=400, h=25,
 					fontSize = 25,font = FONTLARGE, align='left',
-					text={category,cl.OrangeRed}, hintText = objects[1]
+					text={string.upper(category),cl.CornFlowerBlue}, hintText = objects[1]
 				})
 				for name,values in _pairs(objects,function(a,b)
 					local t1, t2 = O:_type(category,a),O:_type(category,b)
@@ -440,24 +492,20 @@ function TPocoHud3:Menu(dismiss,...)
 							}),category,name}
 						else
 							PocoHud3Class.PocoUIButton:new(tab,{
+								hintText = 'Not implemented for now.',
 								x = x()+10, y = y(30), w=390, h=30,
 								text=_.s(name,type)
 							})
 						end
 					end
 				end
+				tab.pnl:bitmap({
+					texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
+					color = cl.White:with_alpha(0.3), x = x(), y = y(10)+3,w = 410, h = 3
+				})
 				col = y1 <= y2
 			end
 			local y = math.max(y1,y2)
-			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function()
-					_('SAVE')
-				end,
-				x = 10, y = y, h=40,
-				fontSize = 30,font = FONTLARGE,
-				text={'SAVE',cl.White},
-				hintText = 'Please note that this screen is bound to be changed in the future.'
-			})
 			tab:set_h(y+90)
 
 			tab = gui:add('Heist Status')
@@ -630,6 +678,7 @@ function TPocoHud3:Float(unit,category,temp,tag)
 	end
 end
 function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
+	if not O:get('buff','enable') then return end
 	local buff = self.buffs[data.key]
 	if buff and (buff.data.et ~= data.et or buff.data.good ~= data.good )then
 		buff:destroy(1)
@@ -1995,7 +2044,7 @@ function TPocoHud3:_hook()
 	-- Kick menu
 	hook( KickPlayer, 'modify_node', function( ... )
 		local self, node, up = unpack{...}
-		local new_node = table.deepcopy( node )
+		local new_node = deep_clone( node )
 		if managers.network:session() then
 			for __,peer in pairs( managers.network:session():peers() ) do
 				local rank = peer:rank()
