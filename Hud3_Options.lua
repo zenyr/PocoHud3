@@ -117,17 +117,20 @@ end
 local Option = class()
 PocoHud3Class.Option = Option
 function Option:init()
-	self:reset()
+	self:default()
 	self.scheme = table.deepcopy(scheme)
 end
 
 function Option:reset()
-	self.items = {}
 	os.remove(JSONFileName)
 end
 
+function Option:default()
+	self.items = {}
+end
+
 function Option:load()
-	local f = io.open(JSONFileName, 'r')
+	local f,err = io.open(JSONFileName, 'r')
 	local result = false
 	if f then
 		local t = f:read('*all')

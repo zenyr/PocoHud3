@@ -473,6 +473,7 @@ function TFloat:draw(t)
 		else
 			d = 1
 		end
+		d = math.min(d,floatO.opacity/100)
 		if not (unit and unit:contour() and #(unit:contour()._contour_list or {}) > 0) then
 			d = math.min(d,self.owner:_visibility(pos))
 		end
@@ -568,7 +569,7 @@ function THitDirection:init(owner,data)
 	end
 	pnl:stop()
 	local du = Opt.duration
-	if du == true then
+	if du == 0 then
 		du = self.data.time or 2
 	end
 	pnl:animate( callback( self, self, 'draw' ), callback( self, self, 'destroy'), du )
@@ -587,7 +588,7 @@ function THitDirection:draw(pnl, done_cb, seconds)
 		local dt = coroutine.yield()
 		t = t - dt
 		local p = t/seconds
-		self.bmp:set_alpha( math.pow(p,0.5) * Opt.opacity )
+		self.bmp:set_alpha( math.pow(p,0.5) * Opt.opacity/100 )
 
 		local target_vec = self.data.mobPos - self.owner.camPos
 		local fwd = self.owner.nl_cam_forward
@@ -868,9 +869,15 @@ function PocoUIValue:isValid(val)
 	return true
 end
 
+function PocoUIValue:isDefault(val)
+	if val == nil then
+		val = self:val()
+	end
+	return O:_default(self.config.category,self.config.name) == val
+end
+
 function PocoUIValue:_markDefault(set)
-	local isDefault = O:_default(self.config.category,self.config.name) == set
-	_.l(self.lbl,{self.config.text,isDefault and cl.White or cl.Moccasin})
+	_.l(self.lbl,{self.config.text,self:isDefault(set) and cl.White or cl.Moccasin})
 end
 
 function PocoUIValue:val(set)
@@ -1515,6 +1522,8 @@ function PocoMenu:init(ws)
 		mouse_press = callback(self, self, 'mouse_pressed',true),
 		mouse_release = callback(self, self, 'mouse_released',true)
 	}
+	managers.mouse_pointer:set_mouse_world_position(ws:width()/2,ws:height()/2)
+
 	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
 	if camBase then
 		camBase:set_limits(15,15)
