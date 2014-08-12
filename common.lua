@@ -499,6 +499,7 @@ function TPoco:Update(t,dt)
 	end
 	if not (
 		(managers.menu_component._blackmarket_gui and managers.menu_component._blackmarket_gui._renaming_item) or
+		(managers.hud and managers.hud._chat_focus) or
 		(managers.menu_component._game_chat_gui and managers.menu_component._game_chat_gui:input_focus())
 		) then
 		for key,cbks in pairs(self.binds.down) do
