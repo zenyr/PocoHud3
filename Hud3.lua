@@ -327,6 +327,7 @@ function TPocoHud3:Menu(dismiss,...)
 		local menu = self.menuGui
 		if menu then -- Remove
 			if not self._stringFocused or (now()-self._stringFocused > 0.1) then
+				self.menuGui = nil
 				if self.onMenuDismiss then
 					local cbk = self.onMenuDismiss
 					self.onMenuDismiss = nil
@@ -334,7 +335,6 @@ function TPocoHud3:Menu(dismiss,...)
 				end
 				managers.menu_component:post_event("menu_exit")
 				menu:destroy()
-				self.menuGui = nil
 			end
 		elseif not dismiss then -- Show
 			managers.menu_component:post_event("menu_enter")
@@ -405,7 +405,7 @@ function TPocoHud3:Menu(dismiss,...)
 				x = 20, y = 10, w = 400, h=50,
 				fontSize = 30,font = FONTLARGE,
 				text={'APPLY & RELOAD',cl.Silver},
-				hintText = 'Some options be applied on the next session.'
+				hintText = 'Some options will be applied on the next session.'
 			})
 
 			PocoHud3Class.PocoUIButton:new(tab,{
@@ -2134,20 +2134,14 @@ function TPocoHud3:_hook()
 	hook( MenuInput, 'mouse_pressed', function( ... )
 		local self, o, button, x, y = unpack{...}
 		if me.menuGui and me.menuGui.mouse_pressed then
-			local used, pointer = me.menuGui:mouse_pressed(false, o, button, x,y)
-			if used then
-				return true, pointer
-			end
+			return me.menuGui:mouse_pressed(false, o, button, x,y)
 		end
 		return Run('mouse_pressed', ...)
 	end)
 	hook( MenuRenderer, 'mouse_released', function( ... )
 		local self, o, button, x, y = unpack{...}
 		if me.menuGui and me.menuGui.mouse_released then
-			local used, pointer = me.menuGui:mouse_released(false, o, button, x,y)
-			if used then
-				return true, pointer
-			end
+			return me.menuGui:mouse_released(false, o, button, x,y)
 		end
 		return Run('mouse_released', ...)
 	end)

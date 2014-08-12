@@ -1529,12 +1529,8 @@ function PocoMenu:init(ws)
 	local __, lbl = _.l({pnl = self.pnl,x = 1010, y = 20, font = FONT, font_size = 17, layer = Layers.TabHeader},
 		{'Bksp or Dbl-right-click to dismiss',cl.Gray},true)
 	lbl:set_right(1000)
-	local active_menu = managers.menu:active_menu()
-	if active_menu then
-		active_menu.input:set_force_input(false)
-	end
 
-	PocoMenu.m_id = managers.mouse_pointer:get_id()
+	PocoMenu.m_id = PocoMenu.m_id or managers.mouse_pointer:get_id()
 	PocoMenu.__active = managers.mouse_pointer._active
 	managers.mouse_pointer:use_mouse{
 		id = PocoMenu.m_id,
@@ -1559,6 +1555,7 @@ function PocoMenu:update(...)
 end
 
 function PocoMenu:destroy()
+	if self.dead then return end
 	self.dead = true
 	if PocoMenu.m_id then
 		managers.mouse_pointer:remove_mouse(PocoMenu.m_id)
@@ -1573,11 +1570,6 @@ function PocoMenu:destroy()
 	if self.pnl then
 		self._ws:panel():remove(self.pnl)
 	end
-	local active_menu = managers.menu:active_menu()
-	if active_menu then
-		active_menu.input:set_force_input(true)
-	end
-
 
 end
 
