@@ -10,7 +10,7 @@ local inGame = CopDamage ~= nil
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
 	Skull = 57364, Ghost = 57363, Dot = 1031, Chapter = 1015, Div = 1014, BigDot = 1012,
-	Times = 215, Divided = 247, LC=139, RC=155, Deg = 1024, PM= 1025, No = 1033,
+	Times = 215, Divided = 247, LC=139, RC=155, DRC = 1035, Deg = 1024, PM= 1030, No = 1033,
 }
 for k,v in pairs(Icon) do
 	Icon[k] = utf8.char(v)
@@ -1012,7 +1012,7 @@ end
 function PocoUINumValue:val(set)
 	local result = PocoUIValue.val(self,set)
 	if set and self.config.vanity then
-		_.l(self.valLbl,self.config.vanity[self:val()+1],true)
+		_.l(self.valLbl,self.config.vanity[self:val()+1] or self:val(),true)
 		self.valLbl:set_center_x(11*self.config.w/16)
 		self.valLbl:set_x(math.floor(self.valLbl:x()))
 	end
