@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 81
-local TAG = '0.122-6-g9bcc1a4'
+local REV = 82
+local TAG = '0.123'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
