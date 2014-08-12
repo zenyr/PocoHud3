@@ -23,6 +23,7 @@ local PocoEvent = {
 	Released = 'onReleased',
 	PressedAlt = 'onPressedAlt',
 	ReleasedAlt = 'onReleasedAlt',
+	Click = 'onClick',
 	WheelUp = 'onWheelUp',
 	WheelDown = 'onWheelDown',
 	Move = 'onMove',
@@ -629,6 +630,19 @@ function PocoUIElem:init(parent,config)
 	self.pnl = self.ppnl:panel({ name = config.name, x=config.x, y=config.y, w = config.w, h = config.h})
 	self.status = 0
 
+	if self.config[PocoEvent.Click] then
+		self:_bind(PocoEvent.Out, function(self)
+			self._pressed = nil
+		end):_bind(PocoEvent.Pressed, function(self,x,y)
+			self._pressed = true
+		end):_bind(PocoEvent.Released, function(self,x,y)
+			if self._pressed then
+				self._pressed = nil
+				return self:fire(PocoEvent.Click,x,y)
+			end
+		end)
+	end
+
 	if config.hintText then
 		PocoUIHintLabel.makeHintPanel(self)
 	end
@@ -651,7 +665,12 @@ function PocoUIElem:_bind(eventVal,cbk)
 	else
 		local _old = self.config[eventVal]
 		self.config[eventVal] = function(...)
-			return cbk(...) or _old(...)
+			local result = _old(...)
+			if not result then
+				result = cbk(...)
+			else
+			end
+			return result
 		end
 	end
 	return self
@@ -686,7 +705,7 @@ function PocoUIElem:fire(event,x,y)
 	end
 end
 
-PocoUIHintLabel = class(PocoUIElem) -- Forward-declared
+PocoUIHintLabel = class(PocoUIElem) -- Forward-declared as local
 PocoHud3Class.PocoUIHintLabel = PocoUIHintLabel
 function PocoUIHintLabel:init(parent,config,inherited)
 	self.super.init(self,parent,config,true)
@@ -1348,7 +1367,7 @@ function PocoTab:isHot(event, x, y, autoFire)
 		for i,hotZone in pairs(self.hotZones[event]) do
 			if hotZone:isHot(event, x,y) then
 				if autoFire then
-					hotZone:fire(event, x, y)
+					return hotZone:fire(event, x, y)
 				end
 				return hotZone
 			end
@@ -1494,7 +1513,6 @@ end
 ------------
 local PocoMenu = class()
 PocoHud3Class.PocoMenu = PocoMenu
-tt =  1
 function PocoMenu:init(ws)
 	self._ws = ws
 
@@ -1508,6 +1526,9 @@ function PocoMenu:init(ws)
 		w = self.pnl:w(),h = self.pnl:h(),
 		render_template = 'VertexColorTexturedBlur3D'
 	})
+	local __, lbl = _.l({pnl = self.pnl,x = 1010, y = 20, font = FONT, font_size = 17, layer = Layers.TabHeader},
+		{'Bksp or Dbl-right-click to dismiss',cl.Gray},true)
+	lbl:set_right(1000)
 	local active_menu = managers.menu:active_menu()
 	if active_menu then
 		active_menu.input:set_force_input(false)
@@ -1568,9 +1589,11 @@ function PocoMenu:mouse_moved(alt, panel, x, y)
 		return a, b
 	end
 	if self.dead then return end
-	if not inGame and alt then return end
+	--if not inGame and alt then return end
 	local isNewPos = self._x ~= x or self._y ~= y
-
+	if isNewPos then
+		self._close = nil
+	end
 	self._x = x
 	self._y = y
 	local _fireMouseOut = function()
@@ -1610,9 +1633,6 @@ end
 
 function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 	if self.dead then return end
-	if not inGame and alt then
-		x, y = managers.mouse_pointer:convert_fullscreen_16_9_mouse_pos(x,y)
-	end
 	pcall(function()
 		local scrollStep = 60
 		local currentTab = self.gui and self.gui.currentTab
@@ -1643,11 +1663,14 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 		end
 
 		if button == Idstring('0') then
-			for ind,tab in pairs(self.gui.items) do
-				if tab:insideTab(x,y) and self.tabIndex ~= ind then
-					self.gui:goTo(ind)
-					return true
+			if self.gui.config.th+self.gui.config.y >= y then
+				for ind,tab in pairs(self.gui.items) do
+					if tab:insideTab(x,y) and self.tabIndex ~= ind then
+						self.gui:goTo(ind)
+						return true
+					end
 				end
+				currentTab:scroll(0,true)
 			end
 			return currentTab and currentTab:isHot(PocoEvent.Pressed, x,y, true)
 		end
@@ -1665,7 +1688,14 @@ function PocoMenu:mouse_released(alt, panel, button, x, y)
 	end
 	if button == Idstring('1') then
 		local hot = currentTab and currentTab:isHot(PocoEvent.ReleasedAlt, x,y, true)
-		return hot or me:Menu(true)
+		if not hot then
+			if self._close then
+				me:Menu(true)
+			else
+				self._close = true
+			end
+		end
+		return hot
 	end
 end
 

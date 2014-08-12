@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 78
-local TAG = '0.122-3-g9db9b2d'
+local REV = 79
+local TAG = '0.122-4-ge1ba821'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -75,7 +75,7 @@ function TPocoHud3:onInit() -- ★설정
 --	Poco:LoadOptions(self:name(1),O)
 	O:load()
 
-	self._ws = inGame and managers.gui_data:create_fullscreen_workspace() or managers.gui_data:create_fullscreen_16_9_workspace()
+	self._ws = managers.gui_data:create_fullscreen_workspace()
 	error = function(msg)
 		if self.dead then
 			_('ERR:',msg)
@@ -338,8 +338,7 @@ function TPocoHud3:Menu(dismiss,...)
 			--- Install tabs here ---
 			local tab = gui:add('About')
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function() end,
-				onReleased = function(self)
+				onClick = function(self)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
 				x = 10, y = 10, w = 400,h=100,
@@ -347,8 +346,7 @@ function TPocoHud3:Menu(dismiss,...)
 				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function() end,
-				onReleased = function(self)
+				onClick = function(self)
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 				end,
 				x = 10, y = 120, w = 400,h=40,
@@ -357,34 +355,12 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function() end,
-				onReleased = function(self)
+				onClick = function(self)
 					Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 				end,
 				x = 10, y = 170, w = 400,h=40,
-				text={
-					{'C', cl.Beige},
-					{'o', cl.BurlyWood},
-					{'l', cl.PowderBlue},
-					{'o', cl.LightBlue},
-					{'r ', cl.MediumAquamarine},
-					{'C', cl.MediumPurple},
-					{'o', cl.Orchid},
-					{'d', cl.PaleVioletRed},
-					{'e ', cl.IndianRed},
-					{'N', cl.Peru},
-					{'a', cl.MediumTurquoise},
-					{'m', cl.SlateBlue},
-					{'e', cl.MediumOrchid},
-					{'s', cl.Brown},
-					{'!', cl.Sienna}
-				},
-				hintText = {{'M', cl.SeaGreen}, {'S', cl.LightSteelBlue}, {'D', cl.Plum}, {'N ', cl.Tan},
-					{'r', cl.MediumSeaGreen}, {'e', cl.SteelBlue}, {'f', cl.DarkKhaki}, {'e', cl.DarkOliveGreen},
-					{'r', cl.DarkSlateBlue}, {'e', cl.Thistle}, {'n', cl.RoyalBlue}, {'c', cl.BlueViolet},
-					{'e ', cl.Chocolate}, {'p', cl.Goldenrod}, {'a', cl.SaddleBrown}, {'g', cl.Linen},
-					{'e', cl.Lavender},
-				}
+				text={'Color codes reference page', cl.Silver},-- no moar fun tho
+				hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
 			})
 			--Because WHY THE FUQ NOT
 
@@ -403,11 +379,7 @@ function TPocoHud3:Menu(dismiss,...)
 
 			local objs = {}
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function(self)
-					self._hot = true
-				end, onReleased = function(self)
-					if not self._hot then return end
-					self._hot = nil
+				onClick = function(self)
 					O:default()
 					for __,obj in pairs(objs) do
 						if not obj[1]:isDefault() then
@@ -424,7 +396,7 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function()
+				onClick = function()
 					for __,obj in pairs(objs) do
 						obj[1]:val(O:get(obj[2],obj[3],true))
 					end
@@ -435,7 +407,7 @@ function TPocoHud3:Menu(dismiss,...)
 				hintText = 'Discard temporary changes and revert to previous settings'
 			})
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function()
+				onClick = function()
 					for __,obj in pairs(objs) do
 						obj[1]:val(O:_default(obj[2],obj[3]))
 					end
@@ -472,16 +444,17 @@ function TPocoHud3:Menu(dismiss,...)
 						local type = O:_type(category,name)
 						local value = O:get(category,name,true)
 						local hint = O:_hint(category,name)
+						local tName = name:gsub('(%U)(%u)','%1 %2'):upper()
 						if type == 'bool' then
 							objs[#objs+1] = {PocoHud3Class.PocoUIBoolean:new(tab,{
 								x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
-								fontSize = 20, text=name, value = value ,
+								fontSize = 20, text=tName , value = value ,
 								hintText = hint
 							}),category,name}
 						elseif type == 'color' then
 							objs[#objs+1] = {PocoHud3Class.PocoUIColorValue:new(tab,{
 								x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
-								fontSize = 20, text=name, value = value,
+								fontSize = 20, text=tName, value = value,
 								hintText = hint
 							}),category,name}
 						elseif type == 'num' then
@@ -490,7 +463,7 @@ function TPocoHud3:Menu(dismiss,...)
 
 							objs[#objs+1] = {PocoHud3Class.PocoUINumValue:new(tab,{
 								x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
-								fontSize = 20, text=name, value = value, min = range[1], max = range[2], vanity = vanity,
+								fontSize = 20, text=tName, value = value, min = range[1], max = range[2], vanity = vanity,
 								hintText = hint
 							}),category,name}
 						else
@@ -510,7 +483,7 @@ function TPocoHud3:Menu(dismiss,...)
 			end
 			local y = math.max(y1,y2)
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function(self)
+				onClick = function(self)
 					self.parent:scroll(0,true)
 				end,
 				x = 0, y = y+10, w = 1000, h=40,
@@ -1040,7 +1013,7 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 	if dO.verboseOnly then
 		self.dbgLbl:set_visible(self.verbose)
 	end
-	self._keyList = _.s(#(Poco._kbd:down_list() or {})>0 and Poco._kbd:down_list() or '')
+	self._keyList = ''--_.s(#(Poco._kbd:down_list() or {})>0 and Poco._kbd:down_list() or '')
 	self._dbgTxt = _.s(self._keyList,self:lastError())
 	local txts = {}
 	if dO.showFPS then
@@ -2079,20 +2052,28 @@ function TPocoHud3:_hook()
 	end)
 
 	-- Mouse hook plugin
-	hook( MenuComponentManager, 'mouse_moved', function( ... )
+
+	hook( MenuRenderer, 'mouse_moved', function( ... )
 		local self, o, x, y = unpack{...}
 		if me.menuGui then
-			if not inGame then
-				x,y = managers.gui_data:safe_to_full_16_9(x,y)
-				return me.menuGui:mouse_moved(false, o, x,y)
-			else
-				return true
-			end
+			return true
 		else
 			return Run('mouse_moved', ...)
 		end
 	end)
-	hook( MenuComponentManager, 'mouse_pressed', function( ... )
+	hook( MenuInput, 'mouse_moved*', function( ... )
+		local self, o, x, y = unpack{...}
+		if me.menuGui then
+			if not inGame then
+				return me.menuGui:mouse_moved(true, o, x,y)
+			else
+				return true
+			end
+		else
+			return Run('mouse_moved*', ...)
+		end
+	end)
+	hook( MenuInput, 'mouse_pressed', function( ... )
 		local self, o, button, x, y = unpack{...}
 		if me.menuGui and me.menuGui.mouse_pressed then
 			local used, pointer = me.menuGui:mouse_pressed(false, o, button, x,y)
@@ -2102,7 +2083,7 @@ function TPocoHud3:_hook()
 		end
 		return Run('mouse_pressed', ...)
 	end)
-	hook( MenuComponentManager, 'mouse_released', function( ... )
+	hook( MenuRenderer, 'mouse_released', function( ... )
 		local self, o, button, x, y = unpack{...}
 		if me.menuGui and me.menuGui.mouse_released then
 			local used, pointer = me.menuGui:mouse_released(false, o, button, x,y)
