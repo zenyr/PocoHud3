@@ -704,23 +704,38 @@ end
 
 function PocoUIHintLabel:makeHintPanel()
 	local config = self.config
-	local hintPnl = self.ppnl:panel{
-		x = 0, y = 0, w = 500, h = 200,
-		visible = false
-	}
-	hintPnl:rect{ color = cl.Black:with_alpha(0.7), layer = 1005}
-	local __, hintLbl = _.l({
-		pnl = hintPnl,x=5, y=5, font = config.hintFont or FONT, font_size = config.hintFontSize or 20, color = config.hintFontColor or cl.White,
-		align = config.align, vertical = config.vAlign, layer = 1006
-	},config.hintText or '',true)
-	hintPnl:set_size(hintLbl:size())
-	hintPnl:grow(10,10)
+	local hintPnl
+
+	local _reposition = function(x,y)
+		if hintPnl then
+			x = math.min(self.ppnl:w()-hintPnl:w(),x+10)
+			hintPnl:set_world_position(x,y+20)
+		end
+	end
+	local _buildOne = function(x,y)
+		hintPnl = self.ppnl:panel{
+			x = 0, y = 0, w = 800, h = 200
+		}
+		hintPnl:rect{ color = cl.Black:with_alpha(0.7), layer = 1005}
+		local __, hintLbl = _.l({
+			pnl = hintPnl,x=5, y=5, font = config.hintFont or FONT, font_size = config.hintFontSize or 18, color = config.hintFontColor or cl.White,
+			align = config.align, vertical = config.vAlign, layer = 1006
+		},config.hintText or '',true)
+		hintPnl:set_size(hintLbl:size())
+		hintPnl:grow(10,10)
+		_reposition(x,y)
+	end
 	self:_bind(PocoEvent.In, function(self,x,y)
-		hintPnl:set_visible(true)
+		if not hintPnl then
+			_buildOne(x,y)
+		end
 	end):_bind(PocoEvent.Out, function(self,x,y)
-		hintPnl:set_visible(false)
+		if hintPnl then
+			self.ppnl:remove(hintPnl)
+			hintPnl = nil
+		end
 	end):_bind(PocoEvent.Move, function(self,x,y)
-		hintPnl:set_world_position(x+10,y+20)
+		_reposition(x,y)
 	end)
 
 end
@@ -853,6 +868,11 @@ function PocoUIValue:isValid(val)
 	return true
 end
 
+function PocoUIValue:_markDefault(set)
+	local isDefault = O:_default(self.config.category,self.config.name) == set
+	_.l(self.lbl,{self.config.text,isDefault and cl.White or cl.Moccasin})
+end
+
 function PocoUIValue:val(set)
 	if set ~= nil then
 		if not self.value or self:isValid(set) then
@@ -860,6 +880,7 @@ function PocoUIValue:val(set)
 			_.l(self.valLbl,set,true)
 			self.valLbl:set_center_x(11*self.config.w/16)
 			self.valLbl:set_x(math.floor(self.valLbl:x()))
+			self:_markDefault(set)
 			return set
 		else
 			return false
@@ -912,6 +933,7 @@ function PocoUIBoolean:val(set)
 					self.tick:set_texture_rect(24,0,24,24)
 				end
 			end
+			self:_markDefault(set)
 			return set
 		else
 			return false
@@ -966,8 +988,8 @@ function PocoUINumValue:val(set)
 		self.valLbl:set_center_x(11*self.config.w/16)
 		self.valLbl:set_x(math.floor(self.valLbl:x()))
 		if self.arrowLeft then
-			self.arrowLeft:set_visible(self:prev(1))
-			self.arrowRight:set_visible(self:next(1))
+			self.arrowLeft:set_alpha(self:prev(1) and 1 or 0.1)
+			self.arrowRight:set_alpha(self:next(1) and 1 or 0.1)
 		end
 	end
 	return result
@@ -996,7 +1018,7 @@ function PocoUIChooseValue:next()
 	self:go(1)
 end
 
-function PocoUIChooseValue:prev(val)
+function PocoUIChooseValue:prev()
 	self:go(-1)
 end
 
@@ -1350,7 +1372,7 @@ function PocoTab:canScroll(down,x,y)
 	if (self._errCnt or 0) > 1 then
 		local pos = self.y or 0
 		if (pos == 0) ~= down then
-			managers.menu_component:post_event('menu_error')
+			--managers.menu_component:post_event('menu_error')
 			result = false
 		end
 	end
@@ -1584,7 +1606,7 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 		x, y = managers.mouse_pointer:convert_fullscreen_16_9_mouse_pos(x,y)
 	end
 	pcall(function()
-		local scrollStep = 40
+		local scrollStep = 60
 		local currentTab = self.gui and self.gui.currentTab
 		if button == Idstring('mouse wheel down') then
 			if currentTab:isHot(PocoEvent.WheelDown, x,y, true) then

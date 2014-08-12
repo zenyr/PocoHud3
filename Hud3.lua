@@ -394,7 +394,7 @@ function TPocoHud3:Menu(dismiss,...)
 				return (col and y1 or y2) - h - m
 			end
 			local objs = {}
-			for category, objects in pairs(O.scheme) do
+			for category, objects in _pairs(O.scheme) do
 				PocoHud3Class.PocoUIHintLabel:new(tab,{
 					x = x(), y = y(25), w=400, h=25,
 					fontSize = 25,font = FONTLARGE, align='left',
@@ -418,36 +418,30 @@ function TPocoHud3:Menu(dismiss,...)
 						local value = O:get(category,name,true)
 						local hint = O:_hint(category,name)
 						if type == 'bool' then
-							objs[#objs+1] = PocoHud3Class.PocoUIBoolean:new(tab,{
-								x = x()+10, y = y(30), w=390, h=30,
+							objs[#objs+1] = {PocoHud3Class.PocoUIBoolean:new(tab,{
+								x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
 								fontSize = 20, text=name, value = value ,
 								hintText = hint
-							})
-						end
-						if type == 'color' then
-							objs[#objs+1] = PocoHud3Class.PocoUIColorValue:new(tab,{
-								x = x()+10, y = y(30), w=390, h=30,
+							}),category,name}
+						elseif type == 'color' then
+							objs[#objs+1] = {PocoHud3Class.PocoUIColorValue:new(tab,{
+								x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
 								fontSize = 20, text=name, value = value,
 								hintText = hint
-							})
-						end
-						if type == 'num' then
+							}),category,name}
+						elseif type == 'num' then
 							local range = O:_range(category,name) or {}
 							local vanity = O:_vanity(category,name)
-							local _vanity = {
-								ChatSend = 'never,readOnly,serverSend,clientFullSend,clientMidSend,alwaysSend',
-								Verbose = 'Never,Verbose only,Always',
-								MidStat = 'Never,50,100',
-								align = 'none,Start,Middle,End',
-								style = 'N/A,PocoHud,Vanilla',
-							}
-							if vanity then
-								vanity = (_vanity[vanity] or '?'):split(',')
-							end
-							objs[#objs+1] = PocoHud3Class.PocoUINumValue:new(tab,{
-								x = x()+10, y = y(30), w=390, h=30,
+
+							objs[#objs+1] = {PocoHud3Class.PocoUINumValue:new(tab,{
+								x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
 								fontSize = 20, text=name, value = value, min = range[1], max = range[2], vanity = vanity,
 								hintText = hint
+							}),category,name}
+						else
+							PocoHud3Class.PocoUIButton:new(tab,{
+								x = x()+10, y = y(30), w=390, h=30,
+								text=_.s(name,type)
 							})
 						end
 					end
@@ -455,7 +449,10 @@ function TPocoHud3:Menu(dismiss,...)
 				col = y1 <= y2
 			end
 			local y = math.max(y1,y2)
-			PocoHud3Class.PocoUIHintLabel:new(tab,{
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onPressed = function()
+					_('SAVE')
+				end,
 				x = 10, y = y, h=40,
 				fontSize = 30,font = FONTLARGE,
 				text={'SAVE',cl.White},
@@ -924,8 +921,8 @@ function TPocoHud3:_updateItems(t,dt)
 			end
 		end
 		local x,y,move = self._ws:size()
-		x = x * buffO.left/100 - size/2
-		y = y * buffO.top/100 - size/2
+		x = x * buffO.originLeft/100 - size/2
+		y = y * buffO.originTop/100 - size/2
 		local oX,oY = x,y
 		if align == 1 then
 			move = size
