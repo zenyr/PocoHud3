@@ -789,7 +789,6 @@ end
 local PocoUIValue = class(PocoUIElem)
 PocoHud3Class.PocoUIValue = PocoUIValue
 function PocoUIValue:init(parent,config,inherited)
-	local dx = config.w/16
 	PocoUIElem.init(self,parent,config,true)
 
 	local bg = self.pnl:rect{color = cl.White:with_alpha(0.1)}
@@ -826,8 +825,6 @@ function PocoUIValue:init(parent,config,inherited)
 			y = 0,
 			blend_mode = 'add'
 		})
-		self.arrowLeft:set_center(7*dx,config.h/2)
-
 		self.arrowRight = self.pnl:bitmap({
 			texture = 'guis/textures/menu_icons',
 			texture_rect = {
@@ -842,7 +839,11 @@ function PocoUIValue:init(parent,config,inherited)
 			blend_mode = 'add',
 			--rotation = 180,
 		})
-		self.arrowRight:set_center(15*dx,config.h/2)
+		self.arrowRight:set_right(config.w)
+		self.arrowLeft:set_left(config.w/2)
+
+		self.arrowLeft:set_center_y(config.h/2)
+		self.arrowRight:set_center_y(config.h/2)
 
 		local shift = function()
 			return Poco._kbd:down(42) or Poco._kbd:down(54)
@@ -906,7 +907,7 @@ function PocoUIValue:val(set)
 		if not self.value or self:isValid(set) then
 			self.value = set
 			_.l(self.valLbl,set,true)
-			self.valLbl:set_center_x(11*self.config.w/16)
+			self.valLbl:set_center_x(12*self.config.w/16)
 			self.valLbl:set_x(math.floor(self.valLbl:x()))
 			self:_markDefault(set)
 			return set
@@ -1013,7 +1014,7 @@ function PocoUINumValue:val(set)
 	local result = PocoUIValue.val(self,set)
 	if set and self.config.vanity then
 		_.l(self.valLbl,self.config.vanity[self:val()+1] or self:val(),true)
-		self.valLbl:set_center_x(11*self.config.w/16)
+		self.valLbl:set_center_x(3*self.config.w/4)
 		self.valLbl:set_x(math.floor(self.valLbl:x()))
 	end
 	if set and self.arrowLeft then
