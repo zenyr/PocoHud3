@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 73
-local TAG = '0.121-2-gb6c61ea'
+local REV = 84
+local TAG = '0.122-9-ga8c8f93'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -75,7 +75,7 @@ function TPocoHud3:onInit() -- ★설정
 --	Poco:LoadOptions(self:name(1),O)
 	O:load()
 
-	self._ws = inGame and managers.gui_data:create_fullscreen_workspace() or managers.gui_data:create_fullscreen_16_9_workspace()
+	self._ws = managers.gui_data:create_fullscreen_workspace()
 	error = function(msg)
 		if self.dead then
 			_('ERR:',msg)
@@ -101,11 +101,15 @@ function TPocoHud3:onInit() -- ★설정
 	self.gadget = self.gadget or {}
 --	self.tmp = self.pnl.dbg:bitmap{name='x', blend_mode = 'add', layer=1, x=0,y=40, color=clGood ,texture = "guis/textures/hud_icons"}
 	local dbgO = O:get('corner')
-	self.dbgLbl = self.pnl.dbg:text{text='HUD '..(inGame and 'Ingame' or 'Outgame'), font= dbgO.defaultFont and FONT or ALTFONT, font_size = dbgO.size, color = dbgO.color, x=0,y=self.pnl.dbg:height()-dbgO.size, layer=0}
+	self.dbgLbl = self.pnl.dbg:text{text='HUD '..(inGame and 'Ingame' or 'Outgame'), font= dbgO.defaultFont and FONT or ALTFONT, font_size = dbgO.size, color = dbgO.color:with_alpha(dbgO.opacity/100), x=0,y=self.pnl.dbg:height()-dbgO.size, layer=0}
 	self:_hook()
 	local verboseKey = O:get('root','verboseKey')
 	if verboseKey then
-		Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose',true),callback(self,self,'toggleVerbose',false))
+		if O:get('root','verboseToggle') then
+			Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose','toggle'))
+		else
+			Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose',true),callback(self,self,'toggleVerbose',false))
+		end
 	end
 	Poco:Bind(self,14,callback(self,self,'Menu',false))
 
@@ -313,7 +317,7 @@ function TPocoHud3:Menu(dismiss,...)
 		pnl:text{
 			x = 10, y = offsetY+10, w = 600, h = 30,
 			name = 'tab_desc', text = self:_name(pid),
-			font = 'fonts/font_large_mf', font_size = 25, color = self:_color(pid)
+			font = FONTLARGE, font_size = 25, color = self:_color(pid)
 		}
 		local y,fontSize,w = offsetY+35, 19, 970
 		return y
@@ -323,9 +327,14 @@ function TPocoHud3:Menu(dismiss,...)
 		local menu = self.menuGui
 		if menu then -- Remove
 			if not self._stringFocused or (now()-self._stringFocused > 0.1) then
+				self.menuGui = nil
+				if self.onMenuDismiss then
+					local cbk = self.onMenuDismiss
+					self.onMenuDismiss = nil
+					cbk()
+				end
 				managers.menu_component:post_event("menu_exit")
 				menu:destroy()
-				self.menuGui = nil
 			end
 		elseif not dismiss then -- Show
 			managers.menu_component:post_event("menu_enter")
@@ -334,7 +343,7 @@ function TPocoHud3:Menu(dismiss,...)
 			--- Install tabs here ---
 			local tab = gui:add('About')
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function(self)
+				onClick = function(self)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
 				x = 10, y = 10, w = 400,h=100,
@@ -342,7 +351,7 @@ function TPocoHud3:Menu(dismiss,...)
 				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function(self)
+				onClick = function(self)
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 				end,
 				x = 10, y = 120, w = 400,h=40,
@@ -351,38 +360,17 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 
 			PocoHud3Class.PocoUIButton:new(tab,{
-				onPressed = function(self)
+				onClick = function(self)
 					Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 				end,
 				x = 10, y = 170, w = 400,h=40,
-				text={
-					{'C', cl.Beige},
-					{'o', cl.BurlyWood},
-					{'l', cl.PowderBlue},
-					{'o', cl.LightBlue},
-					{'r ', cl.MediumAquamarine},
-					{'C', cl.MediumPurple},
-					{'o', cl.Orchid},
-					{'d', cl.PaleVioletRed},
-					{'e ', cl.IndianRed},
-					{'N', cl.Peru},
-					{'a', cl.MediumTurquoise},
-					{'m', cl.SlateBlue},
-					{'e', cl.MediumOrchid},
-					{'s', cl.Brown},
-					{'!', cl.Sienna}
-				},
-				hintText = {{'M', cl.SeaGreen}, {'S', cl.LightSteelBlue}, {'D', cl.Plum}, {'N ', cl.Tan},
-					{'r', cl.MediumSeaGreen}, {'e', cl.SteelBlue}, {'f', cl.DarkKhaki}, {'e', cl.DarkOliveGreen},
-					{'r', cl.DarkSlateBlue}, {'e', cl.Thistle}, {'n', cl.RoyalBlue}, {'c', cl.BlueViolet},
-					{'e ', cl.Chocolate}, {'p', cl.Goldenrod}, {'a', cl.SaddleBrown}, {'g', cl.Linen},
-					{'e', cl.Lavender},
-				}
+				text={'Color codes reference page', cl.Silver},-- no moar fun tho
+				hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
 			})
 			--Because WHY THE FUQ NOT
 
 			tab = gui:add('Options')
-			local y1, y2, m, col = 10, 10, 2, true
+			local y1, y2, m, col = 70, 70, 2, true
 			local x,y =function()
 				return col and (m+10) or m + 520
 			end, function(h)
@@ -393,12 +381,64 @@ function TPocoHud3:Menu(dismiss,...)
 				end
 				return (col and y1 or y2) - h - m
 			end
+
 			local objs = {}
-			for category, objects in pairs(O.scheme) do
+			self.onMenuDismiss = function()
+				O:default()
+				for __,obj in pairs(objs) do
+					if not obj[1]:isDefault() then
+						O:set(obj[2],obj[3],obj[1]:val())
+					end
+				end
+				O:save()
+				me:Menu(true)
+			end
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onClick = function()
+					me:Menu(true)
+
+					-- Shitty force reload :(
+					me = Poco:AddOn(TPocoHud3)
+					me = Poco:AddOn(TPocoHud3)
+					PocoHud3Class.loadVar(O,me)
+				end,
+				x = 20, y = 10, w = 400, h=50,
+				fontSize = 30,font = FONTLARGE,
+				text={'APPLY & RELOAD',cl.Silver},
+				hintText = 'Some options will be applied on the next session.'
+			})
+
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onClick = function()
+					for __,obj in pairs(objs) do
+						obj[1]:val(O:get(obj[2],obj[3],true))
+					end
+				end,
+				x = 500, y = 10, w = 200, h=50,
+				fontSize = 25,font = FONTLARGE,
+				text={'DISCARD CHANGES',cl.Gray},
+				hintText = 'Discard temporary changes and revert to previous settings'
+			})
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onClick = function()
+					for __,obj in pairs(objs) do
+						obj[1]:val(O:_default(obj[2],obj[3]))
+					end
+				end,
+				x = 710, y = 10, w = 200, h=50,
+				fontSize = 25,font = FONTLARGE,
+				text={'RESET TO DEFAULT',cl.Gray},
+				hintText = 'Revert to the default setting.'
+			})
+			tab.pnl:bitmap({
+				texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
+				color = cl.White, x = 5, y = 65, w = tab.pnl:w()-10, h = 3 })
+
+			for category, objects in _pairs(O.scheme) do
 				PocoHud3Class.PocoUIHintLabel:new(tab,{
 					x = x(), y = y(25), w=400, h=25,
-					fontSize = 25,font = FONTLARGE, align='left',
-					text={category,cl.OrangeRed}, hintText = objects[1]
+					fontSize = 25,font = FONTLARGE, align='left', blend = 'add',
+					text={string.upper(category),cl.CornFlowerBlue}, hintText = objects[1]
 				})
 				for name,values in _pairs(objects,function(a,b)
 					local t1, t2 = O:_type(category,a),O:_type(category,b)
@@ -417,50 +457,53 @@ function TPocoHud3:Menu(dismiss,...)
 						local type = O:_type(category,name)
 						local value = O:get(category,name,true)
 						local hint = O:_hint(category,name)
+						local tName = name:gsub('(%U)(%u)','%1 %2'):upper()
 						if type == 'bool' then
-							objs[#objs+1] = PocoHud3Class.PocoUIBoolean:new(tab,{
-								x = x()+10, y = y(30), w=390, h=30,
-								fontSize = 20, text=name, value = value ,
+							objs[#objs+1] = {PocoHud3Class.PocoUIBoolean:new(tab,{
+								x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
+								fontSize = 20, text=tName , value = value ,
 								hintText = hint
-							})
-						end
-						if type == 'color' then
-							objs[#objs+1] = PocoHud3Class.PocoUIColorValue:new(tab,{
-								x = x()+10, y = y(30), w=390, h=30,
-								fontSize = 20, text=name, value = value,
+							}),category,name}
+						elseif type == 'color' then
+							objs[#objs+1] = {PocoHud3Class.PocoUIColorValue:new(tab,{
+								x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
+								fontSize = 20, text=tName, value = value,
 								hintText = hint
-							})
-						end
-						if type == 'num' then
+							}),category,name}
+						elseif type == 'num' then
 							local range = O:_range(category,name) or {}
 							local vanity = O:_vanity(category,name)
-							local _vanity = {
-								ChatSend = 'never,readOnly,serverSend,clientFullSend,clientMidSend,alwaysSend',
-								Verbose = 'Never,Verbose only,Always',
-								MidStat = 'Never,50,100',
-								align = 'none,Start,Middle,End',
-								style = 'N/A,PocoHud,Vanilla',
-							}
-							if vanity then
-								vanity = (_vanity[vanity] or '?'):split(',')
-							end
-							objs[#objs+1] = PocoHud3Class.PocoUINumValue:new(tab,{
-								x = x()+10, y = y(30), w=390, h=30,
-								fontSize = 20, text=name, value = value, min = range[1], max = range[2], vanity = vanity,
+							local step = O:_step(category,name)
+
+							objs[#objs+1] = {PocoHud3Class.PocoUINumValue:new(tab,{
+								x = x()+10, y = y(30), w=390, h=30, category = category, name = name, step = step,
+								fontSize = 20, text=tName, value = value, min = range[1], max = range[2], vanity = vanity,
 								hintText = hint
+							}),category,name}
+						else
+							PocoHud3Class.PocoUIButton:new(tab,{
+								hintText = 'Not implemented for now.',
+								x = x()+10, y = y(30), w=390, h=30,
+								text=_.s(name,type)
 							})
 						end
 					end
 				end
+				tab.pnl:bitmap({
+					texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
+					color = cl.White:with_alpha(0.3), x = x(), y = y(10)+3,w = 410, h = 3
+				})
 				col = y1 <= y2
 			end
 			local y = math.max(y1,y2)
-			PocoHud3Class.PocoUIHintLabel:new(tab,{
-				x = 10, y = y, h=40,
-				fontSize = 30,font = FONTLARGE,
-				text={'SAVE',cl.White},
-				hintText = 'Please note that this screen is bound to be changed in the future.'
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onClick = function(self)
+					self.parent:scroll(0,true)
+				end,
+				x = 0, y = y+10, w = 1000, h=40,
+				fontSize = 25, text={'BACK TO TOP',cl.Gray}
 			})
+
 			tab:set_h(y+90)
 
 			tab = gui:add('Heist Status')
@@ -570,6 +613,7 @@ function TPocoHud3:_update(t,dt)
 		self.menuGui:update(t,dt)
 	end
 end
+
 function TPocoHud3:HitDirection(col_ray,data)
 	local mobPos
 	if self._lastAttkUnit and alive(self._lastAttkUnit) then
@@ -606,6 +650,7 @@ end
 function TPocoHud3:Chat(category,text)
 	local catInd = O:get('chat',category) or -1
 	local forceSend = catInd >= 5
+	if not O:get('chat','enable') then return end
 	if self.muted and not forceSend then return _('Muted:',text) end
 	local canRead = catInd >= 1
 	local isFullGame = not managers.statistics:is_dropin()
@@ -633,6 +678,8 @@ function TPocoHud3:Float(unit,category,temp,tag)
 	end
 end
 function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
+	if not O:get('buff','enable') then return end
+	if O:get('buff','ignore'.. ((data.key):gsub('^%l', string.upper)) ) then return end
 	local buff = self.buffs[data.key]
 	if buff and (buff.data.et ~= data.et or buff.data.good ~= data.good )then
 		buff:destroy(1)
@@ -734,12 +781,18 @@ function TPocoHud3:_updatePlayers(t)
 		local nData = managers.hud:_name_label_by_peer_id( i )
 		local isMe = i==self.pid
 		local pnl = self['pnl_'..i]
+		local btmO = O:get('playerBottom')
+		local _show = function(name)
+			local thr = btmO['show'..name] or 0
+			local ind = self.verbose and 1 or 2
+			return thr >= ind
+		end
 		pnl = pnl ~= 0 and pnl or nil
-		if pnl and not name then
+		if pnl and not name or (pnl and not btmO.enable) then
 			-- killPnl
 			self.pnl.stat:remove(pnl)
 			self['pnl_'..i] = nil
-		elseif not pnl and name and (isMe or nData) then
+		elseif not pnl and name and (isMe or nData) and btmO.enable then
 			-- makePnl
 			if managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
 				local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
@@ -747,26 +800,28 @@ function TPocoHud3:_updatePlayers(t)
 				if bPnl and not (not isMe and bPnl == managers.hud._teammate_panels[4]) then
 					local member = self:_member(i)
 					if member and alive(member:unit()) then
-						local peer = member and member:peer()
-						local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or ''
-						rank = ranks[rank] and (ranks[rank]..'Ї') or ''
-						local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
-						local defaultLbl = bPnl._panel:child( "name" )
-						local nameBg =  bPnl._panel:child( "name_bg" )
-						self:_lbl(defaultLbl,{{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},{self:_name(i),self:_color(i)}})
-						local txtRect = {defaultLbl:text_rect()}
-						defaultLbl:set_size(txtRect[3],txtRect[4])
-						local shape = {defaultLbl:shape()}
-						nameBg:set_shape(shape[1]-3,shape[2],shape[3]+6,shape[4])
-
-						pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=80}
+						if btmO.showRank then
+							local peer = member and member:peer()
+							local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or ''
+							rank = ranks[rank] and (ranks[rank]..'Ї') or ''
+							local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
+							local defaultLbl = bPnl._panel:child( "name" )
+							local nameBg =  bPnl._panel:child( "name_bg" )
+							self:_lbl(defaultLbl,{{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},{self:_name(i),self:_color(i)}})
+							local txtRect = {defaultLbl:text_rect()}
+							defaultLbl:set_size(txtRect[3],txtRect[4])
+							local shape = {defaultLbl:shape()}
+							nameBg:set_shape(shape[1]-3,shape[2],shape[3]+6,shape[4])
+						end
+						pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=btmO.size*2+1}
+						pnl:rect{color=cl.Blue:with_alpha(0.2)}
 						local wp = {bPnl._player_panel:world_position()}
 						pnl:set_world_position(wp[1],wp[2]-30)
 						local fontSize = O:get('playerBottom','size')
 						--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture="guis/textures/test_blur_df", render_template="VertexColorTexturedBlur3D", layer=-1, x=0,y=0 } )
-						self['pnl_lbl'..i] = pnl:text{name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
-						self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=0,y=0, layer=1, blend_mode = 'normal'}
-						self['pnl_lblB'..i] = pnl:text{name='lblB',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=2,y=0, layer=1, blend_mode = 'normal'}
+						self['pnl_lbl'..i] = pnl:text{rotation=360,name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
+						self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=0,y=1, layer=1, blend_mode = 'normal'}
+						self['pnl_lblB'..i] = pnl:text{name='lblB',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=2,y=1, layer=1, blend_mode = 'normal'}
 						self['pnl_'..i] = pnl
 					end
 				end
@@ -805,32 +860,66 @@ function TPocoHud3:_updatePlayers(t)
 			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
 			local lives =	isMe and managers.player:upgrade_value( "player", "additional_lives", 0) or 0
 			local txts = {}
-			if interText then
-				txts[#txts+1]={' '..interText..'\n',color}
+			if btmO.underneith then
+				txts[#txts+1]={'\n'}
 			end
-			txts[#txts+1]={' '..Icon.Skull..kill,color}
-			txts[#txts+1]={' '..Icon.Skull..killS,cl.Yellow:with_alpha(0.8)}
-			if self.verbose then
+			if interText and _show('Interaction') then
+				txts[#txts+1]={' '..interText,color}
+			end
+			if not btmO.underneith then
+				txts[#txts+1]={'\n'}
+			end
+			if _show('Kill') then
+				txts[#txts+1]={' '..Icon.Skull..kill,color}
+			end
+			if _show('Special') then
+				txts[#txts+1]={' '..Icon.Skull..killS,cl.Yellow:with_alpha(0.8)}
+			end
+			if _show('AverageDamage') then
+				txts[#txts+1]={' ±'..avgDmg,color:with_alpha(0.8)}
+			end
+
+			if _show('Minion') then
+				local minion = self:Stat(i,'minion')
+				if minion ~= 0 and alive(minion) then
+					local cd = minion:character_damage()
+					local c = cd._health
+					local f = cd._health_max or cd._HEALTH_INIT
+					if f then
+						txts[#txts+1]={' '..math.floor(c/f*100)..'%',math.lerp( cl.OrangeRed, color, c/f ):with_alpha(0.5)}
+					end
+				else
+					txts[#txts+1]={' '..Icon.Times,cl.OrangeRed:with_alpha(0.5)}
+				end
+			end
+
+			--[[
 				txts[#txts+1]={' !',color:with_red(1)}
 				txts[#txts+1]={_.f(head/hit*100,1)..'%',color:with_red(1)}
-				txts[#txts+1]={' '..avgDmg,color:with_alpha(0.8)}
 				txts[#txts+1]={Icon.Times..accuracy..'%',accColor}
-			end
-			if boost then
+			]]
+
+			if boost and _show('Inspire') then
 				txts[#txts+1]={' '..Icon.Start or '',clGood:with_alpha(0.5)}
 			end
-			if distance>0 then
+			if distance>0 and _show('Distance') then
 				txts[#txts+1]={' '..math.ceil(distance/100)..'m',(canBoost and clGood or clBad):with_alpha(0.8)}
 			end
-			txts[#txts+1]={ping,cl.White:with_alpha(0.5)}
-			txts[#txts+1]={' '..Icon.Ghost..downs..(lives>0 and '/4' or ''),downs<3 and clGood or Color.red}
-
-			if isMe and O:get('playerBottom','clock') then
+			if _show('Ping') then
+				txts[#txts+1]={ping,cl.White:with_alpha(0.5)}
+			end
+			if _show('Downs') then
+				txts[#txts+1]={' '..Icon.Ghost..downs..(lives>0 and '/4' or ''),downs<3 and clGood or Color.red}
+			end
+			if isMe and _show('Clock') then
 				txts[#txts+1]={os.date(' %X'),Color.white}
 			end
 			txts[#txts+1] = {' ',cl.White}
-			if alive(lbl) and self['pnl_txt'..i]~=self:_lbl(nil,txts) then
-				local txt = self:_lbl(lbl,txts)
+
+			if alive(lbl) and self['pnl_txt'..i]~=self:_lbl(nil,txts) and self.hh then
+				local txt = _.l(lbl,txts)
+				local btm = self.hh - (btmO.underneith and 1 or equip and 140 or 115)
+
 				self['pnl_txt'..i]=txt
 				self['pnl_lblA'..i]:set_text(txt)
 				self['pnl_lblB'..i]:set_text(txt)
@@ -838,9 +927,7 @@ function TPocoHud3:_updatePlayers(t)
 				lbl:set_size(pnl:w(),tr[4])
 				self['pnl_lblA'..i]:set_size(pnl:w(),tr[4])
 				self['pnl_lblB'..i]:set_size(pnl:w(),tr[4])
-				lbl:set_bottom(equip and 55 or 80)
-				self['pnl_lblA'..i]:set_bottom(equip and 56 or 81)
-				self['pnl_lblB'..i]:set_bottom(equip and 56 or 81)
+				pnl:set_bottom(btm)
 				--local sh = {lbl:shape()}
 				--self['pnl_blur'..i]:set_shape((sh[3]-tr[3])/2,sh[2],tr[3],tr[4])
 			end
@@ -924,8 +1011,8 @@ function TPocoHud3:_updateItems(t,dt)
 			end
 		end
 		local x,y,move = self._ws:size()
-		x = x * buffO.left/100 - size/2
-		y = y * buffO.top/100 - size/2
+		x = x * buffO.originLeft/100 - size/2
+		y = y * buffO.originTop/100 - size/2
 		local oX,oY = x,y
 		if align == 1 then
 			move = size
@@ -1325,7 +1412,7 @@ function TPocoHud3:_hook()
 		hook( PlayerManager, 'drop_carry', function( self ,...)
 			Run('drop_carry', self,... )
 			pcall(me.Buff,me,({
-				key='drop_carry', good=false,
+				key='carryDrop', good=false,
 				icon=skillIcon, iconRect = {6*64, 0*64, 64, 64},
 				text='',
 				st=Application:time(), et=managers.player._carry_blocked_cooldown_t
@@ -1344,8 +1431,16 @@ function TPocoHud3:_hook()
 			local rect = rectDict[upgrade]
 			if rect ~= '' then
 				local rect2 = rect and ({64*rect[2][1],64*rect[2][2],64,64})
+				local _keys = {
+					DmgMultiplierOutnumbered = 'Underdog',
+					CombatMedicDamageMultiplier = 'CombatMedic',
+					OverkillDamageMultiplier = 'Overkill',
+					NoAmmoCost = 'Bulletstorm',
+				}
+				local key = ('_'..upgrade):gsub('_(%U)',function(a) return a:upper() end)
+				key = _keys[key] or key
 				pcall(me.Buff,me,({
-					key=upgrade, good=true,
+					key=key, good=true,
 					icon=rect2 and skillIcon or 'guis/textures/pd2/lock_incompatible', iconRect = rect2,
 					text=rect and rect[1] or upgrade,
 					st=now(), et=et
@@ -1663,7 +1758,7 @@ function TPocoHud3:_hook()
 			if active and (me._lastECM or 0 < et)then
 				me._lastECM = et
 				pcall(me.Buff,me,({
-					key='ecm', good=true,
+					key='ECM', good=true,
 					icon=skillIcon,
 					iconRect = { 1*64, 4*64,64,64 },
 					text='',
@@ -1690,7 +1785,7 @@ function TPocoHud3:_hook()
 			local et = tape_loop_t+6
 			if et then
 				pcall(me.Buff,me,({
-					key='tloop', good=true,
+					key='tapeLoop', good=true,
 					icon=skillIcon,
 					iconRect = { 4*64, 2*64,64,64 },
 					text='',
@@ -1792,7 +1887,7 @@ function TPocoHud3:_hook()
 			return Run('_enter', self,  ...)
 		end)
 		hook( HuskPlayerMovement, '_get_max_move_speed', function( self, ... )
-			return Run('_get_max_move_speed', self,  ...) * 3
+			return Run('_get_max_move_speed', self,  ...) * math.max(1,O:get('game','fasterDesyncResolve'))
 			-- because of this, husk players will catch up de-sync waaay easily, representing their position more accurate.
 			-- If a host uses this, better stealth experience for all clients guaranteed. Now skill matters, instead of lag. :)
 			-- This does not make them actually move 3 times faster. This only kick in after severe desync.
@@ -1932,22 +2027,22 @@ function TPocoHud3:_hook()
 			local self, id, nick = unpack({...})
 			self['_joinT_'..id] = os.clock()
 			local result = Run('show_person_joining', ...)
-
-			local peer = managers.network:session():peer(id)
-			if peer and 0 < peer:rank() then
-				managers.hud:post_event("infamous_player_join_stinger")
-				local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
-				if dlg then
-					local name = peer:level()..' '..string.upper(nick)
-					if peer:rank()>0 then
-						name = peer:rank()..'-'..name
+			if O:get('game','ingameJoinRemaining') then
+				local peer = managers.network:session():peer(id)
+				if peer and 0 < peer:rank() then
+					managers.hud:post_event("infamous_player_join_stinger")
+					local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
+					if dlg then
+						local name = peer:level()..' '..string.upper(nick)
+						if peer:rank()>0 then
+							name = peer:rank()..'-'..name
+						end
+						dlg:set_title(_.s(
+							managers.localization:text("dialog_dropin_title", {	USER = name	})
+							))
 					end
-					dlg:set_title(_.s(
-						managers.localization:text("dialog_dropin_title", {	USER = name	})
-						))
 				end
 			end
-
 
 			return result
 		end)
@@ -1957,12 +2052,14 @@ function TPocoHud3:_hook()
 			local dT,per = os.clock()-joinT, math.max(1,progress_percentage)
 			local tT = dT/per*100
 			Run('update_person_joining', ...)
-			local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
-			if dlg then
-				dlg:set_text(_.s(
-					managers.localization:text("dialog_wait"), progress_percentage.."%",
-					tT-dT,'s left'
-					))
+			if O:get('game','ingameJoinRemaining') then
+				local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
+				if dlg then
+					dlg:set_text(_.s(
+						managers.localization:text("dialog_wait"), progress_percentage.."%",
+						tT-dT,'s left'
+						))
+				end
 			end
 		end)
 		-- Hide interaction circle
@@ -1993,63 +2090,72 @@ function TPocoHud3:_hook()
 				managers.experience.reached_level_cap = _oldLvlCap
 			end)
 		end
+		-- Corpse limit
+		hook( EnemyManager, '_upd_corpse_disposal', function( ... )
+			local self = unpack{...}
+			self._MAX_NR_CORPSES = math.pow(2,O:get('game','corpseLimit') or 3)
+			Run('_upd_corpse_disposal', ...)
+		end)
 
-	end
+	end -- End of if inGame
 	-- Kick menu
-	hook( KickPlayer, 'modify_node', function( ... )
-		local self, node, up = unpack{...}
-		local new_node = table.deepcopy( node )
-		if managers.network:session() then
-			for __,peer in pairs( managers.network:session():peers() ) do
-				local rank = peer:rank()
-				local params = {
-								name			= peer:name(),
-								text_id			= _.s((rank and rank..'-' or '')..(peer:level() or '?'),peer:name()),
-								callback		= 'kick_player',
-								to_upper		= false,
-								localize		= 'false',
-								rpc				= peer:rpc(),
-								peer			= peer,
-								}
-				local new_item = node:create_item( nil, params )
-				new_node:add_item( new_item )
+	if O:get('game','kickMenuRank') then
+		hook( KickPlayer, 'modify_node', function( ... )
+			local self, node, up = unpack{...}
+			local new_node = deep_clone( node )
+			if managers.network:session() then
+				for __,peer in pairs( managers.network:session():peers() ) do
+					local rank = peer:rank()
+					local params = {
+									name			= peer:name(),
+									text_id			= _.s((rank and rank..'-' or '')..(peer:level() or '?'),peer:name()),
+									callback		= 'kick_player',
+									to_upper		= false,
+									localize		= 'false',
+									rpc				= peer:rpc(),
+									peer			= peer,
+									}
+					local new_item = node:create_item( nil, params )
+					new_node:add_item( new_item )
+				end
 			end
-		end
-		managers.menu:add_back_button( new_node )
-		return new_node
-	end)
-
+			managers.menu:add_back_button( new_node )
+			return new_node
+		end)
+	end
 	-- Mouse hook plugin
-	hook( MenuComponentManager, 'mouse_moved', function( ... )
+
+	hook( MenuRenderer, 'mouse_moved', function( ... )
 		local self, o, x, y = unpack{...}
 		if me.menuGui then
-			if not inGame then
-				x,y = managers.gui_data:safe_to_full_16_9(x,y)
-				return me.menuGui:mouse_moved(false, o, x,y)
-			else
-				return true
-			end
+			return true
 		else
 			return Run('mouse_moved', ...)
 		end
 	end)
-	hook( MenuComponentManager, 'mouse_pressed', function( ... )
+	hook( MenuInput, 'mouse_moved*', function( ... )
+		local self, o, x, y = unpack{...}
+		if me.menuGui then
+			if not inGame then
+				return me.menuGui:mouse_moved(true, o, x,y)
+			else
+				return true
+			end
+		else
+			return Run('mouse_moved*', ...)
+		end
+	end)
+	hook( MenuInput, 'mouse_pressed', function( ... )
 		local self, o, button, x, y = unpack{...}
 		if me.menuGui and me.menuGui.mouse_pressed then
-			local used, pointer = me.menuGui:mouse_pressed(false, o, button, x,y)
-			if used then
-				return true, pointer
-			end
+			return me.menuGui:mouse_pressed(false, o, button, x,y)
 		end
 		return Run('mouse_pressed', ...)
 	end)
-	hook( MenuComponentManager, 'mouse_released', function( ... )
+	hook( MenuRenderer, 'mouse_released', function( ... )
 		local self, o, button, x, y = unpack{...}
 		if me.menuGui and me.menuGui.mouse_released then
-			local used, pointer = me.menuGui:mouse_released(false, o, button, x,y)
-			if used then
-				return true, pointer
-			end
+			return me.menuGui:mouse_released(false, o, button, x,y)
 		end
 		return Run('mouse_released', ...)
 	end)
@@ -2070,7 +2176,11 @@ function TPocoHud3:_hook()
 end
 --- Utility functions ---
 function TPocoHud3:toggleVerbose(state)
-	self.verbose = state
+	if state == 'toggle' then
+		self.verbose = not self.verbose
+	else
+		self.verbose = state
+	end
 end
 function TPocoHud3:test()
 -- reserved
