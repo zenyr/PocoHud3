@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 84
-local TAG = '0.122-9-ga8c8f93'
+local REV = 89
+local TAG = '0.124-4-g7dd762b'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -814,7 +814,6 @@ function TPocoHud3:_updatePlayers(t)
 							nameBg:set_shape(shape[1]-3,shape[2],shape[3]+6,shape[4])
 						end
 						pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=btmO.size*2+1}
-						pnl:rect{color=cl.Blue:with_alpha(0.2)}
 						local wp = {bPnl._player_panel:world_position()}
 						pnl:set_world_position(wp[1],wp[2]-30)
 						local fontSize = O:get('playerBottom','size')
