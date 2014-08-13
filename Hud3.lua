@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 89
-local TAG = '0.124-4-g7dd762b'
+local REV = 90
+local TAG = '0.124-5-gba4bc37'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -1843,10 +1843,10 @@ function TPocoHud3:_hook()
 		end)
 
 		local OnCriminalHealth = function(pid,data)
-			local percent = (pid==self.pid and data.current/data.total or data.current)*100
-			local bPercent = self:Stat(pid,'health')
-			local down = self:Stat(pid,'down')
-			if percent >= 99.8 and bPercent < percent then
+			local percent = (pid==self.pid and data.current/data.total or data.current)*100 or 0
+			local bPercent = self:Stat(pid,'health') or 0
+			local down = self:Stat(pid,'down') or 0
+			if percent>= 99.8 and bPercent < percent then
 				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) then
 					self:Chat('replenished',self:_name(pid)..' replenished health by '.._.f(percent-bPercent)..'%'..(down>0 and '(+'..down..' down'..(down>1 and 's' or '')..')' or ''))
 				end
