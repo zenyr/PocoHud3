@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 82
-local TAG = '0.123'
+local REV = 83
+local TAG = '0.122-8-g968b82b'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -813,7 +813,7 @@ function TPocoHud3:_updatePlayers(t)
 							local shape = {defaultLbl:shape()}
 							nameBg:set_shape(shape[1]-3,shape[2],shape[3]+6,shape[4])
 						end
-						pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=btmO.size*2+1}
+						pnl = self.pnl.stat:panel{x = 0,y=0, w=340,h=btmO.size*2+1}
 						local wp = {bPnl._player_panel:world_position()}
 						pnl:set_world_position(wp[1],wp[2]-30)
 						local fontSize = O:get('playerBottom','size')
@@ -860,8 +860,9 @@ function TPocoHud3:_updatePlayers(t)
 			local lives =	isMe and managers.player:upgrade_value( "player", "additional_lives", 0) or 0
 			local txts = {}
 			if interText and _show('Interaction') then
-				txts[#txts+1]={' '..interText..'\n',color}
-			else
+				txts[#txts+1]={' '..interText,color}
+			end
+			if not btmO.underneith then
 				txts[#txts+1]={'\n'}
 			end
 			if _show('Kill') then
@@ -911,7 +912,7 @@ function TPocoHud3:_updatePlayers(t)
 			end
 			txts[#txts+1] = {' ',cl.White}
 
-			if alive(lbl) and self['pnl_txt'..i]~=self:_lbl(nil,txts) then
+			if alive(lbl) and self['pnl_txt'..i]~=self:_lbl(nil,txts) and self.hh then
 				local txt = _.l(lbl,txts)
 				local btm = self.hh - (btmO.underneith and 1 or equip and 140 or 115)
 
@@ -1430,7 +1431,7 @@ function TPocoHud3:_hook()
 					DmgMultiplierOutnumbered = 'Underdog',
 					CombatMedicDamageMultiplier = 'CombatMedic',
 					OverkillDamageMultiplier = 'Overkill',
-					NoAmmoCostBuff = 'Bulletstorm',
+					NoAmmoCost = 'Bulletstorm',
 				}
 				local key = ('_'..upgrade):gsub('_(%U)',function(a) return a:upper() end)
 				key = _keys[key] or key
@@ -1882,7 +1883,7 @@ function TPocoHud3:_hook()
 			return Run('_enter', self,  ...)
 		end)
 		hook( HuskPlayerMovement, '_get_max_move_speed', function( self, ... )
-			return Run('_get_max_move_speed', self,  ...) * 3
+			return Run('_get_max_move_speed', self,  ...) * math.max(1,O:get('game','fasterDesyncResolve'))
 			-- because of this, husk players will catch up de-sync waaay easily, representing their position more accurate.
 			-- If a host uses this, better stealth experience for all clients guaranteed. Now skill matters, instead of lag. :)
 			-- This does not make them actually move 3 times faster. This only kick in after severe desync.
@@ -2022,22 +2023,22 @@ function TPocoHud3:_hook()
 			local self, id, nick = unpack({...})
 			self['_joinT_'..id] = os.clock()
 			local result = Run('show_person_joining', ...)
-
-			local peer = managers.network:session():peer(id)
-			if peer and 0 < peer:rank() then
-				managers.hud:post_event("infamous_player_join_stinger")
-				local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
-				if dlg then
-					local name = peer:level()..' '..string.upper(nick)
-					if peer:rank()>0 then
-						name = peer:rank()..'-'..name
+			if O:get('game','ingameJoinRemaining') then
+				local peer = managers.network:session():peer(id)
+				if peer and 0 < peer:rank() then
+					managers.hud:post_event("infamous_player_join_stinger")
+					local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
+					if dlg then
+						local name = peer:level()..' '..string.upper(nick)
+						if peer:rank()>0 then
+							name = peer:rank()..'-'..name
+						end
+						dlg:set_title(_.s(
+							managers.localization:text("dialog_dropin_title", {	USER = name	})
+							))
 					end
-					dlg:set_title(_.s(
-						managers.localization:text("dialog_dropin_title", {	USER = name	})
-						))
 				end
 			end
-
 
 			return result
 		end)
@@ -2047,12 +2048,14 @@ function TPocoHud3:_hook()
 			local dT,per = os.clock()-joinT, math.max(1,progress_percentage)
 			local tT = dT/per*100
 			Run('update_person_joining', ...)
-			local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
-			if dlg then
-				dlg:set_text(_.s(
-					managers.localization:text("dialog_wait"), progress_percentage.."%",
-					tT-dT,'s left'
-					))
+			if O:get('game','ingameJoinRemaining') then
+				local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
+				if dlg then
+					dlg:set_text(_.s(
+						managers.localization:text("dialog_wait"), progress_percentage.."%",
+						tT-dT,'s left'
+						))
+				end
 			end
 		end)
 		-- Hide interaction circle
@@ -2083,32 +2086,39 @@ function TPocoHud3:_hook()
 				managers.experience.reached_level_cap = _oldLvlCap
 			end)
 		end
+		-- Corpse limit
+		hook( EnemyManager, '_upd_corpse_disposal', function( ... )
+			local self = unpack{...}
+			self._MAX_NR_CORPSES = math.pow(2,O:get('game','corpseLimit') or 3)
+			Run('_upd_corpse_disposal', ...)
+		end)
 
-	end
+	end -- End of if inGame
 	-- Kick menu
-	hook( KickPlayer, 'modify_node', function( ... )
-		local self, node, up = unpack{...}
-		local new_node = deep_clone( node )
-		if managers.network:session() then
-			for __,peer in pairs( managers.network:session():peers() ) do
-				local rank = peer:rank()
-				local params = {
-								name			= peer:name(),
-								text_id			= _.s((rank and rank..'-' or '')..(peer:level() or '?'),peer:name()),
-								callback		= 'kick_player',
-								to_upper		= false,
-								localize		= 'false',
-								rpc				= peer:rpc(),
-								peer			= peer,
-								}
-				local new_item = node:create_item( nil, params )
-				new_node:add_item( new_item )
+	if O:get('game','kickMenuRank') then
+		hook( KickPlayer, 'modify_node', function( ... )
+			local self, node, up = unpack{...}
+			local new_node = deep_clone( node )
+			if managers.network:session() then
+				for __,peer in pairs( managers.network:session():peers() ) do
+					local rank = peer:rank()
+					local params = {
+									name			= peer:name(),
+									text_id			= _.s((rank and rank..'-' or '')..(peer:level() or '?'),peer:name()),
+									callback		= 'kick_player',
+									to_upper		= false,
+									localize		= 'false',
+									rpc				= peer:rpc(),
+									peer			= peer,
+									}
+					local new_item = node:create_item( nil, params )
+					new_node:add_item( new_item )
+				end
 			end
-		end
-		managers.menu:add_back_button( new_node )
-		return new_node
-	end)
-
+			managers.menu:add_back_button( new_node )
+			return new_node
+		end)
+	end
 	-- Mouse hook plugin
 
 	hook( MenuRenderer, 'mouse_moved', function( ... )

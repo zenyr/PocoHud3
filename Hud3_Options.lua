@@ -118,9 +118,10 @@ local scheme = {
 		minion = {'bool',TRUE,nil,'Configuration not implemented'},
 		bags = {'bool',TRUE,nil,'Configuration not implemented'},
 	}, game = {	'Game specific enhancements',
-		fasterDesyncResolve = {'bool',TRUE,nil,'Configuration not implemented'},
-		showRemaining = {'bool',TRUE,nil,'Configuration not implemented'},
-		betterKickMenu = {'bool',TRUE,nil,'Configuration not implemented'},
+		fasterDesyncResolve = {'num',2,{1,3},'In-game Player husks will catch up severe desync faster and represent more accurate position.\n','DesyncResolve'},
+		ingameJoinRemaining = {'bool',TRUE,nil,'In-game SOMEONE IS JOINING dialog will show you how many seconds left'},
+		kickMenuRank = {'bool',TRUE,nil,'In-game Kick menu will display player levels with their name'},
+		corpseLimit = {'num',3,{1,10},'In-game corpse limit','corpse'},
 	}
 }
 local _vanity = {
@@ -130,6 +131,8 @@ local _vanity = {
 	align = 'none,Start,Middle,End',
 	style = 'N/A,PocoHud,Vanilla',
 	Auto = 'Auto',
+	DesyncResolve = 'N/A,Off,Faster,Aggressive',
+	corpse = 'N/A,Minimum,Less,Default,More,a Lot,Considerable,Massive,Mammoth,Colossal,Ridiculous',
 }
 ----------------------------------------------------
 local JSONFileName = 'poco\\hud3_config.json'
