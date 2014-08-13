@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 83
-local TAG = '0.122-8-g968b82b'
+local REV = 84
+local TAG = '0.122-9-ga8c8f93'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -813,12 +813,13 @@ function TPocoHud3:_updatePlayers(t)
 							local shape = {defaultLbl:shape()}
 							nameBg:set_shape(shape[1]-3,shape[2],shape[3]+6,shape[4])
 						end
-						pnl = self.pnl.stat:panel{x = 0,y=0, w=340,h=btmO.size*2+1}
+						pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=btmO.size*2+1}
+						pnl:rect{color=cl.Blue:with_alpha(0.2)}
 						local wp = {bPnl._player_panel:world_position()}
 						pnl:set_world_position(wp[1],wp[2]-30)
 						local fontSize = O:get('playerBottom','size')
 						--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture="guis/textures/test_blur_df", render_template="VertexColorTexturedBlur3D", layer=-1, x=0,y=0 } )
-						self['pnl_lbl'..i] = pnl:text{name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
+						self['pnl_lbl'..i] = pnl:text{rotation=360,name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
 						self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=0,y=1, layer=1, blend_mode = 'normal'}
 						self['pnl_lblB'..i] = pnl:text{name='lblB',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=2,y=1, layer=1, blend_mode = 'normal'}
 						self['pnl_'..i] = pnl
@@ -859,6 +860,9 @@ function TPocoHud3:_updatePlayers(t)
 			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
 			local lives =	isMe and managers.player:upgrade_value( "player", "additional_lives", 0) or 0
 			local txts = {}
+			if btmO.underneith then
+				txts[#txts+1]={'\n'}
+			end
 			if interText and _show('Interaction') then
 				txts[#txts+1]={' '..interText,color}
 			end
@@ -878,14 +882,14 @@ function TPocoHud3:_updatePlayers(t)
 			if _show('Minion') then
 				local minion = self:Stat(i,'minion')
 				if minion ~= 0 and alive(minion) then
-					local c = _.g(':character_damage()._health',false,minion)
-					local f = c and _.g(':character_damage()._health_max',false,minion)
-						or _.g(':character_damage()._HEALTH_INIT',false,minion)
+					local cd = minion:character_damage()
+					local c = cd._health
+					local f = cd._health_max or cd._HEALTH_INIT
 					if f then
-						txts[#txts+1]={' '..math.floor(c/f*100)..'%',math.lerp( cl.OrangeRed, color, c/f ):with_alpha(0.8)}
+						txts[#txts+1]={' '..math.floor(c/f*100)..'%',math.lerp( cl.OrangeRed, color, c/f ):with_alpha(0.5)}
 					end
 				else
-					txts[#txts+1]={' '..Icon.Times,math.lerp( cl.OrangeRed, color, 0 ):with_alpha(0.8)}
+					txts[#txts+1]={' '..Icon.Times,cl.OrangeRed:with_alpha(0.5)}
 				end
 			end
 
