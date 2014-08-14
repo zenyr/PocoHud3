@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 96
-local TAG = '0.125-1-g8ef6d48'
+local REV = 97
+local TAG = '0.125-2-g543d7a6'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -220,7 +220,8 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 				if isSpecial then
 					self:Stat(pid,'killS',1,true)
 				end
-				if Network:is_server() and (self.killa % O:get('chat','midstatAnnounce')*50 == 0 ) then
+				local mA = O:get('chat','midstatAnnounce') or 0
+				if mA > 0 and Network:is_server() and (self.killa % mA*50 == 0 ) then
 					self:AnnounceStat(true)
 				end
 			end
