@@ -54,6 +54,7 @@ local scheme = {
 	}, playerBottom = {	'Info text at the bottom HUD',
 		enable = {'bool',TRUE},
 		size = {'num',17,{15,30},'Text size',nil,2},
+		offset = {'num',0,{-30,30},'Vertical offset if you REALLY want to move it around',nil,2},
 		underneith = {'bool',TRUE,nil,'Put PlayerBottom text UNDER the vanilla panel'},
 		showClock = {'num',2,{0,2},'Put a clock after local player info','Verbose'},
 		showRank = {'bool',TRUE,nil,'Add Infamy & level info in front of player names'},
@@ -122,6 +123,8 @@ local scheme = {
 		ingameJoinRemaining = {'bool',TRUE,nil,'In-game SOMEONE IS JOINING dialog will show you how many seconds left'},
 		kickMenuRank = {'bool',TRUE,nil,'In-game Kick menu will display player levels with their name'},
 		corpseLimit = {'num',3,{1,10},'In-game corpse limit','corpse'},
+		cantedSightCrook = {'num',2,{1,4},'In-game canted sight(as gadget) indicator','cantedSight'},
+		rememberGadgetState = {'bool',TRUE,nil,'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps'},
 	}
 }
 local _vanity = {
@@ -133,6 +136,7 @@ local _vanity = {
 	Auto = 'Auto',
 	DesyncResolve = 'N/A,Off,Faster,Aggressive',
 	corpse = 'N/A,Minimum,Less,Default,More,a Lot,Considerable,Massive,Mammoth,Colossal,Ridiculous',
+	cantedSight = 'N/A,Off,Subtle,Obvious,Maximum',
 }
 ----------------------------------------------------
 local JSONFileName = 'poco\\hud3_config.json'

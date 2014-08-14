@@ -282,17 +282,19 @@ _ = {
 				local posEnd = 0
 				local ranges = {}
 				for _k,txtObj in ipairs(txts or {}) do
-					if type(txtObj)=='table' then
-						txtObj[1] = tostring(txtObj[1])
-					else
-						txtObj = {txtObj}
-					end
-					result = result..txtObj[1]
-					local __, count = txtObj[1]:gsub('[^\128-\193]', '')
-					if count > 0 then
-						posEnd = pos + count
-						table.insert(ranges,{pos,posEnd,txtObj[2] or cl.White})
-						pos = posEnd
+					if txtObj then
+						if type(txtObj)=='table' then
+							txtObj[1] = tostring(txtObj[1])
+						else
+							txtObj = {txtObj}
+						end
+						result = result..txtObj[1]
+						local __, count = txtObj[1]:gsub('[^\128-\193]', '')
+						if count > 0 then
+							posEnd = pos + count
+							table.insert(ranges,{pos,posEnd,txtObj[2] or cl.White})
+							pos = posEnd
+						end
 					end
 				end
 				lbl:set_text(result)
@@ -395,7 +397,7 @@ end
 function TPocoBase:err(msg,deeper)
 	local di = debug.getinfo(3+(deeper or 0))
 	managers.menu_component:post_event( "zoom_in")
-	self._lastError = _.s(msg,di and di.short_src..':'..di.currentline or '@?')
+	self._lastError = _.s(msg,di and (di.short_src..':'..di.currentline) or '@?')
 end
 function TPocoBase:lastError()
 	return self._lastError or ''
@@ -477,15 +479,19 @@ function TPoco:UnBind(sender)
 		end
 	end
 end
+function TPoco:Kill(name)
+	local addOn = self.addOns[name]
+	self:UnBind(addOn)
+	addOn:export()
+	addOn:destroy()
+	self.addOns[name] = nil
+	return
+end
 function TPoco:AddOn(ancestor)
 	local name = ancestor.className
 	local addOn = self.addOns[name]
 	if addOn then
-		self:UnBind(addOn)
-		addOn:export()
-		addOn:destroy()
-		self.addOns[name] = nil
-		return
+		return self:Kill(name)
 	else
 		local addon = ancestor:new()
 		self.addOns[name] = addon

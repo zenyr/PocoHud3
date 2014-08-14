@@ -801,7 +801,7 @@ function PocoUIValue:init(parent,config,inherited)
 	end)
 
 	local __, lbl = _.l({
-			pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 24,
+			pnl = self.pnl,x=5, y=0, w = config.w, h = config.h, font = FONT, font_size = config.fontSize or 24,
 			color = config.fontColor or cl.White },config.text,true)
 	self.lbl = lbl
 	self.lbl:set_center_y(config.h/2)
@@ -939,7 +939,7 @@ function PocoUIBoolean:init(parent,config,inherited)
 	})
 	self.tick:set_center_y(config.h/2)
 
-	self.lbl:set_x(self.lbl:x()+24)
+	self.lbl:set_x(self.lbl:x()+20)
 	self.valLbl:set_visible(false)
 	self:val(config.value or false)
 	self:_bind(PocoEvent.Pressed,function(self,x,y)

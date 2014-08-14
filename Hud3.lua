@@ -3,14 +3,16 @@ if not TPocoBase then return end
 local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
+
+
 local _ = UNDERSCORE
-local REV = 92
-local TAG = '0.124-7-g8d40a4d'
+local REV = 93
+local TAG = '0.124-8-gd5828c7'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
 	local __req = function(name)
-		local f=io.open(name,"r")
+		local f=io.open(name,'r')
 		if f~=nil then
 			io.close(f)
 			require(name)
@@ -85,10 +87,10 @@ function TPocoHud3:onInit() -- ★설정
 	end
 	--self:_setupWws()
 	self.pnl = {
-		dbg = self._ws:panel():panel({ name = "dbg_sheet" , layer = 50000}),
-		pop = self._ws:panel():panel({ name = "dmg_sheet" , layer = 4}),
-		buff = self._ws:panel():panel({ name = "buff_sheet" , layer = 5}),
-		stat = self._ws:panel():panel({ name = "stat_sheet" , layer = 9}),
+		dbg = self._ws:panel():panel({ name = 'dbg_sheet' , layer = 50000}),
+		pop = self._ws:panel():panel({ name = 'dmg_sheet' , layer = 4}),
+		buff = self._ws:panel():panel({ name = 'buff_sheet' , layer = 5}),
+		stat = self._ws:panel():panel({ name = 'stat_sheet' , layer = 9}),
 	}
 	self.killa = self.killa or 0
 	self.stats = self.stats or {}
@@ -99,7 +101,7 @@ function TPocoHud3:onInit() -- ★설정
 	self.smokes = {}
 	self.hits = {} -- to prevent HitDirection markers gc
 	self.gadget = self.gadget or {}
---	self.tmp = self.pnl.dbg:bitmap{name='x', blend_mode = 'add', layer=1, x=0,y=40, color=clGood ,texture = "guis/textures/hud_icons"}
+--	self.tmp = self.pnl.dbg:bitmap{name='x', blend_mode = 'add', layer=1, x=0,y=40, color=clGood ,texture = 'guis/textures/hud_icons'}
 	local dbgO = O:get('corner')
 	self.dbgLbl = self.pnl.dbg:text{text='HUD '..(inGame and 'Ingame' or 'Outgame'), font= dbgO.defaultFont and FONT or ALTFONT, font_size = dbgO.size, color = dbgO.color:with_alpha(dbgO.opacity/100), x=0,y=self.pnl.dbg:height()-dbgO.size, layer=0}
 	self:_hook()
@@ -117,13 +119,8 @@ function TPocoHud3:onInit() -- ★설정
 end
 function TPocoHud3:onResolutionChanged()
 	if alive(self._ws) then
-		if inGame then
-			managers.gui_data:layout_fullscreen_workspace( self._ws )
-			self.dbgLbl:set_y(self.pnl.dbg:height()-self.dbgLbl:height())
-		else
-			managers.gui_data:layout_fullscreen_16_9_workspace( self._ws )
-			self.dbgLbl:set_y(self.pnl.dbg:height()-self.dbgLbl:height())
-		end
+		managers.gui_data:layout_fullscreen_workspace( self._ws )
+		self.dbgLbl:set_y(self.pnl.dbg:height()-self.dbgLbl:height())
 	else
 		self:err('No WS to reschange')
 	end
@@ -245,11 +242,11 @@ end
 function TPocoHud3:Menu(dismiss,...)
 	local titlecase = function (str)
 			local buf = {}
-			for word in string.gfind(str, "%S+") do
+			for word in string.gfind(str, '%S+') do
 					local first, rest = string.sub(word, 1, 1), string.sub(word, 2)
 					table.insert(buf, string.upper(first) .. string.lower(rest))
 			end
-			return table.concat(buf, " ")
+			return table.concat(buf, ' ')
 	end
 	local _drawUpgrades = function(pnl, data, isTeam, desc, offsetY)
 		local _ignore = {}
@@ -333,11 +330,11 @@ function TPocoHud3:Menu(dismiss,...)
 					self.onMenuDismiss = nil
 					cbk()
 				end
-				managers.menu_component:post_event("menu_exit")
+				managers.menu_component:post_event('menu_exit')
 				menu:destroy()
 			end
 		elseif not dismiss then -- Show
-			managers.menu_component:post_event("menu_enter")
+			managers.menu_component:post_event('menu_enter')
 			local gui = PocoHud3Class.PocoMenu:new(self._ws)
 			self.menuGui = gui
 			--- Install tabs here ---
@@ -396,11 +393,7 @@ function TPocoHud3:Menu(dismiss,...)
 			PocoHud3Class.PocoUIButton:new(tab,{
 				onClick = function()
 					me:Menu(true)
-
-					-- Shitty force reload :(
-					me = Poco:AddOn(TPocoHud3)
-					me = Poco:AddOn(TPocoHud3)
-					PocoHud3Class.loadVar(O,me)
+					PocoHud3 = false -- will reload on its own
 				end,
 				x = 20, y = 10, w = 400, h=50,
 				fontSize = 30,font = FONTLARGE,
@@ -659,7 +652,7 @@ function TPocoHud3:Chat(category,text)
 	if canRead or canSend then
 		_.c(tStr..(canSend and '' or _BROADCASTHDR_HIDDEN), text , canSend and self:_color(self.pid) or nil)
 		if canSend then
-			managers.network:session():send_to_peers_ip_verified( "send_chat_message", 1, tStr.._BROADCASTHDR..text )
+			managers.network:session():send_to_peers_ip_verified( 'send_chat_message', 1, tStr.._BROADCASTHDR..text )
 		end
 	end
 end
@@ -700,12 +693,12 @@ end
 function TPocoHud3:_checkBuff(t)
 	-- Check Another Buffs
 	-- Berserker
-	if managers.player:upgrade_value( "player", "melee_damage_health_ratio_multiplier", 0 )>0 then
+	if managers.player:upgrade_value( 'player', 'melee_damage_health_ratio_multiplier', 0 )>0 then
 		local health_ratio = _.g('managers.player:player_unit():character_damage():health_ratio()')
 		if(health_ratio and health_ratio <= tweak_data.upgrades.player_damage_health_ratio_threshold ) then
 			local damage_ratio = 1 - ( health_ratio / math.max( 0.01, tweak_data.upgrades.player_damage_health_ratio_threshold ) )
-			local mMul =  1 + managers.player:upgrade_value( "player", "melee_damage_health_ratio_multiplier", 0 ) * damage_ratio
-			local rMul =  1 + managers.player:upgrade_value( "player", "damage_health_ratio_multiplier", 0 ) * damage_ratio
+			local mMul =  1 + managers.player:upgrade_value( 'player', 'melee_damage_health_ratio_multiplier', 0 ) * damage_ratio
+			local rMul =  1 + managers.player:upgrade_value( 'player', 'damage_health_ratio_multiplier', 0 ) * damage_ratio
 			if mMul*rMul > 1 then
 				local text = {{(mMul>1 and _.f(mMul)..'x' or '')..(rMul>1 and ' '.._.f(rMul)..'x' or ''),clBad}}
 				self:Buff({
@@ -769,12 +762,12 @@ function TPocoHud3:_checkBuff(t)
 end
 
 function TPocoHud3:_updatePlayers(t)
-	if t-(self._lastUP or 0) > 0.1 then
+	if t-(self._lastUP or 0) > 0.1 and _.g('managers.hud._teammate_panels',{})[4] then
 		self._lastUP = t
 	else
 		return
 	end
-	local ranks = {'I','II','III','IV','V','V+'}
+	local ranks = {'I','II','III','IV','V','VI','VII','VIII','IX','X','X+'}
 	for i = 1,4 do
 		local name = self:_name(i)
 		name = name ~= self:_name(-1) and name
@@ -782,8 +775,9 @@ function TPocoHud3:_updatePlayers(t)
 		local isMe = i==self.pid
 		local pnl = self['pnl_'..i]
 		local btmO = O:get('playerBottom')
-		local _show = function(name)
-			local thr = btmO['show'..name] or 0
+		local fltO = O:get('playerFloat')
+		local _show = function(name,isFlt)
+			local thr = (isFlt and fltO or btmO)['show'..name] or 0
 			local ind = self.verbose and 1 or 2
 			return thr >= ind
 		end
@@ -792,9 +786,9 @@ function TPocoHud3:_updatePlayers(t)
 			-- killPnl
 			self.pnl.stat:remove(pnl)
 			self['pnl_'..i] = nil
-		elseif not pnl and name and (isMe or nData) and btmO.enable then
+		elseif not pnl and name and (isMe or nData) then
 			-- makePnl
-			if managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
+			if btmO.enable and managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
 				local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 				local bPnl = managers.hud._teammate_panels[ isMe and 4 or cdata.panel_id or -1 ]
 				if bPnl and not (not isMe and bPnl == managers.hud._teammate_panels[4]) then
@@ -805,8 +799,8 @@ function TPocoHud3:_updatePlayers(t)
 							local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or ''
 							rank = ranks[rank] and (ranks[rank]..'Ї') or ''
 							local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
-							local defaultLbl = bPnl._panel:child( "name" )
-							local nameBg =  bPnl._panel:child( "name_bg" )
+							local defaultLbl = bPnl._panel:child( 'name' )
+							local nameBg =  bPnl._panel:child( 'name_bg' )
 							self:_lbl(defaultLbl,{{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},{self:_name(i),self:_color(i)}})
 							local txtRect = {defaultLbl:text_rect()}
 							defaultLbl:set_size(txtRect[3],txtRect[4])
@@ -817,7 +811,7 @@ function TPocoHud3:_updatePlayers(t)
 						local wp = {bPnl._player_panel:world_position()}
 						pnl:set_world_position(wp[1],wp[2]-pnl:h())
 						local fontSize = btmO.size
-						--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture="guis/textures/test_blur_df", render_template="VertexColorTexturedBlur3D", layer=-1, x=0,y=0 } )
+						--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture='guis/textures/test_blur_df', render_template='VertexColorTexturedBlur3D', layer=-1, x=0,y=0 } )
 						self['pnl_lbl'..i] = pnl:text{rotation=360,name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
 						self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=0,y=1, layer=1, blend_mode = 'normal'}
 						self['pnl_lblB'..i] = pnl:text{name='lblB',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=2,y=1, layer=1, blend_mode = 'normal'}
@@ -826,18 +820,18 @@ function TPocoHud3:_updatePlayers(t)
 				end
 			end
 		end
-		-- FillIn
+		-- playerBottom
 		if pnl and (nData or isMe) then
 			local lbl = self['pnl_lbl'..i]
 			local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 			local pInd = isMe and 4 or cdata.panel_id
 			local bPnl = managers.hud._teammate_panels[ pInd ]
 			local equip = (bPnl and #bPnl._special_equipment > 0)
-			local interText = nData and nData.interact:visible() and nData.panel:child( "action" ):text()
+			local interText = nData and nData.interact:visible() and nData.panel:child( 'action' ):text()
 			if isMe then
 				interText = managers.hud._progress_timer
-					and managers.hud._progress_timer._hud_panel:child( "progress_timer_text" ):visible()
-					and managers.hud._progress_timer._hud_panel:child( "progress_timer_text" ):text()
+					and managers.hud._progress_timer._hud_panel:child( 'progress_timer_text' ):visible()
+					and managers.hud._progress_timer._hud_panel:child( 'progress_timer_text' ):text()
 			end
 			local unit = nData and nData.movement._unit
 			local kill = self:Stat(i,'kill')
@@ -857,7 +851,7 @@ function TPocoHud3:_updatePlayers(t)
 			local rally_skill_data = _.g('managers.player:player_unit():movement():rally_skill_data()')
 			local canBoost = rally_skill_data and rally_skill_data.long_dis_revive and rally_skill_data.range_sq > dist_sq
 			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
-			local lives =	isMe and managers.player:upgrade_value( "player", "additional_lives", 0) or 0
+			local lives =	isMe and managers.player:upgrade_value( 'player', 'additional_lives', 0) or 0
 			local txts = {}
 			if btmO.underneith then
 				txts[#txts+1]={'\n'}
@@ -927,28 +921,31 @@ function TPocoHud3:_updatePlayers(t)
 				self['pnl_lblA'..i]:set_size(pnl:w(),tr[4])
 				self['pnl_lblB'..i]:set_size(pnl:w(),tr[4])
 				pnl:set_bottom(btm)
-				--local sh = {lbl:shape()}
-				--self['pnl_blur'..i]:set_shape((sh[3]-tr[3])/2,sh[2],tr[3],tr[4])
 			end
+		end
+		-- playerFloat
+		local nLbl = nData and nData.text
+		if alive(nLbl) and fltO.enable then
+			local member = self:_member(i)
+			local peer = member and member:peer()
+			local rank = peer and peer:rank() or ''
+			rank = ranks[rank] and (ranks[rank]..'Ї') or ''
+			local lvl = peer and peer:level() or '?'
+			local unit = nData and nData.movement._unit
+			local distance = unit and mvector3.distance(unit:position(),self.camPos) or 0
+			local boost = self:Stat(i,'boost') > now()
 
-			local nLbl = nData and nData.text
-			if alive(nLbl) then
-				local member = self:_member(i)
-				local peer = member and member:peer()
-				local rank = peer and peer:rank() or ''
-				rank = ranks[rank] and (ranks[rank]..'Ї') or ''
-				local lvl = peer and peer:level() or '?'
-				txts = {
-					{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},
-					{name,color},
-					{' ('..math.ceil(distance/100)..'m)',color:with_alpha(0.5)}
-				}
-				self:_lbl(nLbl,txts)
-				local x,__,w,h = nLbl:text_rect()
-				nLbl:set_size(w,h)
-				nData.bag:set_x(nLbl:x()+w)
-				nData.panel:set_width(nLbl:x()+w + 20)
-			end
+			txts = {
+				_show('Rank',true) and {rank,cl.White},_show('Rank',true) and {lvl..' ',cl.White:with_alpha(0.8)},
+				{name,color},
+				boost and _show('Inspire',true) and {Icon.Start,color:with_alpha(0.5)},
+				_show('Distance',true) and {' ('..math.ceil(distance/100)..'m)',color:with_alpha(0.5)},
+			}
+			_.l(nLbl,txts)
+			local x,__,w,h = nLbl:text_rect()
+			nLbl:set_size(w,h)
+			nData.bag:set_x(nLbl:x()+w)
+			nData.panel:set_width(nLbl:x()+w + 20)
 		end
 	end
 end
@@ -1092,7 +1089,7 @@ function TPocoHud3:_drawStat(state,pnl)
 		local _rowCnt = 0
 
 		local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
-		local risks = { "risk_pd", "risk_swat", "risk_fbi", "risk_death_squad", "risk_murder_squad"}
+		local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
 		local x, y, tbl = 5, 5, {}
 		tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
 		local addJob = function(host,heist)
@@ -1105,7 +1102,7 @@ function TPocoHud3:_drawStat(state,pnl)
 
 			for i, name in ipairs( risks ) do
 				local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
-				local f = managers.statistics._global.sessions.jobs[heist .. "_" .. tweak_data:index_to_difficulty( i + 1 ) .. "_started"] or 0
+				local f = managers.statistics._global.sessions.jobs[heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'] or 0
 				if i > 1 or not pro then
 					table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
 				else
@@ -1162,13 +1159,13 @@ function TPocoHud3:_drawStat(state,pnl)
 			end
 		end
 
-		self.dbgStat:animate( fade, callback( self, self, "destroy" , true), 0.2, ppnl )
+		self.dbgStat:animate( fade, callback( self, self, 'destroy' , true), 0.2, ppnl )
 
 	end
 end
 function TPocoHud3:_scanSmoke(t)
 	local smokeDecay = 3
-	local units = World:find_units_quick( "all", World:make_slot_mask( 14 ))
+	local units = World:find_units_quick( 'all', World:make_slot_mask( 14 ))
 	for i,smoke in pairs(units or {}) do
 		if smoke:name():key() == '465d8f5aafa10ce5' then
 			self.smokes[tostring(smoke:position())] = {smoke:position(),t}
@@ -1274,7 +1271,7 @@ function TPocoHud3:_name(something)
 		end
 	end
 	local member = self:_member(something)
-	member = something==0 and "AI" or (member and member:peer():name() or "Someone")
+	member = something==0 and 'AI' or (member and member:peer():name() or 'Someone')
 	return member
 end
 function TPocoHud3:_time(sec)
@@ -1290,9 +1287,9 @@ function TPocoHud3:_time(sec)
 	end
 	return table.concat(r,':')
 end
-local pen = Draw:pen( "no_z", "red" )
-local pen2 = Draw:pen( "no_z", "green" )
-local pen3 = Draw:pen( "no_z", 'blue' )
+local pen = Draw:pen( 'no_z', 'red' )
+local pen2 = Draw:pen( 'no_z', 'green' )
+local pen3 = Draw:pen( 'no_z', 'blue' )
 function TPocoHud3:_visibility(uPos)
 	local result = 1-math.min(0.9,managers.environment_controller._current_flashbang)
 	if not uPos then
@@ -1347,7 +1344,7 @@ function TPocoHud3:_hook()
 		if Obj and not self.hooks[key] then
 			self.hooks[key] = {Obj,Obj[realKey]}
 			Obj[realKey] = function(...)
-				if me.dead then
+				if (me and me.dead) or not me then
 					return Run(key,...)
 				else
 					return newFunc(...)
@@ -1382,9 +1379,9 @@ function TPocoHud3:_hook()
 			end
 			local altTD = alt:base():weapon_tweak_data()
 			local multiplier = 1
-			multiplier = multiplier * managers.player:upgrade_value( "weapon", "swap_speed_multiplier", 1 )
-				* managers.player:upgrade_value( "weapon", "passive_swap_speed_multiplier", 1 )
-				* managers.player:upgrade_value( altTD[ "category" ], "swap_speed_multiplier", 1 )
+			multiplier = multiplier * managers.player:upgrade_value( 'weapon', 'swap_speed_multiplier', 1 )
+				* managers.player:upgrade_value( 'weapon', 'passive_swap_speed_multiplier', 1 )
+				* managers.player:upgrade_value( altTD[ 'category' ], 'swap_speed_multiplier', 1 )
 
 			local altT = (altTD.timers.equip or 0.7 ) / multiplier
 
@@ -1401,11 +1398,39 @@ function TPocoHud3:_hook()
 		end)
 		hook( PlayerStandard, '_start_action_equip_weapon', function( self,t )
 			Run('_start_action_equip_weapon', self, t)
-			local wb = self._equipped_unit:base()
-			if me.gadget and me.gadget[wb._name_id] then
-				wb:set_gadget_on(me.gadget[wb._name_id] )
-				self:_stance_entered()
+			if O:get('game','rememberGadgetState') then
+				local wb = self._equipped_unit:base()
+				if wb and me.gadget and me.gadget[wb._name_id] then
+					wb:set_gadget_on(me.gadget[wb._name_id] )
+					self:_stance_entered()
+				end
 			end
+		end)
+		hook( FPCameraPlayerBase, 'clbk_stance_entered', function( ... )
+			local self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration = unpack{...}
+			local crook = O:get('game','cantedSightCrook') or 0
+			if crook > 1 then
+				local state = managers.player:player_unit():movement():current_state()
+				local wb = state._equipped_unit and state._equipped_unit:base()
+				local second_sight_on = wb and wb.is_second_sight_on and wb:is_second_sight_on()
+				if second_sight_on and not state:in_steelsight() then
+					local sMod = wb.stance_mod and wb:stance_mod()
+					if crook == 2 then
+						stance_mod.rotation = Rotation(0,0,-7)
+					elseif crook == 3 then
+						stance_mod.rotation = Rotation(0,0,-15)
+					elseif crook == 4 and sMod then
+						local translation = stance_mod.translation or Vector3()
+						local rotation = stance_mod.rotation or Rotation()
+						mvector3.add(translation, sMod.translation)
+						mvector3.add(translation, Vector3(-10,0,0))
+						mrotation.multiply(rotation, sMod.rotation)
+						stance_mod.translation = translation
+						stance_mod.rotation = rotation
+					end
+				end
+			end
+			Run('clbk_stance_entered', self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration)
 		end)
 		-- PlayerManager
 		hook( PlayerManager, 'drop_carry', function( self ,...)
@@ -1529,9 +1554,9 @@ function TPocoHud3:_hook()
 			if et then
 				pcall(me.Buff,me,({
 					key='interaction', good=true,
-					icon = "guis/textures/pd2/pd2_waypoints",
+					icon = 'guis/textures/pd2/pd2_waypoints',
 					iconRect = {224, 32, 32, 32 },
-					--icon = "guis/textures/hud_icons",
+					--icon = 'guis/textures/hud_icons',
 					--iconRect = { 96, 144, 48, 48 },
 					text='',
 					st=t, et=et
@@ -1900,28 +1925,28 @@ function TPocoHud3:_hook()
 		end)
 		hook( getmetatable(managers.subtitle.__presenter), 'show_text', function( self, ... )
 			local text, duration = unpack({...})
-			local label = self.__subtitle_panel:child("label") or self.__subtitle_panel:text({
-				name = "label",
+			local label = self.__subtitle_panel:child('label') or self.__subtitle_panel:text({
+				name = 'label',
 				x = 1,
 				y = 1,
 				font = self.__font_name,
 				font_size = self.__font_size,
 				color = cl.White,
-				align = "center",
-				vertical = "bottom",
+				align = 'center',
+				vertical = 'bottom',
 				layer = 1,
 				wrap = true,
 				word_wrap = true
 			})
-			local shadow = self.__subtitle_panel:child("shadow") or self.__subtitle_panel:text({
-				name = "shadow",
+			local shadow = self.__subtitle_panel:child('shadow') or self.__subtitle_panel:text({
+				name = 'shadow',
 				x = 2,
 				y = 2,
 				font = self.__font_name,
 				font_size = self.__font_size,
 				color = cl.Black:with_alpha(0.8),
-				align = "center",
-				vertical = "bottom",
+				align = 'center',
+				vertical = 'bottom',
 				layer = 0,
 				wrap = true,
 				word_wrap = true
@@ -1980,7 +2005,7 @@ function TPocoHud3:_hook()
 		end)
 		hook( ContourExt, '_upd_color', function( ... )
 			local self = unpack({...})
-			local idstr_contour_color = Idstring( "contour_color" )
+			local idstr_contour_color = Idstring( 'contour_color' )
 			local minionClr = false
 			Run('_upd_color', ...)
 			for i = 1, 4 do
@@ -2011,7 +2036,7 @@ function TPocoHud3:_hook()
 		--[[	local text = managers.localization:text( text_id, string_macros )
 		hook( HUDManager, 'teammate_progress', function( ... )
 			local self, peer_id, type_index, enabled, tweak_data_id, timer, success = unpack({...})
-			local action_text = managers.localization:text( tweak_data.interaction[ tweak_data_id ].action_text_id or "hud_action_generic" )
+			local action_text = managers.localization:text( tweak_data.interaction[ tweak_data_id ].action_text_id or 'hud_action_generic' )
 
 			if enabled then
 				me:Stat(peer_id,'interact',{tweak_data_id,timer})
@@ -2029,15 +2054,15 @@ function TPocoHud3:_hook()
 			if O:get('game','ingameJoinRemaining') then
 				local peer = managers.network:session():peer(id)
 				if peer and 0 < peer:rank() then
-					managers.hud:post_event("infamous_player_join_stinger")
-					local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
+					managers.hud:post_event('infamous_player_join_stinger')
+					local dlg = managers.system_menu:get_dialog('user_dropin' .. id)
 					if dlg then
 						local name = peer:level()..' '..string.upper(nick)
 						if peer:rank()>0 then
 							name = peer:rank()..'-'..name
 						end
 						dlg:set_title(_.s(
-							managers.localization:text("dialog_dropin_title", {	USER = name	})
+							managers.localization:text('dialog_dropin_title', {	USER = name	})
 							))
 					end
 				end
@@ -2052,10 +2077,10 @@ function TPocoHud3:_hook()
 			local tT = dT/per*100
 			Run('update_person_joining', ...)
 			if O:get('game','ingameJoinRemaining') then
-				local dlg = managers.system_menu:get_dialog("user_dropin" .. id)
+				local dlg = managers.system_menu:get_dialog('user_dropin' .. id)
 				if dlg then
 					dlg:set_text(_.s(
-						managers.localization:text("dialog_wait"), progress_percentage.."%",
+						managers.localization:text('dialog_wait'), progress_percentage..'%',
 						tT-dT,'s left'
 						))
 				end
@@ -2285,14 +2310,18 @@ function TPocoHud3:_drawRow(pnl, fontSize, texts, _x, _y, _w, bg, align)
 	return _y + _fontSize
 end
 --- Class end ---
-if Poco and not Poco.dead then
+PocoHud3 = PocoHud3
+TPocoHud3.Toggle = function()
 	me = Poco:AddOn(TPocoHud3)
-	PocoHud3Class.loadVar(O,me)
 	if me and not me.dead then
 		PocoHud3 = me
 	else
 		PocoHud3 = true
 	end
+	PocoHud3Class.loadVar(O,me)
+end
+if Poco and not Poco.dead then
+	TPocoHud3.Toggle()
 else
-	managers.menu_component:post_event( "zoom_out")
+	managers.menu_component:post_event( 'zoom_out')
 end
