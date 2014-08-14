@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 95
-local TAG = '0.125'
+local REV = 96
+local TAG = '0.125-1-g8ef6d48'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -788,40 +788,43 @@ function TPocoHud3:_updatePlayers(t)
 			self['pnl_'..i] = nil
 		elseif not pnl and name and (isMe or nData) then
 			-- makePnl
-			if btmO.enable and managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
-				local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
-				local bPnl = managers.hud._teammate_panels[ isMe and 4 or cdata.panel_id or -1 ]
-				if bPnl and not (not isMe and bPnl == managers.hud._teammate_panels[4]) then
-					local member = self:_member(i)
-					if member and alive(member:unit()) then
-						if btmO.showRank then
-							local peer = member and member:peer()
-							local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or ''
-							rank = ranks[rank] and (ranks[rank]..'Ї') or ''
-							local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
-							local defaultLbl = bPnl._panel:child( 'name' )
-							local nameBg =  bPnl._panel:child( 'name_bg' )
-							self:_lbl(defaultLbl,{{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},{self:_name(i),self:_color(i)}})
-							local txtRect = {defaultLbl:text_rect()}
-							defaultLbl:set_size(txtRect[3],txtRect[4])
-							local shape = {defaultLbl:shape()}
-							nameBg:set_shape(shape[1]-3,shape[2],shape[3]+6,shape[4])
+			local __,err = pcall(function()
+					if btmO.enable and managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
+						local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
+						local bPnl = managers.hud._teammate_panels[ isMe and 4 or cdata.panel_id or -1 ]
+						if bPnl and not (not isMe and bPnl == managers.hud._teammate_panels[4]) then
+							local member = self:_member(i)
+							if member and alive(member:unit()) then
+								if btmO.showRank then
+									local peer = member and member:peer()
+									local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or ''
+									rank = ranks[rank] and (ranks[rank]..'Ї') or ''
+									local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
+									local defaultLbl = bPnl._panel:child( 'name' )
+									local nameBg =  bPnl._panel:child( 'name_bg' )
+									self:_lbl(defaultLbl,{{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},{self:_name(i),self:_color(i)}})
+									local txtRect = {defaultLbl:text_rect()}
+									defaultLbl:set_size(txtRect[3],txtRect[4])
+									local shape = {defaultLbl:shape()}
+									nameBg:set_shape(shape[1]-3,shape[2],shape[3]+6,shape[4])
+								end
+								pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=btmO.size*2+1}
+								local wp = {bPnl._player_panel:world_position()}
+								pnl:set_world_position(wp[1],wp[2]-pnl:h())
+								local fontSize = btmO.size
+								--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture='guis/textures/test_blur_df', render_template='VertexColorTexturedBlur3D', layer=-1, x=0,y=0 } )
+								self['pnl_lbl'..i] = pnl:text{rotation=360,name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
+								self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=0,y=1, layer=1, blend_mode = 'normal'}
+								self['pnl_lblB'..i] = pnl:text{name='lblB',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=2,y=1, layer=1, blend_mode = 'normal'}
+								self['pnl_'..i] = pnl
+							end
 						end
-						pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=btmO.size*2+1}
-						local wp = {bPnl._player_panel:world_position()}
-						pnl:set_world_position(wp[1],wp[2]-pnl:h())
-						local fontSize = btmO.size
-						--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture='guis/textures/test_blur_df', render_template='VertexColorTexturedBlur3D', layer=-1, x=0,y=0 } )
-						self['pnl_lbl'..i] = pnl:text{rotation=360,name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
-						self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=0,y=1, layer=1, blend_mode = 'normal'}
-						self['pnl_lblB'..i] = pnl:text{name='lblB',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=2,y=1, layer=1, blend_mode = 'normal'}
-						self['pnl_'..i] = pnl
 					end
-				end
-			end
+			end)
 		end
 		-- playerBottom
 		local color = self:_color(i)
+		local txts = {}
 		if pnl and (nData or isMe) then
 			local lbl = self['pnl_lbl'..i]
 			local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
@@ -852,7 +855,6 @@ function TPocoHud3:_updatePlayers(t)
 			local canBoost = rally_skill_data and rally_skill_data.long_dis_revive and rally_skill_data.range_sq > dist_sq
 			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
 			local lives =	isMe and managers.player:upgrade_value( 'player', 'additional_lives', 0) or 0
-			local txts = {}
 			if btmO.underneith then
 				txts[#txts+1]={'\n'}
 			end
@@ -911,8 +913,7 @@ function TPocoHud3:_updatePlayers(t)
 
 			if alive(lbl) and self['pnl_txt'..i]~=self:_lbl(nil,txts) and self.hh then
 				local txt = _.l(lbl,txts)
-				local btm = self.hh - (btmO.underneith and 1 or equip and 140 or 115) + (isMe and 0 or 38) + (btmO.offset or 0)
-
+				local btm = self.hh - (btmO.underneith and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
 				self['pnl_txt'..i]=txt
 				self['pnl_lblA'..i]:set_text(txt)
 				self['pnl_lblB'..i]:set_text(txt)
