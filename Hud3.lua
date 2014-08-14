@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 90
-local TAG = '0.124-5-gba4bc37'
+local REV = 91
+local TAG = '0.124-6-g9e9924e'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -1192,7 +1192,7 @@ function TPocoHud3:_scanSmoke(t)
 	end
 end
 function TPocoHud3:Stat(pid,key,data,add)
-	if self.dead then return end
+	if self.dead then return 0 end
 	if pid then
 		local stat = self.stats[pid] or {}
 		if not self.stats[pid] then
@@ -1208,7 +1208,7 @@ function TPocoHud3:Stat(pid,key,data,add)
 				stat[key] = data
 			end
 		end
-		return stat[key]
+		return stat[key] or 0
 	end
 end
 function TPocoHud3:_pos(unit,head)
@@ -1875,7 +1875,7 @@ function TPocoHud3:_hook()
 		end)
 		local OnCriminalDowned = function(pid)
 			self:Stat(pid,'down',1,true)
-			if self:Stat(pid,'down') >= 3 then
+			if (self:Stat(pid,'down') or 0) >= 3 then
 				self:Chat('downedWarning','Warning:'..me:_name(pid)..' has been downed '..me:Stat(pid,'down')..' times.')
 			else
 				self:Chat('downed',me:_name(pid)..' was downed.')
