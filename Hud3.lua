@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 94
-local TAG = '0.124-9-geeb53b3'
+local REV = 95
+local TAG = '0.125'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -821,6 +821,7 @@ function TPocoHud3:_updatePlayers(t)
 			end
 		end
 		-- playerBottom
+		local color = self:_color(i)
 		if pnl and (nData or isMe) then
 			local lbl = self['pnl_lbl'..i]
 			local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
@@ -844,7 +845,6 @@ function TPocoHud3:_updatePlayers(t)
 			local accColor = math.lerp(cl.Red,cl.Green,hit/shot)
 			local avgDmg = _.f(dmg/hit,1)
 			local downs = self:Stat(i,'down')
-			local color = self:_color(i)
 			local boost = self:Stat(i,'boost') > now()
 			local distance = unit and mvector3.distance(unit:position(),self.camPos) or 0
 			local dist_sq = unit and mvector3.distance_sq(unit:position(),self.camPos) or 0
