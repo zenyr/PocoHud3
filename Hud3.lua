@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 97
-local TAG = '0.125-2-g543d7a6'
+local REV = 99
+local TAG = '0.126'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -645,7 +645,7 @@ function TPocoHud3:Chat(category,text)
 	local catInd = O:get('chat',category) or -1
 	local forceSend = catInd >= 5
 	if not O:get('chat','enable') then return end
-	if self.muted and not forceSend then return _('Muted:',text) end
+	if self._muted and not forceSend then return _('Muted:',text) end
 	local canRead = catInd >= 1
 	local isFullGame = not managers.statistics:is_dropin()
 	local canSend = catInd >= (Network:is_server() and 2 or isFullGame and 3 or 4)
@@ -954,9 +954,7 @@ end
 function TPocoHud3:_isSimple(key)
 	return O:get('buff','simpleBusy') and (key == 'transition' or key == 'charge')
 end
-local _mask = World:make_slot_mask(1, 2, 8, 11, 12, 14, 16, 18, 21, 22, 25, 26, 33, 34, 35 )
---1, 11, 38
-_mask = World:make_slot_mask(1, 8, 11, 12, 14, 16, 18, 21, 22, 24, 25, 26, 33, 34, 35 )
+local _mask = World:make_slot_mask(1, 8, 11, 12, 14, 16, 18, 21, 22, 24, 25, 26, 33, 34, 35 )
 function TPocoHud3:_updateItems(t,dt)
 	if self.dead then return end
 	self.state = self.state or _.g('managers.player:player_unit():movement():current_state()')
@@ -2002,7 +2000,8 @@ function TPocoHud3:_hook()
 		hook( ContourExt, 'add', function( ... )
 			local self, type, sync, multiplier = unpack({...})
 			local result = Run('add', ...)
-			me:Float(self._unit,0,result.fadeout_t or now()+4)
+			local unit = self._unit -- TODO: compare this to filter Floats as Config
+			me:Float(unit,0,result.fadeout_t or now()+4)
 			return result
 		end)
 		hook( ContourExt, '_upd_color', function( ... )
