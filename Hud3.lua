@@ -4,8 +4,8 @@ local disclamer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 local _ = UNDERSCORE
-local REV = 91
-local TAG = '0.124-6-g9e9924e'
+local REV = 92
+local TAG = '0.124-7-g8d40a4d'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -815,8 +815,8 @@ function TPocoHud3:_updatePlayers(t)
 						end
 						pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=btmO.size*2+1}
 						local wp = {bPnl._player_panel:world_position()}
-						pnl:set_world_position(wp[1],wp[2]-30)
-						local fontSize = O:get('playerBottom','size')
+						pnl:set_world_position(wp[1],wp[2]-pnl:h())
+						local fontSize = btmO.size
 						--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture="guis/textures/test_blur_df", render_template="VertexColorTexturedBlur3D", layer=-1, x=0,y=0 } )
 						self['pnl_lbl'..i] = pnl:text{rotation=360,name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
 						self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=0,y=1, layer=1, blend_mode = 'normal'}
@@ -917,7 +917,7 @@ function TPocoHud3:_updatePlayers(t)
 
 			if alive(lbl) and self['pnl_txt'..i]~=self:_lbl(nil,txts) and self.hh then
 				local txt = _.l(lbl,txts)
-				local btm = self.hh - (btmO.underneith and 1 or equip and 140 or 115)
+				local btm = self.hh - (btmO.underneith and 1 or equip and 140 or 115) + (isMe and 0 or 38) + (btmO.offset or 0)
 
 				self['pnl_txt'..i]=txt
 				self['pnl_lblA'..i]:set_text(txt)
