@@ -2020,6 +2020,21 @@ function TPocoHud3:_hook()
 				end
 			end
 		end)
+		-- Pager
+		hook( CopBrain, 'clbk_alarm_pager', function( ... )
+			local self = unpack({...})
+			Run('clbk_alarm_pager', ...)
+
+			if self._unit:interaction().tweak_data ~= 'corpse_alarm_pager' or not self._unit:interaction()._active then
+				return
+			end
+
+			if self._alarm_pager_data.nr_calls_made ~= 1 then
+				return
+			end
+
+			self._unit:interaction()._pager_start_time = now()
+		end)
 		-- AmmoUsage
 		hook( HUDTeammate, 'set_ammo_amount_by_type', function( ... )
 			local self, type, max_clip, current_clip, current_left, max = unpack({...})
