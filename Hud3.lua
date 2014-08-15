@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 99
-local TAG = '0.126'
+local REV = 100
+local TAG = '0.126 hotfix 1 (g9f17ca5)'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -856,13 +856,13 @@ function TPocoHud3:_updatePlayers(t)
 			local canBoost = rally_skill_data and rally_skill_data.long_dis_revive and rally_skill_data.range_sq > dist_sq
 			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
 			local lives =	isMe and managers.player:upgrade_value( 'player', 'additional_lives', 0) or 0
-			if btmO.underneith then
+			if btmO.underneath then
 				txts[#txts+1]={'\n'}
 			end
 			if interText and _show('Interaction') then
 				txts[#txts+1]={' '..interText,color}
 			end
-			if not btmO.underneith then
+			if not btmO.underneath then
 				txts[#txts+1]={'\n'}
 			end
 			if _show('Kill') then
@@ -914,7 +914,7 @@ function TPocoHud3:_updatePlayers(t)
 
 			if alive(lbl) and self['pnl_txt'..i]~=self:_lbl(nil,txts) and self.hh then
 				local txt = _.l(lbl,txts)
-				local btm = self.hh - (btmO.underneith and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
+				local btm = self.hh - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
 				self['pnl_txt'..i]=txt
 				self['pnl_lblA'..i]:set_text(txt)
 				self['pnl_lblB'..i]:set_text(txt)
