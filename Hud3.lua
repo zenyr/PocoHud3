@@ -221,7 +221,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 					self:Stat(pid,'killS',1,true)
 				end
 				local mA = O:get('chat','midstatAnnounce') or 0
-				if mA > 0 and Network:is_server() and (self.killa % mA*50 == 0 ) then
+				if mA > 0 and Network:is_server() and self.killa % (mA*50) == 0 then
 					self:AnnounceStat(true)
 				end
 			end
