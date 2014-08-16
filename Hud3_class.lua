@@ -394,8 +394,16 @@ function TFloat:draw(t)
 				if pDist > 100000 then
 					--table.insert(txts,{''})
 				elseif cHealth == 0 then
-					prog = 0
-					table.insert(txts,{Icon.Skull,color})
+					local pager_start = unit:interaction()._pager_start_time
+					if pager_start then
+						local pager_now = math.min(now() - pager_start, 12)
+						prog = 1 - pager_now / 12
+						color = math.lerp( cl.Red:with_alpha(0.6), cl.Yellow, prog )
+						table.insert(txts,{_.f(12 - pager_now)..'/'.._.f(12),color})
+					else
+						prog = 0
+						table.insert(txts,{Icon.Skull,color})
+					end
 				else
 					table.insert(txts,{_.f(cHealth)..'/'.._.f(fHealth),color})
 					if verbose then
