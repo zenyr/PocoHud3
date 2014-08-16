@@ -534,7 +534,7 @@ function THitDirection:init(owner,data)
 	self.sT = now()
 	local pnl = self.ppnl:panel{x = 0,y=0, w=200,h=200}
 	local Opt = O:get('hit')
-	local rate, color = data.rate or 1
+	local rate, color = 1-(data.rate or 1)
 	color = data.shield and math.lerp( Opt.shieldColor, Opt.shieldColorDepleted, rate ) or math.lerp( Opt.healthColor, Opt.healthColorDepleted, rate )
 
 	self.pnl = pnl
