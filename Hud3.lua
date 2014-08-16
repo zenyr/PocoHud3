@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 100
-local TAG = '0.126 hotfix 1 (g9f17ca5)'
+local REV = 101
+local TAG = '0.126 hotfix 2 (gc74499c)'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -221,7 +221,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 					self:Stat(pid,'killS',1,true)
 				end
 				local mA = O:get('chat','midstatAnnounce') or 0
-				if mA > 0 and Network:is_server() and (self.killa % mA*50 == 0 ) then
+				if mA > 0 and Network:is_server() and (self.killa % (mA*50) == 0 ) then
 					self:AnnounceStat(true)
 				end
 			end
@@ -939,7 +939,7 @@ function TPocoHud3:_updatePlayers(t)
 
 			txts = {
 				_show('Rank',true) and {rank,cl.White},_show('Rank',true) and {lvl..' ',cl.White:with_alpha(0.8)},
-				{name,color},
+				{fltO.uppercaseNames and utf8.upper(name) or name,color},
 				boost and _show('Inspire',true) and {Icon.Start,color:with_alpha(0.5)},
 				_show('Distance',true) and {' ('..math.ceil(distance/100)..'m)',color:with_alpha(0.5)},
 			}
