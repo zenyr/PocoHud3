@@ -597,10 +597,11 @@ function THitDirection:draw(pnl, done_cb, seconds)
 		local r = Opt.sizeStart + (1-math.pow(p,0.5)) * (Opt.sizeEnd-Opt.sizeStart)
 
 		self.bmp:set_rotation(-(angle+90))
-		self.lbl:set_rotation(-(angle))
-		self.lbl1:set_rotation(-(angle))
-		self.lbl2:set_rotation(-(angle))
-
+		if sel.lbl then
+			self.lbl:set_rotation(-(angle))
+			self.lbl1:set_rotation(-(angle))
+			self.lbl2:set_rotation(-(angle))
+		end
 		pnl:set_center(ww/2-math.sin(angle)*r,hh/2-math.cos(angle)*r)
 	end
 	pnl:set_visible( false )
