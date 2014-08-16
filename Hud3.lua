@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 102
-local TAG = '0.126 hotfix 3 (ga9219e5)'
+local REV = 111
+local TAG = '0.126 hotfix 8 (gc705eb7)'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -50,7 +50,7 @@ _BAGS['a163786a6ddb0291']='Body'
 
 local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = Icon.Div,Icon.Ghost
 local skillIcon = 'guis/textures/pd2/skilltree/icons_atlas'
-local now = function () return managers.player:player_timer():time() --[[TimerManager:game():time()]] end
+local now = function (type) return type and TimerManager:game():time() or managers.player:player_timer():time() end
 local _conv = {	-- === 미니언 사망 원인 표현용, 변경할 필요 없음 ===
 	city_swat = 'a Gensec Elite',
 	cop = 'a cop',
@@ -2001,7 +2001,9 @@ function TPocoHud3:_hook()
 			local self, type, sync, multiplier = unpack{...}
 			local result = Run('add', ...)
 			local unit = self._unit -- TODO: compare this to filter Floats as Config
-			me:Float(unit,0,result.fadeout_t or now()+4)
+			local tweak = unit and unit:interaction() and unit:interaction().tweak_data
+			local isPager = tweak == 'corpse_alarm_pager'
+			me:Float(unit,0,result.fadeout_t or now()+(isPager and 12 or 4))
 			return result
 		end)
 		hook( ContourExt, '_upd_color', function( ... )
@@ -2024,16 +2026,15 @@ function TPocoHud3:_hook()
 		hook( CopBrain, 'clbk_alarm_pager', function( ... )
 			local self = unpack{...}
 			Run('clbk_alarm_pager', ...)
-
-			if self._unit:interaction().tweak_data ~= 'corpse_alarm_pager' or not self._unit:interaction()._active then
-				return
+			if self._unit:interaction().tweak_data == 'corpse_alarm_pager' and self._unit:interaction()._active then
+				local pagerData = self._alarm_pager_data
+				if pagerData and pagerData.nr_calls_made == 1 then
+					local cbkID = pagerData.pager_clbk_id
+					local t, cbk = me:_getDelayedCbk(cbkID)
+					self._unit:interaction()._pagerT = (t or 0)*2
+					self._unit:interaction()._pager = now()
+				end
 			end
-
-			if self._alarm_pager_data.nr_calls_made ~= 1 then
-				return
-			end
-
-			self._unit:interaction()._pager_start_time = now()
 		end)
 		-- AmmoUsage
 		hook( HUDTeammate, 'set_ammo_amount_by_type', function( ... )
@@ -2212,7 +2213,6 @@ function TPocoHud3:_hook()
 		end
 		return Run('update**', ...)
 	end)
-
 end
 --- Utility functions ---
 function TPocoHud3:toggleVerbose(state)
@@ -2278,7 +2278,7 @@ function TPocoHud3:_getDelayedCbk(id)
 	local all_clbks = eM and eM._delayed_clbks or {}
 	for __, clbk_data in ipairs(all_clbks) do
 		if clbk_data[1] == id then
-			return clbk_data[2], clbk_data[3]
+			return (clbk_data[2] or 0)-now(true), clbk_data[3]
 		end
 	end
 end

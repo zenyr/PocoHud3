@@ -382,7 +382,7 @@ function TFloat:draw(t)
 			prog = cHealth / fHealth
 			local cCarry = unit:carry_data()
 			local isCiv = unit and managers.enemy:is_civilian( unit )
-			local color = isCiv and cl.Lime or math.lerp( cl.Red:with_alpha(0.6), cl.Yellow, prog )
+			local color = isCiv and cl.Lime or math.lerp( cl.Red:with_alpha(0.8), cl.Yellow, prog )
 			if self.tag and self.tag.minion then
 				color = self.owner:_color(self.tag.minion)
 			end
@@ -391,19 +391,21 @@ function TFloat:draw(t)
 				color = cl.White
 				table.insert(txts,{managers.localization:text(tweak_data.carry[cCarry._carry_id].name_id) or 'Bag',color})
 			else
+				local isWhisper = managers.groupai:state():whisper_mode()
+				local pager = isWhisper and unit:interaction()._pager
+				if pager then
+					local eT,tT = now()-pager, unit:interaction()._pagerT or 12
+					local r = eT/tT
+					prog = 1 - r
+					local pColor = math.lerp( cl.Red:with_alpha(0.8), cl.Yellow, prog )
+					if prog > 0 then
+						table.insert(txts,{_.s(_.f(prog*100)..'%', _.f(tT - eT),'/',_.f(tT)),pColor})
+					end
+				end
 				if pDist > 100000 then
 					--table.insert(txts,{''})
 				elseif cHealth == 0 then
-					local pager_start = unit:interaction()._pager_start_time
-					if pager_start then
-						local pager_now = math.min(now() - pager_start, 12)
-						prog = 1 - pager_now / 12
-						color = math.lerp( cl.Red:with_alpha(0.6), cl.Yellow, prog )
-						table.insert(txts,{_.f(12 - pager_now)..'/'.._.f(12),color})
-					else
-						prog = 0
-						table.insert(txts,{Icon.Skull,color})
-					end
+					table.insert(txts,{Icon.Skull,color})
 				else
 					table.insert(txts,{_.f(cHealth)..'/'.._.f(fHealth),color})
 					if verbose then
@@ -605,7 +607,7 @@ function THitDirection:draw(pnl, done_cb, seconds)
 		local r = Opt.sizeStart + (1-math.pow(p,0.5)) * (Opt.sizeEnd-Opt.sizeStart)
 
 		self.bmp:set_rotation(-(angle+90))
-		if sel.lbl then
+		if self.lbl then
 			self.lbl:set_rotation(-(angle))
 			self.lbl1:set_rotation(-(angle))
 			self.lbl2:set_rotation(-(angle))
