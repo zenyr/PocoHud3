@@ -1572,7 +1572,7 @@ function TPocoHud3:_hook()
 		end)
 
 		hook( PlayerStandard, '_check_action_weapon_gadget', function( self,...)
-			local  t, input = unpack({...})
+			local  t, input = unpack{...}
 			Run('_check_action_weapon_gadget', self, ...)
 			if input.btn_weapon_gadget_press then
 				local wb = self._equipped_unit:base()
@@ -1692,7 +1692,7 @@ function TPocoHud3:_hook()
 
 		--UnitNetwork
 		hook( UnitNetworkHandler, 'long_dis_interaction', function( ... )
-			local self, target_unit, amount, aggressor_unit  = unpack({...})
+			local self, target_unit, amount, aggressor_unit  = unpack{...}
 			local pid = me:_pid(target_unit)
 			local pidA = me:_pid(aggressor_unit)
 			if amount == 1 and pid and pid>0 then -- 3rd Person to me.
@@ -1701,7 +1701,7 @@ function TPocoHud3:_hook()
 			return Run('long_dis_interaction',...)
 		end)
 		hook( BaseNetworkSession, 'send_to_peer', function( ... ) -- To capture boost
-			local self, peer, fname, target_unit, amount, aggressor_unit = unpack({...})
+			local self, peer, fname, target_unit, amount, aggressor_unit = unpack{...}
 			if fname == 'long_dis_interaction' and amount == 1 then
 				local pid = me:_pid(target_unit)
 				if pid then -- 3rd Person to Someone
@@ -1711,18 +1711,18 @@ function TPocoHud3:_hook()
 			return Run('send_to_peer',...)
 		end)
 		hook( UnitNetworkHandler, 'damage_bullet', function( ... )
-			local self,subject_unit, attacker_unit, damage, i_body, height_offset, death, sender = unpack({...})
+			local self,subject_unit, attacker_unit, damage, i_body, height_offset, death, sender = unpack{...}
 			local head = i_body and alive(subject_unit) and subject_unit:character_damage().is_head and subject_unit:character_damage():is_head(subject_unit:body(i_body))
 			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'bullet')
 			return Run('damage_bullet',...)
 		end)
 		hook( UnitNetworkHandler, 'damage_explosion', function(...)
-			local self, subject_unit, attacker_unit, damage, i_attack_variant, death, direction, sender = unpack({...})
+			local self, subject_unit, attacker_unit, damage, i_attack_variant, death, direction, sender = unpack{...}
 			me:AddDmgPopByUnit(attacker_unit,subject_unit,0,damage*-0.1953125,death,false,'explosion')
 			return Run('damage_explosion', ... )
 		end)
 		hook( UnitNetworkHandler, 'damage_melee', function(...)
-			local self, subject_unit, attacker_unit, damage, damage_effect, i_body, height_offset, variant, death, sender  = unpack({...})
+			local self, subject_unit, attacker_unit, damage, damage_effect, i_body, height_offset, variant, death, sender  = unpack{...}
 			local head = i_body and alive(subject_unit) and subject_unit:character_damage().is_head and subject_unit:character_damage():is_head(subject_unit:body(i_body))
 			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'melee')
 			return Run('damage_melee',...)
@@ -1746,7 +1746,7 @@ function TPocoHud3:_hook()
 		end)
 		--CopMovement
 		hook( CopMovement, 'action_request', function( ...  )
-			local self, action_desc = unpack({...})
+			local self, action_desc = unpack{...}
 			local dmgTime = O:get('popup','damageDecay')
 			if action_desc.variant == 'hands_up' and O:get('popup','handsUp') then
 				me:Popup({pos=me:_pos(self._unit),text={{'Hands-Up',cl.White}},stay=false,et=now()+dmgTime})
@@ -1804,7 +1804,7 @@ function TPocoHud3:_hook()
 			end
 		end)
 		hook( SecurityCamera, '_start_tape_loop', function( self , ...)
-			local tape_loop_t = unpack({...})
+			local tape_loop_t = unpack{...}
 			Run('_start_tape_loop', self, ... )
 			local et = tape_loop_t+6
 			if et then
@@ -1831,7 +1831,7 @@ function TPocoHud3:_hook()
 			me:Minion(minion_owner_peer_id,unit)
 		end)
 		hook( ChatManager, '_receive_message', function( self, ... )
-			local channel_id, name, message, color, icon = unpack({...})
+			local channel_id, name, message, color, icon = unpack{...}
 			if not me._muted and (name ~= me:_name(me.pid)) and (name ~= _BROADCASTHDR) and message and not Network:is_server() and message:find(_BROADCASTHDR) then
 				_.c(_BROADCASTHDR_HIDDEN,'PocoHud broadcast Muted.')
 				me._muted = true
@@ -1846,7 +1846,7 @@ function TPocoHud3:_hook()
 		end)
 
 		hook( HUDManager, 'add_teammate_panel', function( self, ... )
-			local character_name, player_name, ai, peer_id = unpack({...})
+			local character_name, player_name, ai, peer_id = unpack{...}
 			if peer_id then
 				if me:Stat(peer_id,'name') ~= player_name then
 					me:Stat(peer_id,'name',player_name)
@@ -1882,7 +1882,7 @@ function TPocoHud3:_hook()
 			self:Stat(pid,'health',percent)
 		end
 		hook( HUDManager, 'set_teammate_health', function( ... )
-			local self, i, data = unpack({...})
+			local self, i, data = unpack{...}
 			local pid
 			if i == 4 then
 				pid = me.pid
@@ -1924,7 +1924,7 @@ function TPocoHud3:_hook()
 			return Run('_start_bleedout', self,  ...)
 		end)
 		hook( getmetatable(managers.subtitle.__presenter), 'show_text', function( self, ... )
-			local text, duration = unpack({...})
+			local text, duration = unpack{...}
 			local label = self.__subtitle_panel:child('label') or self.__subtitle_panel:text({
 				name = 'label',
 				x = 1,
@@ -1972,24 +1972,24 @@ function TPocoHud3:_hook()
 			end
 		end
 		hook( UnitNetworkHandler, 'set_trade_death', function( ... )
-			local self, criminal_name, respawn_penalty, hostages_killed = unpack({...})
+			local self, criminal_name, respawn_penalty, hostages_killed = unpack{...}
 			OnCriminalCustody(criminal_name)
 			return Run('set_trade_death', ...)
 		end)
 		hook( TradeManager, 'on_player_criminal_death', function( ... )
-			local self, criminal_name, respawn_penalty, hostages_killed, skip_netsend = unpack({...})
+			local self, criminal_name, respawn_penalty, hostages_killed, skip_netsend = unpack{...}
 			OnCriminalCustody(criminal_name)
 			return Run('on_player_criminal_death', ...)
 		end)
 		-- TimerGUI
 		hook( TimerGui, 'update', function( ... )
-			local self, unit, t, dt = unpack({...})
+			local self, unit, t, dt = unpack{...}
 			local result = Run('update', ...)
 			me:Float(unit,1)
 			return result
 		end)
 		hook( DigitalGui, 'update*', function( ... )
-			local self, unit, t, dt = unpack({...})
+			local self, unit, t, dt = unpack{...}
 			local result = Run('update*', ...)
 			if self:is_timer() then
 				me:Float(unit,1)
@@ -1998,14 +1998,14 @@ function TPocoHud3:_hook()
 		end)
 		-- Spot
 		hook( ContourExt, 'add', function( ... )
-			local self, type, sync, multiplier = unpack({...})
+			local self, type, sync, multiplier = unpack{...}
 			local result = Run('add', ...)
 			local unit = self._unit -- TODO: compare this to filter Floats as Config
 			me:Float(unit,0,result.fadeout_t or now()+4)
 			return result
 		end)
 		hook( ContourExt, '_upd_color', function( ... )
-			local self = unpack({...})
+			local self = unpack{...}
 			local idstr_contour_color = Idstring( 'contour_color' )
 			local minionClr = false
 			Run('_upd_color', ...)
@@ -2022,7 +2022,7 @@ function TPocoHud3:_hook()
 		end)
 		-- Pager
 		hook( CopBrain, 'clbk_alarm_pager', function( ... )
-			local self = unpack({...})
+			local self = unpack{...}
 			Run('clbk_alarm_pager', ...)
 
 			if self._unit:interaction().tweak_data ~= 'corpse_alarm_pager' or not self._unit:interaction()._active then
@@ -2037,7 +2037,7 @@ function TPocoHud3:_hook()
 		end)
 		-- AmmoUsage
 		hook( HUDTeammate, 'set_ammo_amount_by_type', function( ... )
-			local self, type, max_clip, current_clip, current_left, max = unpack({...})
+			local self, type, max_clip, current_clip, current_left, max = unpack{...}
 			local result = Run('set_ammo_amount_by_type', ...)
 			local out_of_ammo_clip = current_clip <= 0
 			local pid = self:peer_id() or me.pid
@@ -2051,7 +2051,7 @@ function TPocoHud3:_hook()
 		-- Teammate Interaction
 		--[[	local text = managers.localization:text( text_id, string_macros )
 		hook( HUDManager, 'teammate_progress', function( ... )
-			local self, peer_id, type_index, enabled, tweak_data_id, timer, success = unpack({...})
+			local self, peer_id, type_index, enabled, tweak_data_id, timer, success = unpack{...}
 			local action_text = managers.localization:text( tweak_data.interaction[ tweak_data_id ].action_text_id or 'hud_action_generic' )
 
 			if enabled then
@@ -2064,7 +2064,7 @@ function TPocoHud3:_hook()
 
 		-- Joining
 		hook( MenuManager, 'show_person_joining', function( ... )
-			local self, id, nick = unpack({...})
+			local self, id, nick = unpack{...}
 			self['_joinT_'..id] = os.clock()
 			local result = Run('show_person_joining', ...)
 			if O:get('game','ingameJoinRemaining') then
@@ -2226,9 +2226,11 @@ function TPocoHud3:test()
 -- reserved
 	self:Menu()
 end
+
 function TPocoHud3:_v2p(pos)
 	return alive(self._ws) and pos and self._ws:world_to_screen( self.cam, pos )
 end
+
 function TPocoHud3:_setupWws()
 	self._wws = World:newgui():create_world_workspace( 10, 10, Vector3(0,0,0), Vector3(10,0,0), Vector3(0,0,-10) )
 	self.wws = {
@@ -2264,11 +2266,23 @@ function TPocoHud3:_setupWws()
 		self._wws:set_world( w,h, pos - Vector3( w / 2, 0, -h / 2 ):rotate_with( rot ), rot:x() * w, -rot:z() * h )
 	end
 end
+
 function TPocoHud3:_vectorToScreen(v3pos)
 	if not self._ws then return end
 	local cam = managers.viewport:get_current_camera()
 	return (cam and v3pos) and self._ws:world_to_screen( cam, v3pos )
 end
+
+function TPocoHud3:_getDelayedCbk(id)
+	local eM = managers.enemy
+	local all_clbks = eM and eM._delayed_clbks or {}
+	for __, clbk_data in ipairs(all_clbks) do
+		if clbk_data[1] == id then
+			return clbk_data[2], clbk_data[3]
+		end
+	end
+end
+
 function TPocoHud3:_lbl(lbl,txts)
 	local result = ''
 	if not alive(lbl) then
