@@ -396,10 +396,10 @@ function TFloat:draw(t)
 				if pager then
 					local eT,tT = now()-pager, unit:interaction()._pagerT or 12
 					local r = eT/tT
-					prog = 1 - r
-					local pColor = math.lerp( cl.Red:with_alpha(0.8), cl.Yellow, prog )
-					if prog > 0 then
-						table.insert(txts,{_.s(_.f(prog*100)..'%', _.f(tT - eT),'/',_.f(tT)),pColor})
+					local pColor = math.lerp( cl.Red:with_alpha(0.8), cl.Yellow, 1-r )
+					if r < 1 then
+						prog = 1 - r
+						table.insert(txts,{_.s(_.f(tT - eT),'/',_.f(tT)),pColor})
 					end
 				end
 				if pDist > 100000 then
