@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 112
-local TAG = '0.126 hotfix 9 (g69dd577)'
+local REV = 113
+local TAG = '0.126 hotfix 10 (g4741862)'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -29,12 +29,6 @@ if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
-local inO = {
-	debug = {
-		color = {'color','White'},
-		size = {'number',22},
-	}
-}
 local ALTFONT= PocoHud3Class.ALTFONT
 local FONT= PocoHud3Class.FONT
 local FONTLARGE = PocoHud3Class.FONTLARGE
@@ -627,10 +621,9 @@ function TPocoHud3:HitDirection(col_ray,data)
 	if not mobPos then -- still no?... set to player position
 		mobPos = managers.player:player_unit():position()
 	end
-	managers.environment_controller._hit_some = math.min(managers.environment_controller._hit_some + managers.environment_controller._hit_amount, 1)
 	if mobPos then
 		-- TODO: Change intensity according to dmg?
-		table.insert(self.hits,PocoHud3Class.THitDirection:new(self,{mobPos=mobPos,shield=data.shield,dmg=data.dmg,time=data.time}))
+		table.insert(self.hits,PocoHud3Class.THitDirection:new(self,{mobPos=mobPos,shield=data.shield,dmg=data.dmg,time=data.time,rate=data.rate}))
 	end
 end
 function TPocoHud3:Minion(pid,unit)
@@ -763,7 +756,7 @@ function TPocoHud3:_checkBuff(t)
 end
 
 function TPocoHud3:_updatePlayers(t)
-	if t-(self._lastUP or 0) > 0.1 and _.g('managers.hud._teammate_panels',{})[4] then
+	if t-(self._lastUP or 0) > 0.05 and _.g('managers.hud._teammate_panels',{})[4] then
 		self._lastUP = t
 	else
 		return
@@ -856,11 +849,19 @@ function TPocoHud3:_updatePlayers(t)
 			local canBoost = rally_skill_data and rally_skill_data.long_dis_revive and rally_skill_data.range_sq > dist_sq
 			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
 			local lives =	isMe and managers.player:upgrade_value( 'player', 'additional_lives', 0) or 0
+			local interT = self:Stat(i,'interactET')
 			if btmO.underneath then
 				txts[#txts+1]={'\n'}
 			end
+			if interT>0 and _show('InteractionTime') then
+				local st,et = self:Stat(i,'interactST'), interT
+				local t,tt = now()-st,et-st
+				local r,rt = t/math.max(0.01,tt), tt-t
+				local c = math.lerp(cl.Aqua,cl.Lime,r)
+				txts[#txts+1]={' '.._.f(rt),c}
+			end
 			if interText and _show('Interaction') then
-				txts[#txts+1]={' '..interText,color}
+				txts[#txts+1]={' '..interText,cl.White}
 			end
 			if not btmO.underneath then
 				txts[#txts+1]={'\n'}
@@ -912,7 +913,7 @@ function TPocoHud3:_updatePlayers(t)
 			end
 			txts[#txts+1] = {' ',cl.White}
 
-			if alive(lbl) and self['pnl_txt'..i]~=self:_lbl(nil,txts) and self.hh then
+			if alive(lbl) and self['pnl_txt'..i]~=_.l(nil,txts) and self.hh then
 				local txt = _.l(lbl,txts)
 				local btm = self.hh - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
 				self['pnl_txt'..i]=txt
@@ -939,7 +940,7 @@ function TPocoHud3:_updatePlayers(t)
 
 			txts = {
 				_show('Rank',true) and {rank,cl.White},_show('Rank',true) and {lvl..' ',cl.White:with_alpha(0.8)},
-				{fltO.uppercaseNames and utf8.upper(name) or name,color},
+				{fltO.uppercaseNames and utf8.to_upper(name) or name,color},
 				boost and _show('Inspire',true) and {Icon.Start,color:with_alpha(0.5)},
 				_show('Distance',true) and {' ('..math.ceil(distance/100)..'m)',color:with_alpha(0.5)},
 			}
@@ -972,7 +973,7 @@ function TPocoHud3:_updateItems(t,dt)
 			unit = (unit:movement() or unit:carry_data()) and unit
 			if unit then
 				local cHealth = unit:character_damage() and unit:character_damage()._health or false
-				if cHealth and cHealth > 0 or unit:carry_data() then
+				if cHealth and cHealth > 0 or (unit:carry_data() and unit:interaction()._active) then
 					self:Float(unit,0,true)
 				end
 			end
@@ -1651,11 +1652,12 @@ function TPocoHud3:_hook()
 		end)
 		if O:get('hit','enable') then
 			hook( PlayerDamage, '_hit_direction', function( self, col_ray )
+				managers.environment_controller._hit_some = math.min(managers.environment_controller._hit_some + managers.environment_controller._hit_amount, 1)
 				if not col_ray then
 					Run('_hit_direction', self, col_ray)
 				end -- Nullify if possible
 			end)
-			local _hitDirection = function(self,result,data,shield)
+			local _hitDirection = function(self,result,data,shield,rate)
 				local sd = self._supperssion_data and self._supperssion_data.decay_start_t
 				if sd then
 					sd = math.max(0,sd-now())
@@ -1664,28 +1666,29 @@ function TPocoHud3:_hook()
 				if et == 0 then
 					et = 2 -- Failsafe
 				end
-				me:HitDirection(data.col_ray,{dmg=result,shield=shield,time=et})
+				me:HitDirection(data.col_ray,{dmg=result,shield=shield,time=et,rate=rate})
 			end
 			hook( PlayerDamage, '_calc_armor_damage', function( self, attack_data )
 				local valid = self:get_real_armor() > 0
 				local result = Run('_calc_armor_damage', self, attack_data)
 				if valid then
-					_hitDirection(self,result,attack_data,true)
+					_hitDirection(self,result,attack_data,true,self:get_real_armor() / self:_total_armor() )
 				end
 				return result
 			end)
 			hook( PlayerDamage, '_calc_health_damage', function( self, attack_data )
 				local result = Run('_calc_health_damage', self, attack_data)
 				if result > 0 then
-					_hitDirection(self,result,attack_data,false)
+					_hitDirection(self,result,attack_data,false,self:health_ratio())
 				end
 				return result
 			end)
 		end
+
 		hook( PlayerDamage, 'consume_messiah_charge', function( self)
 			local result = Run('consume_messiah_charge', self)
 			if result then
-				me:Chat('messiah',_.s('Used pistol messiah.', self._messiah_charges ,'left'))
+				me:Chat('messiah',_.s('Used pistol messiah.', self._messiah_charges ,'charges left'))
 			end
 			return result
 		end)
@@ -2049,19 +2052,33 @@ function TPocoHud3:_hook()
 			self['_last_clip_'..type] = current_left
 			return result
 		end)
-		-- Teammate Interaction
-		--[[	local text = managers.localization:text( text_id, string_macros )
-		hook( HUDManager, 'teammate_progress', function( ... )
-			local self, peer_id, type_index, enabled, tweak_data_id, timer, success = unpack{...}
-			local action_text = managers.localization:text( tweak_data.interaction[ tweak_data_id ].action_text_id or 'hud_action_generic' )
 
+		-- Interaction timers
+		hook( HUDInteraction, 'set_interaction_bar_width', function( ... ) -- Local
+			local self, current, total = unpack{...}
+			if me:Stat(me.pid,'interactET') == 0 then
+				me:Stat(me.pid,'interactST',now())
+				me:Stat(me.pid,'interactET',now()+total)
+			end
+			Run('set_interaction_bar_width',...)
+		end)
+		hook( HUDInteraction, 'hide_interaction_bar', function( ... ) -- Local
+			me:Stat(me.pid,'interactST',0)
+			me:Stat(me.pid,'interactET',0)
+			Run('hide_interaction_bar',...)
+		end)
+
+		hook( HUDManager, 'teammate_progress', function( ... ) -- Remote
+			local self, peer_id, type_index, enabled, tweak_data_id, timer, success = unpack{...}
 			if enabled then
-				me:Stat(peer_id,'interact',{tweak_data_id,timer})
+				me:Stat(peer_id,'interactST',now())
+				me:Stat(peer_id,'interactET',now()+timer)
 			else
-				me:Stat(peer_id,'interact',0)
+				me:Stat(peer_id,'interactST',0)
+				me:Stat(peer_id,'interactET',0)
 			end
 			return Run('teammate_progress', ...)
-		end)]]
+		end)
 
 		-- Joining
 		hook( MenuManager, 'show_person_joining', function( ... )
