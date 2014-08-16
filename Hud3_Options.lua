@@ -52,7 +52,7 @@ local scheme = {
 		showRank = {'num',2,{0,2},'e.g) V-100','Verbose'},
 		showDistance = {'num',2,{0,2},'e.g) 25m','Verbose'},
 		showInspire = {'num',2,{0,2},'Inspire speed-boost','Verbose'},
-	}, playerBottom = {	'Info text at the bottom HUD',
+	}, playerBottom = {	'Info text at the bottom of the HUD',
 		enable = {'bool',TRUE},
 		size = {'num',17,{15,30},'Text size',nil,2},
 		offset = {'num',0,{-30,30},'Vertical offset if you REALLY want to move it around',nil,2},
@@ -83,17 +83,17 @@ local scheme = {
 		enable = {'bool',TRUE},
 		midstatAnnounce = {'num',0,{0,2},'Announce stats on every X kills. Considered as \'Midgame stat\'','MidStat'},
 		midStat  = {'num',1,{0,2},'Midgame stat. (limited to ServerSend)','ChatSend'},
-		endStat  = {'num',2,{0,5},'Endgame stat','ChatSend'},
-		endStatCredit  = {'num',2,{0,5},'PocoMods group plug after endgame stat :-p','ChatSend'},
-		dominated  = {'num',2,{0,5},'Someone dominated a police enforcer','ChatSend'},
-		converted  = {'num',2,{0,5},'Someone converted a police enforcer','ChatSend'},
-		minionLost  = {'num',2,{0,5},'Someone lost a minion','ChatSend'},
-		minionShot  = {'num',4,{0,5},'Someone shot a minion','ChatSend'},
-		hostageChanged  = {'num',2,{0,5},'Hostage count has been changed (Not implemented)','ChatSend'},
-		custody  = {'num',2,{0,5},'Someone is in custody','ChatSend'},
-		downed  = {'num',1,{0,5},'Someone is downed','ChatSend'},
-		downedWarning  = {'num',4,{0,5},'Someone is downed more than twice in a row','ChatSend'},
-		replenished  = {'num',3,{0,5},'Someone replenished health(usually by Med kit)','ChatSend'},
+		endStat  = {'num',2,{0,4},'Endgame stat','ChatSend'},
+		endStatCredit  = {'num',2,{0,4},'PocoMods group plug after endgame stat :-p','ChatSend'},
+		dominated  = {'num',2,{0,4},'Someone dominated a police enforcer','ChatSend'},
+		converted  = {'num',2,{0,4},'Someone converted a police enforcer','ChatSend'},
+		minionLost  = {'num',2,{0,4},'Someone lost a minion','ChatSend'},
+		minionShot  = {'num',4,{0,4},'Someone shot a minion','ChatSend'},
+		hostageChanged  = {'num',2,{0,4},'Hostage count has been changed (Not implemented)','ChatSend'},
+		custody  = {'num',2,{0,4},'Someone is in custody','ChatSend'},
+		downed  = {'num',1,{0,4},'Someone is downed','ChatSend'},
+		downedWarning  = {'num',4,{0,4},'Someone is downed more than twice in a row','ChatSend'},
+		replenished  = {'num',3,{0,4},'Someone replenished health(usually by Med kit)','ChatSend'},
 		messiah  = {'num',5,{0,5},'You consumed a pistol messiah shot','ChatSend'},
 	}, hit = {	'Hit indicator that shows where you\'ve been shot from',
 		enable = {'bool',TRUE},
@@ -127,7 +127,7 @@ local scheme = {
 		ingameJoinRemaining = {'bool',TRUE,nil,'In-game SOMEONE IS JOINING dialog will show you how many seconds left'},
 		kickMenuRank = {'bool',TRUE,nil,'In-game Kick menu will display player levels with their name'},
 		corpseLimit = {'num',3,{1,10},'In-game corpse limit','corpse'},
-		cantedSightCrook = {'num',2,{1,4},'In-game canted sight(as gadget) indicator','cantedSight'},
+		cantedSightCrook = {'num',4,{1,4},'In-game canted sight(as gadget) indicator','cantedSight'},
 		rememberGadgetState = {'bool',TRUE,nil,'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps'},
 	}
 }
@@ -179,7 +179,7 @@ end
 function Option:save()
 	local f = io.open(JSONFileName, 'w')
 	if f then
-		f:write(JSON:encode(self.items))
+		f:write(JSON:encode_pretty(self.items))
 		f:close()
 	end
 end

@@ -763,7 +763,9 @@ function PocoUIHintLabel:makeHintPanel()
 		end
 	end):_bind(PocoEvent.Out, function(self,x,y)
 		if hintPnl then
-			self.ppnl:remove(hintPnl)
+			if alive(hintPnl) then
+				self.ppnl:remove(hintPnl)
+			end
 			hintPnl = nil
 		end
 	end):_bind(PocoEvent.Move, function(self,x,y)
@@ -1588,6 +1590,7 @@ function PocoMenu:destroy()
 end
 
 function PocoMenu:mouse_moved(alt, panel, x, y)
+	if not me or me.dead then return end
 	local ret = function (a,b)
 		if alt then
 			managers.mouse_pointer:set_pointer_image(b)
@@ -1638,6 +1641,7 @@ function PocoMenu:mouse_moved(alt, panel, x, y)
 end
 
 function PocoMenu:mouse_pressed(alt, panel, button, x, y)
+	if not me or me.dead then return end
 	if self.dead then return end
 	pcall(function()
 		local scrollStep = 60
@@ -1687,6 +1691,7 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 end
 
 function PocoMenu:mouse_released(alt, panel, button, x, y)
+	if not me or me.dead then return end
 	if self.dead then return end
 	local currentTab = self.gui and self.gui.currentTab
 	if button == Idstring('0') then
