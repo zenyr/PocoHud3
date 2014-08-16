@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 115
-local TAG = '0.13'
+local REV = 116
+local TAG = '0.13 hotfix 1 (g852479b)'
 local inGame = CopDamage ~= nil
 local me
 local function _req(name)
@@ -388,7 +388,8 @@ function TPocoHud3:Menu(dismiss,...)
 			PocoHud3Class.PocoUIButton:new(tab,{
 				onClick = function()
 					me:Menu(true)
-					PocoHud3 = false -- will reload on its own
+					TPocoHud3.Toggle()
+					PocoHud3 = nil -- will reload on its own
 				end,
 				x = 20, y = 10, w = 400, h=50,
 				fontSize = 30,font = FONTLARGE,
