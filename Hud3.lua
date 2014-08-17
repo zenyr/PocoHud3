@@ -9,6 +9,7 @@ local _ = UNDERSCORE
 local REV = 117
 local TAG = '0.13 hotfix 2 (g7edd22f)'
 local inGame = CopDamage ~= nil
+local inGameDeep = inGame and BaseNetworkHandler._verify_gamestate(BaseNetworkHandler._gamestate_filter.any_ingame_playing)
 local me
 local function _req(name)
 	local __req = function(name)
@@ -729,17 +730,17 @@ function TPocoHud3:_checkBuff(t)
 	end
 	-- Suppression
 	local supp = _.g('managers.player:player_unit():character_damage():effective_suppression_ratio()')
-	if false and supp and supp > 0 then -- disabled
-		local supp2 = math.lerp( 1, tweak_data.player.suppression.spread_mul, supp )
+	if supp and supp > 0 then
+		-- Not in effect as of now : local supp2 = math.lerp( 1, tweak_data.player.suppression.spread_mul, supp )
 		self:Buff({
-			key= 'supp', good=false,
+			key= 'suppressed', good=false,
 			icon=skillIcon,
 			iconRect = { 7*64, 0*64,64,64 },
 			text='', --_.f(supp2)..'x',
 			st=supp, et=1
 		})
 	else
-		self:RemoveBuff('supp')
+		self:RemoveBuff('suppressed')
 	end
 
 	local melee = self.state and self.state._state_data.meleeing and self.state:_get_melee_charge_lerp_value( t ) or 0
@@ -757,7 +758,7 @@ function TPocoHud3:_checkBuff(t)
 end
 
 function TPocoHud3:_updatePlayers(t)
-	if t-(self._lastUP or 0) > 0.05 and _.g('managers.hud._teammate_panels',{})[4] then
+	if t-(self._lastUP or 0) > 0.05 and inGameDeep then
 		self._lastUP = t
 	else
 		return
@@ -1072,7 +1073,7 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 	if dO.showFPS then
 		txts[#txts+1] = math.floor(1/dt)
 	end
-	if (inGame and dO.showClockIngame) or (not inGame and dO.showClockOutgame) then
+	if (inGameDeep and dO.showClockIngame) or (not inGameDeep and dO.showClockOutgame) then
 		txts[#txts+1] = os.date('%X')
 	end
 	txts[#txts+1] = self._dbgTxt

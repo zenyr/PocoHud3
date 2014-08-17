@@ -781,18 +781,20 @@ PocoHud3Class.PocoUIButton = PocoUIButton
 function PocoUIButton:init(parent,config,inherited)
 	self.super.init(self,parent,config,true)
 
-	local bg = BoxGuiObject:new(self.pnl, {sides = {1,1,1,1}})
-	bg:set_visible(false)
+	local spnl = self.pnl:panel{}
+	BoxGuiObject:new(spnl, {sides = {1,1,1,1}})
+	spnl:rect{color=cl.Black,alpha=0.5,layer=-1}
+	spnl:set_visible(false)
 	local __, lbl = _.l({
 		pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = config.fontColor or cl.White,
 		align = config.align or 'center', vertical = config.vAlign or 'center'
 	},config.text,config.autoSize)
 
 	self:_bind(PocoEvent.In, function(self,x,y)
-		bg:set_visible(true)
+		spnl:set_visible(true)
 		self:sound('slider_grab')
 	end):_bind(PocoEvent.Out, function(self,x,y)
-		bg:set_visible(false)
+		spnl:set_visible(false)
 	end)
 
 	self.lbl = lbl
@@ -806,7 +808,7 @@ PocoHud3Class.PocoUIValue = PocoUIValue
 function PocoUIValue:init(parent,config,inherited)
 	PocoUIElem.init(self,parent,config,true)
 
-	local bg = self.pnl:rect{color = cl.White:with_alpha(0.1)}
+	local bg = self.pnl:rect{color = cl.White:with_alpha(0.1),layer=-1}
 	bg:set_visible(false)
 	self:_bind(PocoEvent.In, function(self,x,y)
 		bg:set_visible(true)
