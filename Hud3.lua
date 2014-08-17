@@ -333,7 +333,52 @@ function TPocoHud3:Menu(dismiss,...)
 			managers.menu_component:post_event('menu_enter')
 			local gui = PocoHud3Class.PocoMenu:new(self._ws)
 			self.menuGui = gui
-			--- Install tabs here ---
+			--- Install tabs Begin --- ===================================
+			local tab = gui:add('New Options')
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onClick = function()
+					me:Menu(true)
+					TPocoHud3.Toggle()
+					PocoHud3 = nil -- will reload on its own
+				end,
+				x = 20, y = 10, w = 400, h=50,
+				fontSize = 30,font = FONTLARGE,
+				text={'APPLY & RELOAD',cl.Silver},
+				hintText = 'Some options will be applied on the next session.'
+			})
+
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onClick = function()
+					for __,obj in pairs(objs) do
+						obj[1]:val(O:get(obj[2],obj[3],true))
+					end
+				end,
+				x = 500, y = 10, w = 200, h=50,
+				fontSize = 25,font = FONTLARGE,
+				text={'DISCARD CHANGES',cl.Gray},
+				hintText = 'Discard temporary changes and revert to previous settings'
+			})
+			PocoHud3Class.PocoUIButton:new(tab,{
+				onClick = function()
+					for __,obj in pairs(objs) do
+						obj[1]:val(O:_default(obj[2],obj[3]))
+					end
+				end,
+				x = 710, y = 10, w = 200, h=50,
+				fontSize = 25,font = FONTLARGE,
+				text={'RESET TO DEFAULT',cl.Gray},
+				hintText = 'Revert to the default setting.'
+			})
+
+			local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, h = tab.pnl:height()-120, pTab = tab})
+			local oTab = oTabs:add('test2')
+
+			oTab.pnl:bitmap({
+				texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
+				color = cl.White, x = 5, y = 65, w = tab.pnl:w()-10, h = 3 })
+
+
+			--- Test End ======================================
 			local tab = gui:add('About')
 			PocoHud3Class.PocoUIButton:new(tab,{
 				onClick = function(self)
@@ -361,7 +406,7 @@ function TPocoHud3:Menu(dismiss,...)
 				hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
 			})
 			--Because WHY THE FUQ NOT
-
+			-- Draw Options Begin
 			tab = gui:add('Options')
 			local y1, y2, m, col = 70, 70, 2, true
 			local x,y =function()
@@ -495,7 +540,7 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 
 			tab:set_h(y+90)
-
+			-- Draw Options End
 			tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
 

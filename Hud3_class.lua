@@ -1371,8 +1371,16 @@ function PocoTab:init(parent,ppnl,tabName)
 	self.pnl:animate(t)
 end
 
-function PocoTab:insideTab(x,y)
-	return self.bg and alive(self.bg) and self.bg:inside(x, y)
+function PocoTab:insideTabHeader(x,y)
+	local result = self.bg and alive(self.bg) and self.bg:inside(x, y)
+	if not result then
+		if self._children then
+			for name,child in pairs(self._children) do
+				result = result or (child.currentTab and child.currentTab:insideTabHeader(x,y))
+			end
+		end
+	end
+	return result
 end
 
 function PocoTab:addHotZone(event,item)
@@ -1390,9 +1398,14 @@ function PocoTab:isHot(event, x, y, autoFire)
 				return hotZone
 			end
 		end
-	else
-		return false
 	end
+	if self._children then
+		for name,child in pairs(self._children) do
+			local cResult = child.currentTab and child.currentTab:isHot(event,x,y,autoFire)
+			if cResult then return cResult end
+		end
+	end
+	return false
 end
 
 function PocoTab:scroll(val, force)
@@ -1430,8 +1443,19 @@ function PocoTab:set_h(h)
 	self.pnl:set_h(math.max(self.pnl:h(),h))
 end
 
+function PocoTab:children(child)
+	if child then
+		local children = self._children or {}
+		children[#children+1] = child
+		self._children = children
+	end
+end
+
 function PocoTab:destroy()
 	self.dead = true
+	for name,child in pairs(self._children or {}) do
+		child:destroy()
+	end
 end
 
 local PocoTabs = class()
@@ -1440,9 +1464,13 @@ PocoHud3Class.PocoTabs = PocoTabs
 function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 	self._ws = ws
 	self.config = config
-	self.pnl = ws:panel():panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h, layer = Layers.TabHeader}
-
+	self.pTab = config.pTab
+	if self.pTab then
+		self.pTab:children(self)
+	end
+	self.pnl = (self.pTab and self.pTab.pnl or ws:panel()):panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h, layer = self.pTab and 0 or Layers.TabHeader}
 	self.items = {} -- array of PocoTab
+	self._children = {} -- array of PocoTabs
 	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th}
 	BoxGuiObject:new(self.sPnl, {
 		sides = {
@@ -1453,6 +1481,31 @@ function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 		}
 	})
 end
+
+function PocoTabs:insideTabHeader(x,y)
+	for ind,tab in pairs(self.items) do
+		if tab:insideTabHeader(x,y) and self.tabIndex ~= ind then
+			return self, ind
+		end
+	end
+	local cTC = self.currentTab and self.currentTab._children
+	if cTC then
+		for ind,tabs in pairs(cTC) do
+			local cResult = {tabs:insideTabHeader(x,y)}
+			if cResult[1] then
+				return unpack(cResult)
+			end
+		end
+	end
+
+	local dY = y-self.pnl:world_y()
+	if dY>0 and self.config.th >= dY then
+		if self.currentTab then
+			return self, 0
+		end
+	end
+end
+
 function PocoTabs:goTo(index)
 	local cnt = #self.items
 	if index < 1 then
@@ -1534,7 +1587,7 @@ PocoHud3Class.PocoMenu = PocoMenu
 function PocoMenu:init(ws)
 	self._ws = ws
 
-	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = ws:height()-20})
+	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = ws:height()-20, pTab = nil})
 
 	self.pnl = ws:panel():panel({ name = 'bg' })
 	self.pnl:rect{color = cl.Black:with_alpha(0.7),layer = Layers.Bg}
@@ -1604,6 +1657,8 @@ function PocoMenu:mouse_moved(alt, panel, x, y)
 	local isNewPos = self._x ~= x or self._y ~= y
 	if isNewPos then
 		self._close = nil
+	else
+		return
 	end
 	self._x = x
 	self._y = y
@@ -1611,11 +1666,6 @@ function PocoMenu:mouse_moved(alt, panel, x, y)
 		if self.lastHot then
 			self.lastHot:fire(PocoEvent.Out,x,y)
 			self.lastHot = nil
-		end
-	end
-	for ind,tab in pairs(self.gui.items) do
-		if tab:insideTab(x,y) and self.tabIndex ~= ind then
-			return ret(true, 'link')
 		end
 	end
 	local currentTab = self.gui and self.gui.currentTab
@@ -1639,10 +1689,16 @@ function PocoMenu:mouse_moved(alt, panel, x, y)
 	if hotElem then
 		return ret(true, hotElem.cursor or 'link')
 	end
+
+	local tabHdr = {self.gui:insideTabHeader(x,y)}
+	if isNewPos and tabHdr[1] then
+		return ret(true, tabHdr[2]~=0 and 'link' or 'arrow')
+	end
 	return ret( true, 'arrow' )
 end
 
 function PocoMenu:mouse_pressed(alt, panel, button, x, y)
+	_('MP',x,y)
 	if not me or me.dead then return end
 	if self.dead then return end
 	pcall(function()
@@ -1656,9 +1712,10 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 			if currentTab and currentTab:canScroll(true,x,y) then
 				return currentTab:scroll(-scrollStep)
 			end
-			if currentTab and not currentTab.wrapper:inside(x,y) and now() - self._lastMove > 0.1 then
+			local tabHdr = {self.gui:insideTabHeader(x,y)}
+			if tabHdr[1] and now() - self._lastMove > 0.05 then
 				self._lastMove = now()
-				self.gui:move(1)
+				tabHdr[1]:move(1)
 			end
 		elseif button == Idstring('mouse wheel up') then
 			if currentTab:isHot(PocoEvent.WheelUp, x,y, true) then
@@ -1668,21 +1725,22 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 			if currentTab and currentTab:canScroll(false,x,y) then
 				return currentTab:scroll(scrollStep)
 			end
-			if currentTab and not currentTab.wrapper:inside(x,y) and now() - self._lastMove > 0.1 then
+			local tabHdr = {self.gui:insideTabHeader(x,y)}
+			if tabHdr[1] and now() - self._lastMove > 0.05 then
 				self._lastMove = now()
-				self.gui:move(-1)
+				tabHdr[1]:move(-1)
 			end
 		end
 
 		if button == Idstring('0') then
-			if self.gui.config.th+self.gui.config.y >= y then
-				for ind,tab in pairs(self.gui.items) do
-					if tab:insideTab(x,y) and self.tabIndex ~= ind then
-						self.gui:goTo(ind)
-						return true
-					end
+			local tabs, tabInd = self.gui:insideTabHeader(x,y)
+			if tabs and self.tabIndex ~= tabInd then
+				if tabInd == 0 then
+					tabs.currentTab:scroll(0,true)
+				else
+					tabs:goTo(tabInd)
 				end
-				currentTab:scroll(0,true)
+				return true
 			end
 			return currentTab and currentTab:isHot(PocoEvent.Pressed, x,y, true)
 		end
