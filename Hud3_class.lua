@@ -318,7 +318,28 @@ local _drillNames = {
 	digitalgui = 'Timelock',
 	huge_lance = 'The Beast',
 }
+local _drillHosts = {
+	['d2e9092f3a57cefc'] = 'a mini safe',
+	['e87e439e3e1a7313'] = 'a mini titan safe',
+	['ad6fb7a483695e19'] = 'safe_1x05',
+	['dbfbfbb21eddcd30'] = 'safe_1x05 titan',
+	['3e964910f730f3d7'] = 'a huge safe',
+	['246cc067a20249df'] = 'a huge titan safe',
+	['8834e3a4da3df5c6'] = 'a tall safe',
+	['e3ab30d889c6db5f'] = 'a tall titan safe',
+	['4407f5e571e2f51a'] = 'a door',
+	['0afafcebe54ae7c4'] = 'a yellow cage door'
+}
 local __n = {}
+function TFloat:_getHost()
+	local mD = self.unit and alive(self.unit) and self.unit:mission_door_device()
+	local pD = mD and mD._parent_door
+	local key = pD and pD:name():key()
+	if key and not _drillHosts[key] then
+		_('Found a new DrillHost',key)
+	end
+	return key and _drillHosts[key] or nil
+end
 function TFloat:draw(t)
 	if not alive(self.unit) or (self.temp and (t-self.lastT>0.5)) and not self.dead then
 		self.dead = true
@@ -418,15 +439,18 @@ function TFloat:draw(t)
 		if category == 1 then -- Drill
 			local tGUI = unit and unit:timer_gui()
 			local dGUI = unit and unit:digital_gui()
+			local name
+			local leftT
 			if not alive(unit) then
 				self.dead = true
 			elseif tGUI then
 				if tGUI._time_left <= 0 then
 					self.dead = true
 				end
-				local name = unit and unit:interaction() and unit:interaction().tweak_data
+				name = unit and unit:interaction() and unit:interaction().tweak_data
 				name = name and name:gsub('_jammed',''):gsub('_upgrade','') or 'drill'
 				name = _drillNames[name] or 'Drill'
+				leftT = tGUI._time_left
 				prog = 1-tGUI._time_left/tGUI._timer
 				if pDist < 10000 or verbose then
 					table.insert(txts,{_.s(name..':',self.owner:_time(tGUI._time_left)..(tGUI._jammed and '!' or ''),'/',self.owner:_time(tGUI._timer)),tGUI._jammed and cl.Red or cl.White})
@@ -434,20 +458,31 @@ function TFloat:draw(t)
 					table.insert(txts,{_.s(self.owner:_time(tGUI._time_left))..(tGUI._jammed and '!' or ''),tGUI._jammed and cl.Red or cl.White})
 				end
 			elseif dGUI then
-				dGUI._maxx = math.max( dGUI._maxx or 0, dGUI._timer)
+				dGUI._maxx = math.max( dGUI._maxx or 0, dGUI._timer or 0)
 				if not (dGUI._ws and dGUI._ws:visible()) or dGUI._floored_last_timer <= 0 then
 					return self:destroy(1)
 				else
 					self:renew()
 				end
-				local name = 'digitalgui'
+				name = 'digitalgui'
 				name = _drillNames[name] or 'Timelock'
+				leftT = dGUI._timer
 				prog = 1-dGUI._timer/math.max(dGUI._maxx,1)
 				if pDist < 10000 or self.owner.verbose then
 					table.insert(txts,{_.s(name..':',self.owner:_time(dGUI._timer),'/',self.owner:_time(dGUI._maxx)),cl.White})
 				else
 					table.insert(txts,{_.s(self.owner:_time(dGUI._timer)),cl.White})
 				end
+			end
+			if not self._name then
+				self._name = name
+				self._host = self:_getHost()
+			end
+
+			if not self._almost and leftT and leftT <= 10 then
+				self._almost = true
+				local host = self._host
+				me:Chat('drillAlmostDone',_.s('A',name,host and 'at' or nil,host,': 10 seconds left'))
 			end
 		end
 		if category == 2 then -- Deadsimple text
@@ -511,6 +546,16 @@ function TFloat:renew(data)
 	self.dead = false
 end
 function TFloat:destroy(skipAnim)
+	if self.category == 1 and not self._done then
+		local r,err = pcall(function()
+			self._done = true
+			local name = self._name or 'Drill'
+			local host = self._host
+			me:Chat('drillDone',_.s('A',name,host and 'at' or nil,host,': Done'))
+		end)
+		if not r then me:err(err) end
+	end
+
 	local pnl = self.pnl
 	if alive(self.ppnl) and alive(pnl) then
 		if not skipAnim then
@@ -1124,6 +1169,64 @@ function PocoUIColorValue:val(set)
 	return val
 end
 
+local PocoUIKeyValue = class(PocoUIValue)
+PocoHud3Class.PocoUIKeyValue = PocoUIKeyValue
+function PocoUIKeyValue:init(parent,config,inherited)
+	config.noArrow = true
+	self.super.init(self,parent,config,true)
+	self:val(config.value or '')
+	self:_bind(PocoEvent.Pressed,function(self,x,y)
+		if self._waiting then
+			self:cancel()
+		else
+			self:setup()
+		end
+	end)
+
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
+function PocoUIKeyValue:setup()
+	self._waiting = true
+	me._ws:connect_keyboard(Input:keyboard())
+	local onKeyPress = function(o, key)
+		me._stringFocused = now()
+		local keyName = Input:keyboard():button_name_str(key)
+		local ignore = ('backspace,space,esc,num abnt c1,num abnt c2,@,ax,convert,kana,kanji,no convert,oem 102,stop,unlabeled,yen,mouse 8,mouse 9'):split(',')
+		for __,iKey in pairs(ignore) do
+			if key == Idstring(iKey) then
+				if iKey ~= 'esc' then
+					managers.menu:show_key_binding_forbidden({KEY = keyName})
+				end
+				self:cancel()
+				return
+			end
+		end
+		self:val(keyName)
+		self:cancel()
+	end
+	_.l(self.valLbl,'?',true)
+	self.valLbl:key_press(onKeyPress)
+end
+
+function PocoUIKeyValue:cancel()
+	self._waiting = nil
+	me._ws:disconnect_keyboard()
+	self.valLbl:key_press(nil)
+	self:val(self:val())
+end
+
+function PocoUIKeyValue:val(set)
+	local val = PocoUIValue.val(self,set)
+	if set then
+		_.l(self.valLbl,val:upper(),true)
+	end
+	return val
+end
+
+
 local PocoUIStringValue = class(PocoUIValue)
 PocoHud3Class.PocoUIStringValue = PocoUIStringValue
 
@@ -1207,7 +1310,6 @@ function PocoUIStringValue:select(delta,shift)
 	elseif shift == false then
 		self._shift = nil
 	elseif self._shift then -- grow selection
-		_('GROW')
 		local ss = self._start
 		if delta > 0 then
 			if ss == s then
@@ -1463,6 +1565,7 @@ PocoHud3Class.PocoTabs = PocoTabs
 
 function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 	self._ws = ws
+	config.fontSize = config.fontSize or 20
 	self.config = config
 	self.pTab = config.pTab
 	if self.pTab then
@@ -1566,10 +1669,10 @@ function PocoTabs:repaint()
 			color = cl.White:with_alpha(isSelected and 1 or 0.1)
 		})
 		local lbl = hPnl:text({
-			x = 10, y = 5, w = 200, h = self.config.th,
+			x = 10, y = 0, w = 200, h = self.config.th,
 			name = 'tab_name', text = itm.name,
 			font = FONT,
-			font_size = 20,
+			font_size = self.config.fontSize,
 			color = isSelected and cl.Black or cl.White,
 			layer = 2,
 			align = 'center',
@@ -1577,7 +1680,7 @@ function PocoTabs:repaint()
 		})
 		local xx,yy,w,h = lbl:text_rect()
 
-		lbl:set_size(w,h)
+		lbl:set_size(w,self.config.th)
 
 		bg:set_w(w + 20)
 		x = x + w + 22

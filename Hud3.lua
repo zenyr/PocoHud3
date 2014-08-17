@@ -382,7 +382,7 @@ function TPocoHud3:Menu(dismiss,...)
 					hintText = 'Revert to the default setting.'
 				})
 
-				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, h = tab.pnl:height()-120, pTab = tab})
+				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = tab})
 				for category, objects in _pairs(O.scheme) do
 					local _y, m, half = 10, 5
 					local x,y = function()
@@ -394,7 +394,6 @@ function TPocoHud3:Menu(dismiss,...)
 					local oTab = oTabs:add(category:gsub('(%U)(%u)','%1 %2'):upper())
 					if objects[1] then
 						local txts = objects[1]
-						_(category,type(txts))
 						local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=20, pnl = oTab.pnl, x = x(), y = y(0)},txts,true)
 						y(lbl:h())
 						--[[oTab.pnl:bitmap({
@@ -440,6 +439,12 @@ function TPocoHud3:Menu(dismiss,...)
 									fontSize = 20, text=tName, value = value,
 									hintText = hint
 								}),category,name}
+							elseif type == 'key' then
+								objs[#objs+1] = {PocoHud3Class.PocoUIKeyValue:new(oTab,{
+									x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
+									fontSize = 20, text=tName, value = value,
+									hintText = hint
+								}),category,name}
 							elseif type == 'num' then
 								local range = O:_range(category,name) or {}
 								local vanity = O:_vanity(category,name)
@@ -454,7 +459,7 @@ function TPocoHud3:Menu(dismiss,...)
 								PocoHud3Class.PocoUIButton:new(oTab,{
 									hintText = 'Not implemented for now.',
 									x = x()+10, y = y(30), w=390, h=30,
-									text=_.s(name,type)
+									text=_.s(name,type,value)
 								})
 							end
 						end
