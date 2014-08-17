@@ -2,8 +2,8 @@ local TRUE,FALSE = true,false
 local scheme = {
 	root = {	'PocoHud3 Main configuration',
 		enable = {'bool',TRUE,nil,'Not implemented.'},
-		verboseKey = {'key','`',nil,'Keybind for verbose mode. Default: ` (tilde key)'},
-		verboseToggle = {'bool',FALSE,nil,'Toggle verbose mode'},
+		verboseKey = {'key','`',nil,'Keybind for verbose mode.\nDefault: ` (tilde key)\nRequires reloading'},
+		verboseToggle = {'bool',FALSE,nil,'Toggle verbose mode.\nRequires reloading'},
 	}, corner = {	'Static text ticker which works as FPS counter / Outgame clock',
 		color  = {'color','White','color','Font color'},
 		opacity = {'num',80,{0,100},'Font opacity',nil,5},
@@ -134,7 +134,7 @@ local scheme = {
 		rememberGadgetState = {'bool',TRUE,nil,'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps'},
 		subtitleFontSize = {'num',20,{10,30},'Subtitle font size'},
 		subtitleFontColor = {'color','White',nil,'Subtitle font color'},
-		subtitleOpacity = {'num',80,{10,100},'Subtitle opacity',nil,5},
+		subtitleOpacity = {'num',100,{10,100},'Subtitle opacity',nil,10},
 	}
 }
 local _vanity = {

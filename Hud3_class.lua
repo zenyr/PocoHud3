@@ -482,7 +482,7 @@ function TFloat:draw(t)
 			if not self._almost and leftT and leftT <= 10 then
 				self._almost = true
 				local host = self._host
-				me:Chat('drillAlmostDone',_.s('A',name,host and 'at' or nil,host,': 10 seconds left'))
+				me:Chat('drillAlmostDone',_.s('A',name:lower(),host and 'at' or nil,host,' < 10s left'))
 			end
 		end
 		if category == 2 then -- Deadsimple text
@@ -551,7 +551,7 @@ function TFloat:destroy(skipAnim)
 			self._done = true
 			local name = self._name or 'Drill'
 			local host = self._host
-			me:Chat('drillDone',_.s('A',name,host and 'at' or nil,host,': Done'))
+			me:Chat('drillDone',_.s('A',name:lower(),host and 'at' or nil,host,'is done'))
 		end)
 		if not r then me:err(err) end
 	end
