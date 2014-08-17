@@ -1362,7 +1362,7 @@ function PocoTab:init(parent,ppnl,tabName)
 		while true do
 			local tY,cY = self.y or 0,panel:y()
 			if tY ~= cY then
-				panel:set_y(math.floor(cY + ((tY-cY)/5)))
+				panel:set_y(1+math.floor(cY + ((tY-cY)/5)))
 			end
 			coroutine.yield()
 		end
@@ -1424,7 +1424,7 @@ function PocoTab:scroll(val, force)
 end
 
 function PocoTab:canScroll(down,x,y)
-	local result = self:isLarge() and self.wrapper:inside(x,y)
+	local result = self:isLarge() and self.wrapper:inside(x,y) and self
 	if (self._errCnt or 0) > 1 then
 		local pos = self.y or 0
 		if (pos == 0) ~= down then
@@ -1480,6 +1480,21 @@ function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 			1
 		}
 	})
+end
+
+function PocoTabs:canScroll(down,x,y)
+	local cTC = self.currentTab and self.currentTab._children
+	if cTC then
+		for ind,tabs in pairs(cTC) do
+			local cResult = {tabs:canScroll(down,x,y)}
+			if cResult[1] then
+				return unpack(cResult)
+			end
+		end
+	end
+	if self.currentTab then
+		return self.currentTab:canScroll(down,x,y)
+	end
 end
 
 function PocoTabs:insideTabHeader(x,y)
@@ -1565,7 +1580,7 @@ function PocoTabs:repaint()
 		lbl:set_size(w,h)
 
 		bg:set_w(w + 20)
-		x = x + w + 25
+		x = x + w + 22
 		itm.bg = bg
 		itm.hPnl = hPnl
 		itm.pnl:set_visible(isSelected)
@@ -1698,7 +1713,6 @@ function PocoMenu:mouse_moved(alt, panel, x, y)
 end
 
 function PocoMenu:mouse_pressed(alt, panel, button, x, y)
-	_('MP',x,y)
 	if not me or me.dead then return end
 	if self.dead then return end
 	pcall(function()
@@ -1709,8 +1723,9 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 				managers.menu_componenet:post_event('slider_grab')
 				return true
 			end
-			if currentTab and currentTab:canScroll(true,x,y) then
-				return currentTab:scroll(-scrollStep)
+			local canScroll = {self.gui:canScroll(true,x,y)}
+			if canScroll[1] then
+				return canScroll[1]:scroll(-scrollStep)
 			end
 			local tabHdr = {self.gui:insideTabHeader(x,y)}
 			if tabHdr[1] and now() - self._lastMove > 0.05 then
@@ -1722,9 +1737,11 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 				managers.menu_componenet:post_event('slider_grab')
 				return true
 			end
-			if currentTab and currentTab:canScroll(false,x,y) then
-				return currentTab:scroll(scrollStep)
+			local canScroll = {self.gui:canScroll(false,x,y)}
+			if canScroll[1] then
+				return canScroll[1]:scroll(scrollStep)
 			end
+
 			local tabHdr = {self.gui:insideTabHeader(x,y)}
 			if tabHdr[1] and now() - self._lastMove > 0.05 then
 				self._lastMove = now()

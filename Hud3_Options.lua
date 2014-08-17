@@ -41,7 +41,7 @@ local scheme = {
 		ignoreCombatMedic = {'bool',FALSE,nil,'Combat medic duration'},
 		ignoreUnderdog = {'bool',FALSE,nil,'Underdog duration'},
 		ignoreBulletstorm = {'bool',FALSE,nil,'Bulletstorm duration'},
-		--ignoreSuppressed = {'bool',TRUE,nil,'Suppression that prevents shield recovery and increases bullet deviation.\nNot in effect as of now'},
+		ignoreSuppressed = {'bool',TRUE,nil,'Suppression that prevents shield recovery and increases bullet deviation.\n(Bullet deviation not in effect)'},
 
 		noSprintDelay  = {'bool',TRUE,nil,'Ignore after-sprint delay '},
 		hideInteractionCircle  = {'bool',FALSE,nil,'Hide vanilla game\'s interaction circle'},
@@ -130,6 +130,9 @@ local scheme = {
 		corpseLimit = {'num',3,{1,10},'In-game corpse limit','corpse'},
 		cantedSightCrook = {'num',4,{1,4},'In-game canted sight(as gadget) indicator','cantedSight'},
 		rememberGadgetState = {'bool',TRUE,nil,'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps'},
+		subtitleFontSize = {'num',20,{10,30},'Subtitle font size'},
+		subtitleFontColor = {'color','White',nil,'Subtitle font color'},
+		subtitleOpacity = {'num',80,{10,100},'Subtitle opacity',nil,5},
 	}
 }
 local _vanity = {

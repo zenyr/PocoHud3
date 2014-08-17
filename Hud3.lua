@@ -6,10 +6,10 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 120
-local TAG = '0.13 hotfix 5 (gc6f0b97)'
+local REV = 121
+local TAG = '0.13 hotfix 6 (g3afac2d)'
 local inGame = CopDamage ~= nil
-local inGameDeep = inGame and BaseNetworkHandler._verify_gamestate(BaseNetworkHandler._gamestate_filter.any_ingame_playing)
+local inGameDeep
 local me
 local function _req(name)
 	local __req = function(name)
@@ -335,7 +335,7 @@ function TPocoHud3:Menu(dismiss,...)
 			self.menuGui = gui
 			--- Install tabs Begin --- ===================================
 			do
-				local tab = gui:add('New Options')
+				local tab = gui:add('Options')
 				local objs = {}
 				self.onMenuDismiss = function()
 					O:default()
@@ -355,7 +355,7 @@ function TPocoHud3:Menu(dismiss,...)
 					end,
 					x = 20, y = 10, w = 400, h=50,
 					fontSize = 30,font = FONTLARGE,
-					text={'APPLY & RELOAD',cl.Silver},
+					text={'APPLY & RELOAD',cl.SteelBlue},
 					hintText = 'Some options will be applied on the next session.'
 				})
 
@@ -384,21 +384,26 @@ function TPocoHud3:Menu(dismiss,...)
 
 				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, h = tab.pnl:height()-120, pTab = tab})
 				for category, objects in _pairs(O.scheme) do
-					local _y, m = 10, 5
+					local _y, m, half = 10, 5
 					local x,y = function()
-						return 10
+						return half and 440 or 10
 					end, function(h)
 						_y = _y + h + m
 						return _y - h - m
 					end
-					local oTab = oTabs:add(string.upper(category))
+					local oTab = oTabs:add(category:gsub('(%U)(%u)','%1 %2'):upper())
 					if objects[1] then
-						local __, lbl = _.l({font=FONT, color=cl.White, font_size=20, pnl = oTab.pnl, x = x(), y = y(0)},objects[1],true)
+						local txts = objects[1]
+						_(category,type(txts))
+						local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=20, pnl = oTab.pnl, x = x(), y = y(0)},txts,true)
 						y(lbl:h())
+						--[[oTab.pnl:bitmap({
+							texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
+							color = cl.White, x = 5, y = y(3), w = oTab.pnl:w()-10, h = 3, alpha = 0.3 })]]
 					end
-					oTab.pnl:bitmap({
-						texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
-						color = cl.White, x = 5, y = y(3), w = oTab.pnl:w()-10, h = 3 })
+
+					local c = 0
+					local _sy,_ty = _y
 					for name,values in _pairs(objects,function(a,b)
 						local t1, t2 = O:_type(category,a),O:_type(category,b)
 						if a == 'enable' then
@@ -413,6 +418,12 @@ function TPocoHud3:Menu(dismiss,...)
 						return tostring(a) <= tostring(b)
 					end) do
 						if type(name) ~= 'number' then
+							c = c + 1
+							if not half and c > table.size(objects) / 2 then
+								half = true
+								_ty = _y
+								_y = _sy
+							end
 							local type = O:_type(category,name)
 							local value = O:get(category,name,true)
 							local hint = O:_hint(category,name)
@@ -448,11 +459,7 @@ function TPocoHud3:Menu(dismiss,...)
 							end
 						end
 					end
-					oTab.pnl:bitmap({
-						texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
-						color = cl.White:with_alpha(0.3), x = x(), y = y(10)+3,w = 410, h = 3
-					})
-					oTab:set_h(_y)
+					oTab:set_h(math.max(_y,_ty)+40)
 				end
 			end
 			--- Test End ======================================
@@ -708,6 +715,7 @@ function TPocoHud3:_slowUpdate(t,dt)
 	end
 end
 function TPocoHud3:_update(t,dt)
+	inGameDeep = inGame and BaseNetworkHandler._verify_gamestate(BaseNetworkHandler._gamestate_filter.any_ingame_playing)
 	self:_upd_dbgLbl(t,dt)
 	self.cam = managers.viewport:get_current_camera()
 	if not self.cam then return end
@@ -2053,32 +2061,52 @@ function TPocoHud3:_hook()
 		end)
 		hook( getmetatable(managers.subtitle.__presenter), 'show_text', function( self, ... )
 			local text, duration = unpack{...}
-			local label = self.__subtitle_panel:child('label') or self.__subtitle_panel:text({
-				name = 'label',
-				x = 1,
-				y = 1,
-				font = self.__font_name,
-				font_size = self.__font_size,
-				color = cl.White,
-				align = 'center',
-				vertical = 'bottom',
-				layer = 1,
-				wrap = true,
-				word_wrap = true
-			})
-			local shadow = self.__subtitle_panel:child('shadow') or self.__subtitle_panel:text({
-				name = 'shadow',
-				x = 2,
-				y = 2,
-				font = self.__font_name,
-				font_size = self.__font_size,
-				color = cl.Black:with_alpha(0.8),
-				align = 'center',
-				vertical = 'bottom',
-				layer = 0,
-				wrap = true,
-				word_wrap = true
-			})
+			local label = self.__subtitle_panel:child('label')
+			local shadow = self.__subtitle_panel:child('shadow')
+			local gameO = O:get('game')
+			local apply = function()
+				self._fontSize = gameO.subtitleFontSize
+				self._fontColor = gameO.subtitleFontColor:with_alpha(gameO.subtitleOpacity/100)
+			end
+			if label then
+				if self._fontSize ~= gameO.subtitleFontSize then
+					apply()
+					label:set_font_size(self._fontSize)
+					shadow:set_font_size(self._fontSize)
+				end
+				if self._fontColor ~= gameO.subtitleFontColor then
+					apply()
+					label:set_color(self._fontColor)
+				end
+			else
+				apply()
+				label = self.__subtitle_panel:text({
+					name = 'label',
+					x = 1,
+					y = 1,
+					font = self.__font_name,
+					font_size = self._fontSize,
+					color = self._fontColor,
+					align = 'center',
+					vertical = 'bottom',
+					layer = 1,
+					wrap = true,
+					word_wrap = true
+				})
+				shadow = self.__subtitle_panel:text({
+					name = 'shadow',
+					x = 2,
+					y = 2,
+					font = self.__font_name,
+					font_size = self._fontSize,
+					color = cl.Black:with_alpha(0.008*gameO.subtitleOpacity),
+					align = 'center',
+					vertical = 'bottom',
+					layer = 0,
+					wrap = true,
+					word_wrap = true
+				})
+			end
 			label:set_text(text)
 			shadow:set_text(text)
 		end)

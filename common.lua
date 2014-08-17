@@ -292,14 +292,16 @@ _ = {
 						local __, count = txtObj[1]:gsub('[^\128-\193]', '')
 						if count > 0 then
 							posEnd = pos + count
-							table.insert(ranges,{pos,posEnd,txtObj[2] or cl.White})
+							table.insert(ranges,{pos,posEnd,txtObj[2] or false})
 							pos = posEnd
 						end
 					end
 				end
 				lbl:set_text(result)
 				for __,range in ipairs(ranges) do
-					lbl:set_range_color( range[1], range[2], range[3] or cl.Green)
+					if range[3] then
+						lbl:set_range_color( range[1], range[2], range[3])
+					end
 				end
 				if autoSize then
 					local x,y,w,h = lbl:text_rect()
