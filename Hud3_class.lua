@@ -321,8 +321,8 @@ local _drillNames = {
 local _drillHosts = {
 	['d2e9092f3a57cefc'] = 'a mini safe',
 	['e87e439e3e1a7313'] = 'a mini titan safe',
-	['ad6fb7a483695e19'] = 'safe_1x05',
-	['dbfbfbb21eddcd30'] = 'safe_1x05 titan',
+	['ad6fb7a483695e19'] = 'a safe',
+	['dbfbfbb21eddcd30'] = 'a titan safe',
 	['3e964910f730f3d7'] = 'a huge safe',
 	['246cc067a20249df'] = 'a huge titan safe',
 	['8834e3a4da3df5c6'] = 'a tall safe',
@@ -336,7 +336,7 @@ function TFloat:_getHost()
 	local pD = mD and mD._parent_door
 	local key = pD and pD:name():key()
 	if key and not _drillHosts[key] then
-		_('Found a new DrillHost',key)
+		_(os.date(),'Found a new DrillHost',key,'\n')
 	end
 	return key and _drillHosts[key] or nil
 end
