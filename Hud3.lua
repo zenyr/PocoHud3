@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 117
-local TAG = '0.13 hotfix 2 (g7edd22f)'
+local REV = 120
+local TAG = '0.13 hotfix 5 (gc6f0b97)'
 local inGame = CopDamage ~= nil
 local inGameDeep = inGame and BaseNetworkHandler._verify_gamestate(BaseNetworkHandler._gamestate_filter.any_ingame_playing)
 local me
@@ -334,50 +334,127 @@ function TPocoHud3:Menu(dismiss,...)
 			local gui = PocoHud3Class.PocoMenu:new(self._ws)
 			self.menuGui = gui
 			--- Install tabs Begin --- ===================================
-			local tab = gui:add('New Options')
-			PocoHud3Class.PocoUIButton:new(tab,{
-				onClick = function()
+			do
+				local tab = gui:add('New Options')
+				local objs = {}
+				self.onMenuDismiss = function()
+					O:default()
+					for __,obj in pairs(objs) do
+						if not obj[1]:isDefault() then
+							O:set(obj[2],obj[3],obj[1]:val())
+						end
+					end
+					O:save()
 					me:Menu(true)
-					TPocoHud3.Toggle()
-					PocoHud3 = nil -- will reload on its own
-				end,
-				x = 20, y = 10, w = 400, h=50,
-				fontSize = 30,font = FONTLARGE,
-				text={'APPLY & RELOAD',cl.Silver},
-				hintText = 'Some options will be applied on the next session.'
-			})
+				end
+				PocoHud3Class.PocoUIButton:new(tab,{
+					onClick = function()
+						me:Menu(true)
+						TPocoHud3.Toggle()
+						PocoHud3 = nil -- will reload on its own
+					end,
+					x = 20, y = 10, w = 400, h=50,
+					fontSize = 30,font = FONTLARGE,
+					text={'APPLY & RELOAD',cl.Silver},
+					hintText = 'Some options will be applied on the next session.'
+				})
 
-			PocoHud3Class.PocoUIButton:new(tab,{
-				onClick = function()
-					for __,obj in pairs(objs) do
-						obj[1]:val(O:get(obj[2],obj[3],true))
+				PocoHud3Class.PocoUIButton:new(tab,{
+					onClick = function()
+						for __,obj in pairs(objs) do
+							obj[1]:val(O:get(obj[2],obj[3],true))
+						end
+					end,
+					x = 500, y = 10, w = 200, h=50,
+					fontSize = 25,font = FONTLARGE,
+					text={'DISCARD CHANGES',cl.Gray},
+					hintText = 'Discard temporary changes and revert to previous settings'
+				})
+				PocoHud3Class.PocoUIButton:new(tab,{
+					onClick = function()
+						for __,obj in pairs(objs) do
+							obj[1]:val(O:_default(obj[2],obj[3]))
+						end
+					end,
+					x = 710, y = 10, w = 200, h=50,
+					fontSize = 25,font = FONTLARGE,
+					text={'RESET TO DEFAULT',cl.Gray},
+					hintText = 'Revert to the default setting.'
+				})
+
+				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, h = tab.pnl:height()-120, pTab = tab})
+				for category, objects in _pairs(O.scheme) do
+					local _y, m = 10, 5
+					local x,y = function()
+						return 10
+					end, function(h)
+						_y = _y + h + m
+						return _y - h - m
 					end
-				end,
-				x = 500, y = 10, w = 200, h=50,
-				fontSize = 25,font = FONTLARGE,
-				text={'DISCARD CHANGES',cl.Gray},
-				hintText = 'Discard temporary changes and revert to previous settings'
-			})
-			PocoHud3Class.PocoUIButton:new(tab,{
-				onClick = function()
-					for __,obj in pairs(objs) do
-						obj[1]:val(O:_default(obj[2],obj[3]))
+					local oTab = oTabs:add(string.upper(category))
+					if objects[1] then
+						local __, lbl = _.l({font=FONT, color=cl.White, font_size=20, pnl = oTab.pnl, x = x(), y = y(0)},objects[1],true)
+						y(lbl:h())
 					end
-				end,
-				x = 710, y = 10, w = 200, h=50,
-				fontSize = 25,font = FONTLARGE,
-				text={'RESET TO DEFAULT',cl.Gray},
-				hintText = 'Revert to the default setting.'
-			})
+					oTab.pnl:bitmap({
+						texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
+						color = cl.White, x = 5, y = y(3), w = oTab.pnl:w()-10, h = 3 })
+					for name,values in _pairs(objects,function(a,b)
+						local t1, t2 = O:_type(category,a),O:_type(category,b)
+						if a == 'enable' then
+							return true
+						elseif b == 'enable' then
+							return  false
+						elseif t1 == 'bool' and t2 ~= 'bool' then
+							return true
+						elseif t1 ~= 'bool' and t2 == 'bool' then
+							return false
+						end
+						return tostring(a) <= tostring(b)
+					end) do
+						if type(name) ~= 'number' then
+							local type = O:_type(category,name)
+							local value = O:get(category,name,true)
+							local hint = O:_hint(category,name)
+							local tName = name:gsub('(%U)(%u)','%1 %2'):upper()
+							if type == 'bool' then
+								objs[#objs+1] = {PocoHud3Class.PocoUIBoolean:new(oTab,{
+									x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
+									fontSize = 20, text=tName , value = value ,
+									hintText = hint
+								}),category,name}
+							elseif type == 'color' then
+								objs[#objs+1] = {PocoHud3Class.PocoUIColorValue:new(oTab,{
+									x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
+									fontSize = 20, text=tName, value = value,
+									hintText = hint
+								}),category,name}
+							elseif type == 'num' then
+								local range = O:_range(category,name) or {}
+								local vanity = O:_vanity(category,name)
+								local step = O:_step(category,name)
 
-			local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, h = tab.pnl:height()-120, pTab = tab})
-			local oTab = oTabs:add('test2')
-
-			oTab.pnl:bitmap({
-				texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
-				color = cl.White, x = 5, y = 65, w = tab.pnl:w()-10, h = 3 })
-
-
+								objs[#objs+1] = {PocoHud3Class.PocoUINumValue:new(oTab,{
+									x = x()+10, y = y(30), w=390, h=30, category = category, name = name, step = step,
+									fontSize = 20, text=tName, value = value, min = range[1], max = range[2], vanity = vanity,
+									hintText = hint
+								}),category,name}
+							else
+								PocoHud3Class.PocoUIButton:new(oTab,{
+									hintText = 'Not implemented for now.',
+									x = x()+10, y = y(30), w=390, h=30,
+									text=_.s(name,type)
+								})
+							end
+						end
+					end
+					oTab.pnl:bitmap({
+						texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
+						color = cl.White:with_alpha(0.3), x = x(), y = y(10)+3,w = 410, h = 3
+					})
+					oTab:set_h(_y)
+				end
+			end
 			--- Test End ======================================
 			local tab = gui:add('About')
 			PocoHud3Class.PocoUIButton:new(tab,{
@@ -407,6 +484,7 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 			--Because WHY THE FUQ NOT
 			-- Draw Options Begin
+			--[[
 			tab = gui:add('Options')
 			local y1, y2, m, col = 70, 70, 2, true
 			local x,y =function()
@@ -540,7 +618,7 @@ function TPocoHud3:Menu(dismiss,...)
 			})
 
 			tab:set_h(y+90)
-			-- Draw Options End
+			-- Draw Options End]]
 			tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
 
