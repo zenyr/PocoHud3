@@ -150,6 +150,7 @@ local _vanity = {
 }
 ----------------------------------------------------
 local JSONFileName = 'poco\\hud3_config.json'
+local KitsJSONFileName = 'poco\\hud3_kits.json'
 local isNil = function(a)
 	return a == nil
 end
@@ -267,4 +268,160 @@ end
 
 function Option:isChanged(category,name,value)
 	return value ~= self:get(category,name)
+end
+----------------------------------
+-- Kits : Kit profiler
+----------------------------------
+local Kits = class()
+PocoHud3Class.Kits = Kits
+
+function Kits:init()
+	self.items = {}
+	self:load()
+end
+
+function Kits:load()
+	local f,err = io.open(KitsJSONFileName, 'r')
+	local result = false
+	if f then
+		local t = f:read('*all')
+		local o = JSON:decode(t)
+		if type(o) == 'table' then
+			self.items = o
+		end
+		f:close()
+	end
+end
+
+function Kits:save()
+	local f = io.open(KitsJSONFileName, 'w')
+	if f then
+		f:write(JSON:encode_pretty(self.items))
+		f:close()
+	end
+end
+
+function Kits:equip(index)
+	_('Equip all items in INDEX of:',index)
+end
+
+function Kits:get(index,category,asText)
+	if not index then return end
+	local obj
+	if not self.items[index] then
+		self.items[index] = {}
+	end
+	obj = self.items[index]
+	if category == nil then
+		return obj
+	end
+	local _asText = {
+		primaries = function(val)
+			local obj = val and Global.blackmarket_manager.crafted_items[category][val]
+			if obj then
+				local s = managers.weapon_factory:has_perk( 'silencer', obj.factory_id, obj.blueprint ) and PocoHud3Class.Icon.Ghost or ''
+				return s..managers.blackmarket:get_weapon_name_by_category_slot(category,val)
+			end
+		end,
+		armor = function(val)
+			local tweak = val and tweak_data.blackmarket.armors[val]
+			return tweak and managers.localization:text(tweak.name_id)
+		end,
+		gadget = function(val)
+			return val and managers.localization:text(tweak_data.blackmarket.deployables[val].name_id)
+		end,
+		melee = function (val)
+			local tweak = val and tweak_data.blackmarket.melee_weapons[val]
+			return tweak and managers.localization:text(tweak.name_id)
+		end,
+		color = function(a) return a end
+	}
+	_asText.secondaries = _asText.primaries
+	return asText and _asText[category](obj[category]) or obj[category]
+end
+
+--[[function Kits:set(index,category,slot)
+	if not slot then
+		if category == 'primaries' then
+			local obj = Global.blackmarket_manager.crafted_items or {}
+			for _slot, obj in pairs(obj) do
+				if obj.equipped then
+					slot = _slot
+				end
+			end
+		end
+	end
+	if not slot then
+		return
+	end
+	if self:get(index,category) ~= slot then
+		self.items[index][category] = slot
+		return slot
+	end
+end]]
+
+function Kits:current(category,raw)
+	local result
+	local obj
+	local a,b = {
+		primaries = function()
+			obj = Global.blackmarket_manager.crafted_items[category]
+		end,
+		armor = function()
+			obj = Global.blackmarket_manager.armors
+		end,
+		gadget = function()
+			obj = Global.player_manager.kit.equipment_slots
+		end,
+		melee = function()
+			obj = Global.blackmarket_manager.melee_weapons
+		end
+	},{
+		primaries = function(_slot,obj)
+			if obj.equipped then
+				if raw then
+					return _slot
+				else
+					local s = managers.weapon_factory:has_perk( 'silencer', obj.factory_id, obj.blueprint ) and PocoHud3Class.Icon.Ghost or ''
+					return s..managers.blackmarket:get_weapon_name_by_category_slot(category,_slot)
+				end
+			end
+		end,
+		armor = function(aID,obj)
+			local armor = Global.blackmarket_manager.armors[aID]
+			if armor.equipped and armor.unlocked and armor.owned then
+				if raw then
+					return aID
+				else
+					local tweak = tweak_data.blackmarket.armors[aID]
+					return managers.localization:text(tweak.name_id)
+				end
+			end
+		end,
+		gadget = function(__,obj)
+			return raw and obj or managers.localization:text(tweak_data.blackmarket.deployables[obj].name_id)
+		end,
+		melee = function (_slot,obj)
+			if obj.equipped then
+				if raw then
+					return _slot
+				else
+					local tweak = tweak_data.blackmarket.melee_weapons[_slot]
+					return managers.localization:text(tweak.name_id)
+				end
+			end
+		end
+	}
+	a.secondaries = a.primaries
+	b.secondaries = b.primaries
+	if a[category] and b[category] then
+		a[category]()
+	else
+		return category..'?'
+	end
+	for _slot, obj in pairs(obj) do
+		local r = b[category](_slot, obj)
+		if r then return r end
+	end
+	return '??'
 end

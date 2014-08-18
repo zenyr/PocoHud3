@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 132
-local TAG = '0.14 hotfix 6 (g70004c8)'
+local REV = 133
+local TAG = '0.14 hotfix 7 (g2b93c1f)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -65,6 +65,7 @@ local _conv = {	-- === 미니언 사망 원인 표현용, 변경할 필요 없�
 }
 --- Class Start ---
 local TPocoHud3 = class(TPocoBase)
+PocoHud3Class.TPocoHud3 = TPocoHud3
 TPocoHud3.className = 'Hud'
 TPocoHud3.classVersion = 3
 --- Inherited ---
@@ -123,11 +124,13 @@ end
 function TPocoHud3:import(data)
 	self.killa = data.killa
 	self.stats = data.stats
+	self._muted = data._muted
 end
 function TPocoHud3:export()
 	Poco.save[self.className] = {
 		stats = self.stats,
 		killa = self.killa,
+		_muted = self._muted,
 	}
 end
 function TPocoHud3:Update(t,dt)
@@ -2094,8 +2097,8 @@ function TPocoHud3:_lbl(lbl,txts)
 	end
 	return result
 end
-function TPocoHud3:_drawRow(pnl, fontSize, texts, _x, _y, _w, bg, align)
-	local _fontSize = fontSize * 1
+function TPocoHud3:_drawRow(pnl, fontSize, texts, _x, _y, _w, bg, align, lineHeight)
+	local _fontSize = fontSize * (lineHeight or 1.1)
 	if bg then
 		pnl:rect( { x=_x,y=_y,w=_w,h=_fontSize,color=cl.White, alpha=0.05, layer=0 } )
 	end
@@ -2105,12 +2108,21 @@ function TPocoHud3:_drawRow(pnl, fontSize, texts, _x, _y, _w, bg, align)
 		return align == true or (type(align)=='table' and align[i]~=0)
 	end
 	for i,text in pairs(texts) do
-		if text ~= '' then
-			local res, lbl = _.l({ pnl=pnl,font=FONT, color=cl.White, font_size=fontSize * 0.92, x=_x + iw*(i-0.5), y=math.floor(_y)+1, text='', blend_mode='add'},text,true)
-			if isCenter(i) then
-				lbl:set_center_x(math.round(_x + iw*(i-0.5)))
+		if text and text ~= '' then
+			if type(text)=='table' and text.set_y then
+				text:set_y(_y)
+				if isCenter(i) then
+					text:set_center_x(math.round(_x + iw*(i-0.5)))
+				else
+					text:set_x(math.round(_x+iw*(i-1)))
+				end
 			else
+				local res, lbl = _.l({ pnl=pnl,font=FONT, color=cl.White, font_size=fontSize, x=_x + iw*(i-0.5), y=math.floor(_y), w = iw, h = _fontSize, text='', align = isCenter(i) and 'center', vertical = 'center', blend_mode='add'},text)
 				lbl:set_x(math.round(_x+iw*(i-1)))
+				--[[if isCenter(i) then
+					lbl:set_center_x(math.round(_x + iw*(i-0.5)))
+				end]]
+
 			end
 		end
 	end

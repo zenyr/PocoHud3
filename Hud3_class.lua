@@ -28,7 +28,7 @@ local PocoEvent = {
 	WheelDown = 'onWheelDown',
 	Move = 'onMove',
 }
-local O, me
+local O, K, me
 PocoHud3Class = {
 	ALTFONT	= ALTFONT	,
 	FONT		= FONT		,
@@ -692,7 +692,7 @@ function PocoUIElem:init(parent,config)
 
 	self.parent = parent
 	self.config = config or {}
-	self.ppnl = parent.pnl
+	self.ppnl = config.pnl or parent.pnl
 	self.pnl = self.ppnl:panel({ name = config.name, x=config.x, y=config.y, w = config.w, h = config.h})
 	self.status = 0
 
@@ -725,6 +725,16 @@ function PocoUIElem:postInit()
 	end
 end
 
+function PocoUIElem:set_y(y)
+	self.pnl:set_y(y)
+end
+function PocoUIElem:set_center_x(x)
+	self.pnl:set_center_x(x)
+end
+function PocoUIElem:set_x(x)
+	self.pnl:set_x(x)
+end
+
 function PocoUIElem:_bind(eventVal,cbk)
 	if not self.config[eventVal] then
 		self.config[eventVal] = cbk
@@ -748,11 +758,11 @@ end
 
 
 function PocoUIElem:isHot(event,x,y)
-	return self.pnl:inside(x,y)
+	return alive(self.pnl) and self.pnl:inside(x,y)
 end
 
 function PocoUIElem:fire(event,x,y)
-	if self.parent.dead then return end
+	if self.parent.dead or not alive(self.pnl) then return end
 	local result = {self.config[event](self,x,y)}
 	local sound = {
 		onPressed = 'prompt_enter'
@@ -803,13 +813,13 @@ function PocoUIHintLabel:makeHintPanel()
 		hintPnl = self.ppnl:panel{
 			x = 0, y = 0, w = 800, h = 200
 		}
-		hintPnl:rect{ color = cl.Black:with_alpha(0.7), layer = 1005}
 		local __, hintLbl = _.l({
 			pnl = hintPnl,x=5, y=5, font = config.hintFont or FONT, font_size = config.hintFontSize or 18, color = config.hintFontColor or cl.White,
-			align = config.align, vertical = config.vAlign, layer = 1006
+			align = config.align, vertical = config.vAlign, layer = 1006, rotation = 360
 		},config.hintText or '',true)
 		hintPnl:set_size(hintLbl:size())
 		hintPnl:grow(10,10)
+		hintPnl:rect{ color = cl.Black:with_alpha(0.7), layer = 1005, rotation = 360}
 		_reposition(x,y)
 	end
 	self:_bind(PocoEvent.In, function(self,x,y)
@@ -970,8 +980,10 @@ function PocoUIValue:isDefault(val)
 end
 
 function PocoUIValue:_markDefault(set)
-	local isChanged = O:isChanged(self.config.category,self.config.name,set)
-	_.l(self.lbl,{self.config.text,self:isDefault(set) and cl.White or (isChanged and cl.LightSkyBlue or cl.DarkKhaki)})
+	if self.config.category then
+		local isChanged = O:isChanged(self.config.category,self.config.name,set)
+		_.l(self.lbl,{self.config.text,self:isDefault(set) and cl.White or (isChanged and cl.LightSkyBlue or cl.DarkKhaki)})
+	end
 end
 
 function PocoUIValue:val(set)
@@ -979,7 +991,7 @@ function PocoUIValue:val(set)
 		if not self.value or self:isValid(set) then
 			self.value = set
 			_.l(self.valLbl,set,true)
-			self.valLbl:set_center_x(12*self.config.w/16)
+			self.valLbl:set_center_x(self.config.valX or 12*self.config.w/16)
 			self.valLbl:set_x(math.floor(self.valLbl:x()))
 			self:_markDefault(set)
 			return set
@@ -1256,6 +1268,7 @@ function PocoUIStringValue:init(parent,config,inherited)
 	self:_bind(PocoEvent.Pressed,function(self,x,y)
 		if not self._editing then
 			self:startEdit()
+			self:selectAll()
 		else
 			if now() - (self._lastClick or 0) < 0.3 then
 				self:selectAll()
@@ -1270,14 +1283,20 @@ function PocoUIStringValue:init(parent,config,inherited)
 end
 
 function PocoUIStringValue:_initLayout()
-	-- valLbl 아래로 이동 등등
+	if not self.config.valX and self.config.text:gsub(' ','') == '' then
+		self.config.valX = self.config.w / 2
+	end
 end
 
-function PocoUIStringValue:val(...)
-	local result =  PocoUIValue.val(self,...)
+function PocoUIStringValue:val(set)
+	if set then
+		set = utf8.sub(set,1,self.config.max or 15)
+	end
+	local result =  PocoUIValue.val(self,set)
 	self:repaint()
 	return result
 end
+
 function PocoUIStringValue:startEdit()
 	self._editing = true
 	self.box:set_visible(true)
@@ -1377,7 +1396,7 @@ function PocoUIStringValue:repaint()
 	me._stringFocused = now()
 	if self.box then
 		local x,y,w,h = self.valLbl:shape()
-		x, y, w, h = x-5, y-5, w+10, math.max(h+10,self.config.h)
+		x, y, w, h = x-5, y-5, w+10, math.max(h+10,self.config.h+10)
 		self.box:set_shape(x,y,w,h)
 	end
 	if self._rename_caret then
@@ -1415,6 +1434,9 @@ function PocoUIStringValue:key_release(o, k)
 end
 
 function PocoUIStringValue:key_press(o, k)
+	if managers.menu:active_menu() then
+		managers.menu:active_menu().renderer:disable_input(0.2)
+	end
 	local lbl = self.valLbl
 	local n = utf8.len(lbl:text())
 	local s, e = lbl:selection()
@@ -1924,7 +1946,7 @@ end
 function PocoHud3Class._drawHeistStats (tab)
 	local pnl = tab.pnl
 	local w, h, ww, hh = 0,0, pnl:size()
-	local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size*1.05
+	local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size*0.98
 	local _rowCnt = 0
 
 	local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
@@ -2049,8 +2071,8 @@ function PocoHud3Class._drawPlayer(pnl, pid, member, offsetY)
 end
 
 function PocoHud3Class._drawAbout(tab,REV,TAG)
-	local C,self = PocoHud3Class,me
-	C.PocoUIButton:new(tab,{
+	local self = PocoHud3Class,me
+	PocoUIButton:new(tab,{
 		onClick = function(self)
 			Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 		end,
@@ -2067,7 +2089,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		x = 420, y = 10, w = 400,h=100,
 		text='Test'
 	})]]
-	C.PocoUIButton:new(tab,{
+	PocoUIButton:new(tab,{
 		onClick = function(self)
 			Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 		end,
@@ -2076,7 +2098,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki}}
 	})
 
-	C.PocoUIButton:new(tab,{
+	PocoUIButton:new(tab,{
 		onClick = function(self)
 			Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 		end,
@@ -2087,7 +2109,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 end
 
 function PocoHud3Class._drawOptions(tab)
-	local C,self = PocoHud3Class,me
+	local self = me
 	local objs = {}
 	self.onMenuDismiss = function()
 		O:default()
@@ -2099,10 +2121,10 @@ function PocoHud3Class._drawOptions(tab)
 		O:save()
 		me:Menu(true)
 	end
-	C.PocoUIButton:new(tab,{
+	PocoUIButton:new(tab,{
 		onClick = function()
 			me:Menu(true)
-			TPocoHud3.Toggle()
+			PocoHud3Class.TPocoHud3.Toggle()
 			PocoHud3 = nil -- will reload on its own
 		end,
 		x = 20, y = 10, w = 400, h=50,
@@ -2111,7 +2133,7 @@ function PocoHud3Class._drawOptions(tab)
 		hintText = 'Some options will be applied on the next session.'
 	})
 
-	C.PocoUIButton:new(tab,{
+	PocoUIButton:new(tab,{
 		onClick = function()
 			for __,obj in pairs(objs) do
 				obj[1]:val(O:get(obj[2],obj[3],true))
@@ -2122,7 +2144,7 @@ function PocoHud3Class._drawOptions(tab)
 		text={'DISCARD CHANGES',cl.Gray},
 		hintText = 'Discard temporary changes and revert to previous settings'
 	})
-	C.PocoUIButton:new(tab,{
+	PocoUIButton:new(tab,{
 		onClick = function()
 			for __,obj in pairs(objs) do
 				obj[1]:val(O:_default(obj[2],obj[3]))
@@ -2134,7 +2156,7 @@ function PocoHud3Class._drawOptions(tab)
 		hintText = 'Revert to the default setting.'
 	})
 
-	local oTabs = C.PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = tab})
+	local oTabs = PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = tab})
 	for category, objects in _pairs(O.scheme) do
 		local _y, m, half = 10, 5
 		local x,y = function()
@@ -2180,19 +2202,19 @@ function PocoHud3Class._drawOptions(tab)
 				local hint = O:_hint(category,name)
 				local tName = name:gsub('(%U)(%u)','%1 %2'):upper()
 				if type == 'bool' then
-					objs[#objs+1] = {C.PocoUIBoolean:new(oTab,{
+					objs[#objs+1] = {PocoUIBoolean:new(oTab,{
 						x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
 						fontSize = 20, text=tName , value = value ,
 						hintText = hint
 					}),category,name}
 				elseif type == 'color' then
-					objs[#objs+1] = {C.PocoUIColorValue:new(oTab,{
+					objs[#objs+1] = {PocoUIColorValue:new(oTab,{
 						x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
 						fontSize = 20, text=tName, value = value,
 						hintText = hint
 					}),category,name}
 				elseif type == 'key' then
-					objs[#objs+1] = {C.PocoUIKeyValue:new(oTab,{
+					objs[#objs+1] = {PocoUIKeyValue:new(oTab,{
 						x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
 						fontSize = 20, text=tName, value = value,
 						hintText = hint
@@ -2202,13 +2224,13 @@ function PocoHud3Class._drawOptions(tab)
 					local vanity = O:_vanity(category,name)
 					local step = O:_step(category,name)
 
-					objs[#objs+1] = {C.PocoUINumValue:new(oTab,{
+					objs[#objs+1] = {PocoUINumValue:new(oTab,{
 						x = x()+10, y = y(30), w=390, h=30, category = category, name = name, step = step,
 						fontSize = 20, text=tName, value = value, min = range[1], max = range[2], vanity = vanity,
 						hintText = hint
 					}),category,name}
 				else
-					C.PocoUIButton:new(oTab,{
+					PocoUIButton:new(oTab,{
 						hintText = 'Not implemented for now.',
 						x = x()+10, y = y(30), w=390, h=30,
 						text=_.s(name,type,value)
@@ -2220,18 +2242,194 @@ function PocoHud3Class._drawOptions(tab)
 	end
 end
 
-local _kitPnl
+local _kitPnl,_kitPnlBtn
 function PocoHud3Class._drawKit(tab)
-	if _kitPnl and alive(_kitPnl) then
-		tab.pnl:remove(_kitPnl)
+	if not K then
+		K = PocoHud3Class.Kits:new()
 	end
-	local pnl = tab.pnl:panel{}
-	_kitPnl = pnl
-	local C,y = PocoHud3Class,10
+	local C,_y,m = PocoHud3Class,10,5
+	local y = function(h,set)
+		h = h and h+m or 0
+		local __y = _y
+		_y = set and h or _y + h
+		return __y
+	end
+	local categories_vanity = ('set name,primary,secondary,armor,gadget,melee'):upper():split(',')
+	local categories = ('name,primaries,secondaries,armor,gadget,melee'):split(',')
+	local draw, _Current
+	local oTabs = PocoTabs:new(me._ws,{name = 'kits',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 
-	local ooTabs = C.PocoTabs:new(me._ws,{name = 'kits',x = 10, y = y, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-10-y, pTab = tab})
-	local ooTab = ooTabs:add('Kit1')
-	local ooTab = ooTabs:add('Kit2')
-	local ooTab = ooTabs:add('Kit3')
+	local tabBtn = oTabs:add('USE KIT')
+	local tabEdt =oTabs:add('EDIT')
+	draw = function()
+		y(10,true)
+		if _kitPnl and alive(_kitPnl) then
+			_kitPnl:parent():remove(_kitPnl)
+		end
+		local pnl = tabEdt.pnl:panel{}
+		_kitPnl = pnl
+		local cnt,row = 0
+		local lH = me:_drawRow(pnl,20,categories_vanity,20,y(),pnl:w()-40,true,true,1.3)
+		y(lH,true)
+		-- Current
+		row = {}
+		_Current = {}
+		for col,category in pairs(categories) do
+			if col ~= 1 then
+				local text = K:current(category)
+				local raw = K:current(category,true)
+				local elem = PocoUIBoolean:new(tabEdt,{ pnl = pnl,
+					x = 0, y = 0, w=150, h=20, category = false, name = false,
+					fontSize = 18, text=text , value = true ,
+				})
 
+				_Current[category] = {elem,raw}
+				row[#row+1] = elem
+			else
+				local s,sNum = 'Config',1
+				while K.items[s..sNum] do
+					sNum = sNum + 1
+				end
+				local elem = PocoUIStringValue:new(tabEdt,{ pnl = pnl,
+					x = 0, y = 0, w=150, h=20, category = false, name = false,
+					fontSize = 18, text=' ' , value = 'Config'..sNum , max = 20
+				})
+				_Current[category] = {elem}
+				row[#row+1] = elem
+			end
+		end
+		local elem = PocoUIColorValue:new(tabEdt,{ pnl = pnl,
+			x = 330, y = 80, w = 300, h=30, category = false, name = false,
+			fontSize = 18, text='Color' , value = 'White'
+		})
+		_Current['color'] = {elem}
+
+		lH = me:_drawRow(pnl,20,row,20,y(),pnl:w()-40,false,true)
+		y(lH,true)
+		y(70)
+		lH = me:_drawRow(pnl,20,categories_vanity,20,y(),pnl:w()-40,true,true,1.3)
+		y(lH,true)
+		-- Kit Edt
+		for ind,obj in _pairs(K.items,function(a,b)return tostring(a)<tostring(b) end) do
+			row = {}
+			cnt = cnt + 1
+			for col,category in pairs(categories) do
+				if col ~= 1 then
+					row[#row+1] = K:get(ind,category,true) or {'LEAVE AS IS',cl.Gray}
+				else
+					row[#row+1] = PocoUIButton:new(tabEdt,{ pnl = pnl,
+						onClick = function(self)
+							if self._t and now()-self._t<0.2 then
+								K.items[ind] = nil
+								K:save()
+								draw()
+								self:sound('item_sell')
+							else
+								self._t = now()
+								-- Copy this value to _Current Elems
+								for cat,obj in pairs(_Current) do
+									if cat == 'name' then
+										obj[1]:val(ind)
+									elseif cat == 'color' then
+										obj[2] = K:get(ind,cat)
+										obj[1]:val(obj[2])
+									else
+										if K:get(ind,cat) then
+											obj[2] = K:get(ind,cat)
+											_.l(obj[1].lbl,K:get(ind,cat,true),true)
+											obj[1]:val(true)
+										else
+											obj[1]:val(false)
+										end
+									end
+								end
+							end
+						end,
+						x = 0, y = 0, w=150, h=22,
+						fontSize = 22, text={ind,cl[K:get(ind,'color') or 'White']}, hintText = {'Click to ',{'Edit',cl.Tan},'\nDoubleClick to ',{'Remove',cl.Red},' this item'}
+					})
+				end
+			end
+			lH = me:_drawRow(pnl,22,row,20,y(),pnl:w()-40,cnt % 2 == 0,true,1.1)
+			y(lH,true)
+		end
+		pnl:set_h(y()+50)
+		tabEdt:set_h(pnl:h())
+
+		-- Kit Btn
+		if _kitPnlBtn and alive(_kitPnlBtn) then
+			_kitPnlBtn:parent():remove(_kitPnlBtn)
+		end
+		pnl = tabBtn.pnl:panel{}
+		_kitPnlBtn = pnl
+
+		local c,x,y,m,ww,w,h = 0,0,0,10,pnl:w()-20,300,100
+		if table.size(K.items) == 0 then
+			_.l({font=FONT, color=cl.LightSteelBlue, font_size=25, pnl = pnl, x = m, y=m},'No Kit profiles available',true)
+		end
+		for ind,obj in _pairs(K.items,function(a,b)return tostring(a)<tostring(b) end) do
+			x = m+(c % 3) * (w+m)
+			y = m+math.floor(c / 3) * (h+m)
+			c = c + 1
+			local name = ind
+			local row = {}
+			for col,category in pairs(categories) do
+				if col ~= 1 then
+					local val = K:get(ind,category,true)
+
+					row[#row+1] = {categories_vanity[col]..' : ',val and cl.Tan or cl.Gray}
+					row[#row+1] = {(val or '-')..'\n',val and cl.White or cl.Gray}
+				end
+			end
+			row[#row+1] = '* DoubleClick to Equip this item'
+			PocoUIButton:new(tabBtn,{ pnl = pnl,
+				onPressed = function(self)
+					self.mute = true
+				end,
+				onClick = function(self)
+					if self._t and now()-self._t<0.2 then
+						K:equip(ind)
+						self:sound('finalize_mask')
+					else
+						self._t = now()
+					end
+				end,
+				x = x, y = y, w=w, h=h,
+				fontSize = 25, text={ind,cl[K:get(ind,'color')] or cl.Red}, hintText = row
+			})
+		end
+		pnl:set_h(y+h+50)
+		tabBtn:set_h(pnl:h())
+	end
+	PocoUIButton:new(tabEdt,{
+		onClick = function(self)
+			local result = {}
+			local name = 'Item'
+			for cat,obj in pairs(_Current) do
+				if cat == 'name' then
+					name = obj[1]:val()
+				elseif cat == 'color' then
+					result[cat] = obj[1]:val()
+				elseif obj[1]:val() then
+						result[cat] = obj[2]
+				end
+			end
+			if name and table.size(result) > 0 then
+				K.items[name] = result
+				K:save()
+				self:sound('item_buy')
+			else
+				me:err('No item to save')
+			end
+			draw()
+		end,
+		x = 640, y = 75, w = 300, h=40,
+		text='SAVE'
+	})
+	tabEdt.pnl:bitmap({
+		texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
+		color = cl.White, x = 5, y = 70, w = tabEdt.pnl:w()-10, h = 2, alpha = 0.8
+	})
+
+	draw()
 end
