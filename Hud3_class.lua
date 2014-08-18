@@ -1465,7 +1465,7 @@ function PocoTab:init(parent,ppnl,tabName)
 	self.ppnl = ppnl
 	self.name = tabName
 	self.wrapper = ppnl:panel({ x=0, y=parent.config.th,w = ppnl:w(), h = ppnl:h()-parent.config.th, name = tabName})
-	self.pnl = self.wrapper:panel({ x=0, y=0, w = ppnl:w(), h = ppnl:h(), name = 'content'})
+	self.pnl = self.wrapper:panel({ x=0, y=0, w = ppnl:w(), h = self.wrapper:h(), name = 'content'})
 	self.hotZones = {}
 
 	local function t(panel)
@@ -1522,7 +1522,7 @@ end
 
 function PocoTab:scroll(val, force)
 	local tVal = force and 0 or (self.y or 0) + val
-	local pVal = math.clamp(tVal,self.wrapper:h()-self.pnl:h()-100,0)
+	local pVal = math.clamp(tVal,self.wrapper:h()-self.pnl:h()-20,0)
 	if pVal ~= tVal then
 		self._errCnt = 1+ (self._errCnt or 0)
 	else

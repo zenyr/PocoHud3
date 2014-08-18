@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 127
-local TAG = '0.14 hotfix 1 (g160aa87)'
+local REV = 128
+local TAG = '0.14 hotfix 2 (g70a0659)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -244,6 +244,59 @@ function TPocoHud3:Menu(dismiss,...)
 			end
 			return table.concat(buf, ' ')
 	end
+	local _drawHeistStats = function(tab)
+		local pnl = tab.pnl
+		local w, h, ww, hh = 0,0, pnl:size()
+		local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size*1.05
+		local _rowCnt = 0
+
+		local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
+		local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
+		local x, y, tbl = 5, 5, {}
+		tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
+		local addJob = function(host,heist)
+			local job_string =managers.localization:to_upper_text(tweak_data.narrative.jobs[heist].name_id) or heist
+			local pro = tweak_data.narrative.jobs[heist].professional
+			if pro then
+				job_string = {job_string, cl.Red}
+			end
+			local rowObj = {host:upper(),job_string}
+
+			for i, name in ipairs( risks ) do
+				local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
+				local f = managers.statistics._global.sessions.jobs[heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'] or 0
+				if i > 1 or not pro then
+					table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
+				else
+					table.insert(rowObj, {c > 0 and c or 'N/A', cl.Tan:with_alpha(0.4)})
+				end
+			end
+			local multi = managers.job:get_job_heat_multipliers(heist)
+			local color = multi >= 1 and math.lerp( cl.Khaki, cl.Chartreuse, 2*(multi - 1) ) or math.lerp( cl.Crimson, cl.OrangeRed, multi )
+			table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..managers.job:get_job_heat(heist)..')',color:with_alpha(0.3)}})
+			tbl[#tbl+1] = rowObj
+		end
+		for host,jobs in pairs(host_list) do
+			for no,heist in pairs(jobs) do
+				job_list[table.get_key(job_list,heist)] = nil
+				addJob(host,heist)
+			end
+		end
+		for no,heist in pairs(job_list) do
+			addJob('N/A',heist) -- Just in case
+		end
+		local _lastHost = ''
+		for row, _tbl in pairs(tbl) do
+			if _lastHost == _tbl[1] then
+				_tbl[1] = ''
+			else
+				_lastHost = _tbl[1]
+			end
+			_rowCnt = _rowCnt + 1
+			y = self:_drawRow(pnl,fontSize,_tbl,x,y,970, _rowCnt % 2 == 0,{1,_rowCnt == 1 and 1 or 0})
+		end
+		tab:set_h(y)
+	end
 	local _drawUpgrades = function(pnl, data, isTeam, desc, offsetY)
 		local _ignore = {}
 		offsetY = offsetY or 0
@@ -253,7 +306,7 @@ function TPocoHud3:Menu(dismiss,...)
 			font = FONTLARGE, font_size = 25, color = cl.CornFlowerBlue,
 		}
 		local large = 5
-		local y,fontSize,w = offsetY+35, 19, 970
+		local y,fontSize,w = offsetY+35, 19, pnl:w()
 		if data then
 			local merged = table.deepcopy(data)
 			for category, upgrades in _pairs(merged) do
@@ -477,6 +530,15 @@ function TPocoHud3:Menu(dismiss,...)
 				text={{'PocoHud3 r'},{REV,cl.Gray},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\n'..TAG,cl.Silver}},
 				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
+			--[[PocoHud3Class.PocoUIButton:new(tab,{
+				onClick = function(self)
+					Steam:http_request('http://steamcommunity.com/groups/pocomods/rss', function (success, body)
+						_(success,body)
+					end)
+				end,
+				x = 420, y = 10, w = 400,h=100,
+				text='Test'
+			})]]
 			PocoHud3Class.PocoUIButton:new(tab,{
 				onClick = function(self)
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
@@ -494,28 +556,35 @@ function TPocoHud3:Menu(dismiss,...)
 				text={'Color codes reference page', cl.Silver},-- no moar fun tho
 				hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
 			})
-
-			tab = gui:add('Heist Status')
-			self:_drawStat(true,tab.pnl)
-
-			tab = gui:add('Upgrade Skills')
 			local y = 0
-			if inGame then
-				for pid,upg in pairs(_.g('Global.player_manager.synced_team_upgrades',{})) do
-					if upg then
-						y = _drawUpgrades(tab.pnl,upg,true,'Crew bonus from '..self:_name(pid),y)
+			tab = gui:add('Statistics')
+			do
+				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
+				local oTab = oTabs:add('Heist Status')
+				_drawHeistStats(oTab)
+
+				oTab = oTabs:add('Upgrade Skills')
+				if inGame then
+					for pid,upg in pairs(_.g('Global.player_manager.synced_team_upgrades',{})) do
+						if upg then
+							y = _drawUpgrades(oTab.pnl,upg,true,'Crew bonus from '..self:_name(pid),y)
+						end
 					end
 				end
+				y = _drawUpgrades(oTab.pnl,_.g('Global.player_manager.team_upgrades'),true,'Perks that you and your crew will benefit from',y)
+				y = _drawUpgrades(oTab.pnl,_.g('Global.player_manager.upgrades'),false,'Perks that you have acquired',y)
 			end
-			y = _drawUpgrades(tab.pnl,_.g('Global.player_manager.team_upgrades'),true,'Perks that you and your crew will benefit from',y)
-			y = _drawUpgrades(tab.pnl,_.g('Global.player_manager.upgrades'),false,'Perks that you have acquired',y)
 
 			tab = gui:add('Tools')
 			do
-				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'tools',x = 10, y = 10, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = tab})
+				_.l({
+					pnl = tab.pnl,
+					x = 20, y = 10, w = tab.pnl:w()-20,h=20, font = FONT, font_size = 20, color = cl.Crimson,
+					align = 'right'},'* Tools section is currently Work in progress. Stay tuned :D')
+				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'tools',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
 				local oTab = oTabs:add('Kit Profiler')
 
-				local ooTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'kits',x = 10, y = 10, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = oTab})
+				local ooTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'kits',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = oTab.pnl:height()-50, pTab = oTab})
 				local ooTab = ooTabs:add('Kit1')
 				local ooTab = ooTabs:add('Kit2')
 				local ooTab = ooTabs:add('Kit3')
@@ -528,11 +597,6 @@ function TPocoHud3:Menu(dismiss,...)
 						y = _drawPlayer(oTab.pnl, i, member, y)
 					end
 				end
-				_.l({
-					pnl = oTab.pnl,
-					x = 10, y = y+10, font = FONT, font_size = 20, color = cl.White,
-					align = 'center', vertical = 'center'
-				},{{'*to be announced',cl.Crimson}},true)
 			end
 		end
 	end)
@@ -560,6 +624,7 @@ function TPocoHud3:AnnounceStat(midgame)
 					)
 				)
 			else
+
 				table.insert(txt,
 					_.s(Icon.LC..self:_name(pid)..Icon.RC,
 						kill..Icon.Skull..(killS>0 and '('..killS..' Sp)' or ''),'|',
@@ -1098,56 +1163,6 @@ end
 function TPocoHud3:_drawStat(state,pnl)
 	local ppnl = pnl or self.pnl.dbg
 	if state then -- Show Stat
-		local w, h, ww, hh = 0,0, ppnl:size()
-		local pnl = ppnl:panel( { name='stat', visible=true, x=10, y=10, w=ww - 20, h=hh - 20} )
-		local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size
-		local _rowCnt = 0
-
-		local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
-		local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
-		local x, y, tbl = 5, 5, {}
-		tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
-		local addJob = function(host,heist)
-			local job_string =managers.localization:to_upper_text(tweak_data.narrative.jobs[heist].name_id) or heist
-			local pro = tweak_data.narrative.jobs[heist].professional
-			if pro then
-				job_string = {job_string, cl.Red}
-			end
-			local rowObj = {host:upper(),job_string}
-
-			for i, name in ipairs( risks ) do
-				local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
-				local f = managers.statistics._global.sessions.jobs[heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'] or 0
-				if i > 1 or not pro then
-					table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
-				else
-					table.insert(rowObj, {c > 0 and c or 'N/A', cl.Tan:with_alpha(0.4)})
-				end
-			end
-			local multi = managers.job:get_job_heat_multipliers(heist)
-			local color = multi >= 1 and math.lerp( cl.Khaki, cl.Chartreuse, 2*(multi - 1) ) or math.lerp( cl.Crimson, cl.OrangeRed, multi )
-			table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..managers.job:get_job_heat(heist)..')',color:with_alpha(0.3)}})
-			tbl[#tbl+1] = rowObj
-		end
-		for host,jobs in pairs(host_list) do
-			for no,heist in pairs(jobs) do
-				job_list[table.get_key(job_list,heist)] = nil
-				addJob(host,heist)
-			end
-		end
-		for no,heist in pairs(job_list) do
-			addJob('N/A',heist) -- Just in case
-		end
-		local _lastHost = ''
-		for row, _tbl in pairs(tbl) do
-			if _lastHost == _tbl[1] then
-				_tbl[1] = ''
-			else
-				_lastHost = _tbl[1]
-			end
-			_rowCnt = _rowCnt + 1
-			y = self:_drawRow(pnl,fontSize,_tbl,x,y,970, _rowCnt % 2 == 0,{1,_rowCnt == 1 and 1 or 0})
-		end
 
 	else -- Hide Stat
 		local fade = function(pnl,cb,seconds, ppnl)
