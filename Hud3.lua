@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 124
-local TAG = '0.13 hotfix 9 (gd144094)'
+local REV = 126
+local TAG = '0.14'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -2387,6 +2387,13 @@ function TPocoHud3:_hook()
 			return --me.menuGui:mouse_moved(managers.mouse_pointer:mouse(), managers.mouse_pointer:world_position())
 		end
 		return Run('update**', ...)
+	end)
+
+--- DEBUG ONLY
+	hook( BlackMarketGui, 'equip_weapon_callback', function( ... )
+		local self, data = unpack{...}
+		_('Eq,',zinspect(data,{depth=3}))
+		return Run('equip_weapon_callback', ...)
 	end)
 end
 --- Utility functions ---
