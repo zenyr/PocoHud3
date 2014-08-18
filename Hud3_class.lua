@@ -1481,16 +1481,18 @@ function PocoTab:init(parent,ppnl,tabName)
 	self.pnl:animate(t)
 end
 
-function PocoTab:insideTabHeader(x,y)
-	local result = self.bg and alive(self.bg) and self.bg:inside(x, y)
-	if not result then
+function PocoTab:insideTabHeader(x,y,noChildren)
+	local result = self.bg and alive(self.bg) and self.bg:inside(x, y) and self
+	if not result and not noChildren then
 		if self._children then
 			for name,child in pairs(self._children) do
-				result = result or (child.currentTab and child.currentTab:insideTabHeader(x,y))
+				if child.currentTab and child.currentTab:insideTabHeader(x,y) then
+					return child,false
+				end
 			end
 		end
 	end
-	return result
+	return result,true
 end
 
 function PocoTab:addHotZone(event,item)
@@ -1608,9 +1610,10 @@ function PocoTabs:canScroll(down,x,y)
 	end
 end
 
-function PocoTabs:insideTabHeader(x,y)
+function PocoTabs:insideTabHeader(x,y,noChildren)
 	for ind,tab in pairs(self.items) do
-		if tab:insideTabHeader(x,y) and self.tabIndex ~= ind then
+		local tResult = {tab:insideTabHeader(x,y,true)}
+		if tResult[1] and self.tabIndex ~= ind then
 			return self, ind
 		end
 	end

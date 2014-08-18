@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 126
-local TAG = '0.14'
+local REV = 127
+local TAG = '0.14 hotfix 1 (g160aa87)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -494,143 +494,7 @@ function TPocoHud3:Menu(dismiss,...)
 				text={'Color codes reference page', cl.Silver},-- no moar fun tho
 				hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
 			})
-			--Because WHY THE FUQ NOT
-			-- Draw Options Begin
-			--[[
-			tab = gui:add('Options')
-			local y1, y2, m, col = 70, 70, 2, true
-			local x,y =function()
-				return col and (m+10) or m + 520
-			end, function(h)
-				if col then
-					y1 = y1 + h + m
-				else
-					y2 = y2 + h + m
-				end
-				return (col and y1 or y2) - h - m
-			end
 
-			local objs = {}
-			self.onMenuDismiss = function()
-				O:default()
-				for __,obj in pairs(objs) do
-					if not obj[1]:isDefault() then
-						O:set(obj[2],obj[3],obj[1]:val())
-					end
-				end
-				O:save()
-				me:Menu(true)
-			end
-			PocoHud3Class.PocoUIButton:new(tab,{
-				onClick = function()
-					me:Menu(true)
-					TPocoHud3.Toggle()
-					PocoHud3 = nil -- will reload on its own
-				end,
-				x = 20, y = 10, w = 400, h=50,
-				fontSize = 30,font = FONTLARGE,
-				text={'APPLY & RELOAD',cl.Silver},
-				hintText = 'Some options will be applied on the next session.'
-			})
-
-			PocoHud3Class.PocoUIButton:new(tab,{
-				onClick = function()
-					for __,obj in pairs(objs) do
-						obj[1]:val(O:get(obj[2],obj[3],true))
-					end
-				end,
-				x = 500, y = 10, w = 200, h=50,
-				fontSize = 25,font = FONTLARGE,
-				text={'DISCARD CHANGES',cl.Gray},
-				hintText = 'Discard temporary changes and revert to previous settings'
-			})
-			PocoHud3Class.PocoUIButton:new(tab,{
-				onClick = function()
-					for __,obj in pairs(objs) do
-						obj[1]:val(O:_default(obj[2],obj[3]))
-					end
-				end,
-				x = 710, y = 10, w = 200, h=50,
-				fontSize = 25,font = FONTLARGE,
-				text={'RESET TO DEFAULT',cl.Gray},
-				hintText = 'Revert to the default setting.'
-			})
-			tab.pnl:bitmap({
-				texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
-				color = cl.White, x = 5, y = 65, w = tab.pnl:w()-10, h = 3 })
-
-			for category, objects in _pairs(O.scheme) do
-				PocoHud3Class.PocoUIHintLabel:new(tab,{
-					x = x(), y = y(25), w=400, h=25,
-					fontSize = 25,font = FONTLARGE, align='left', blend = 'add',
-					text={string.upper(category),cl.CornFlowerBlue}, hintText = objects[1]
-				})
-				for name,values in _pairs(objects,function(a,b)
-					local t1, t2 = O:_type(category,a),O:_type(category,b)
-					if a == 'enable' then
-						return true
-					elseif b == 'enable' then
-						return  false
-					elseif t1 == 'bool' and t2 ~= 'bool' then
-						return true
-					elseif t1 ~= 'bool' and t2 == 'bool' then
-						return false
-					end
-					return tostring(a) <= tostring(b)
-				end) do
-					if type(name) ~= 'number' then
-						local type = O:_type(category,name)
-						local value = O:get(category,name,true)
-						local hint = O:_hint(category,name)
-						local tName = name:gsub('(%U)(%u)','%1 %2'):upper()
-						if type == 'bool' then
-							objs[#objs+1] = {PocoHud3Class.PocoUIBoolean:new(tab,{
-								x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
-								fontSize = 20, text=tName , value = value ,
-								hintText = hint
-							}),category,name}
-						elseif type == 'color' then
-							objs[#objs+1] = {PocoHud3Class.PocoUIColorValue:new(tab,{
-								x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
-								fontSize = 20, text=tName, value = value,
-								hintText = hint
-							}),category,name}
-						elseif type == 'num' then
-							local range = O:_range(category,name) or {}
-							local vanity = O:_vanity(category,name)
-							local step = O:_step(category,name)
-
-							objs[#objs+1] = {PocoHud3Class.PocoUINumValue:new(tab,{
-								x = x()+10, y = y(30), w=390, h=30, category = category, name = name, step = step,
-								fontSize = 20, text=tName, value = value, min = range[1], max = range[2], vanity = vanity,
-								hintText = hint
-							}),category,name}
-						else
-							PocoHud3Class.PocoUIButton:new(tab,{
-								hintText = 'Not implemented for now.',
-								x = x()+10, y = y(30), w=390, h=30,
-								text=_.s(name,type)
-							})
-						end
-					end
-				end
-				tab.pnl:bitmap({
-					texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
-					color = cl.White:with_alpha(0.3), x = x(), y = y(10)+3,w = 410, h = 3
-				})
-				col = y1 <= y2
-			end
-			local y = math.max(y1,y2)
-			PocoHud3Class.PocoUIButton:new(tab,{
-				onClick = function(self)
-					self.parent:scroll(0,true)
-				end,
-				x = 0, y = y+10, w = 1000, h=40,
-				fontSize = 25, text={'BACK TO TOP',cl.Gray}
-			})
-
-			tab:set_h(y+90)
-			-- Draw Options End]]
 			tab = gui:add('Heist Status')
 			self:_drawStat(true,tab.pnl)
 
@@ -645,19 +509,31 @@ function TPocoHud3:Menu(dismiss,...)
 			end
 			y = _drawUpgrades(tab.pnl,_.g('Global.player_manager.team_upgrades'),true,'Perks that you and your crew will benefit from',y)
 			y = _drawUpgrades(tab.pnl,_.g('Global.player_manager.upgrades'),false,'Perks that you have acquired',y)
-			tab = gui:add('Inspect')
-			y = 0
-			for i=1,4 do
-				local member= self:_member(i)
-				if member and member._unit then
-					y = _drawPlayer(tab.pnl, i, member, y)
+
+			tab = gui:add('Tools')
+			do
+				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'tools',x = 10, y = 10, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = tab})
+				local oTab = oTabs:add('Kit Profiler')
+
+				local ooTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'kits',x = 10, y = 10, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = oTab})
+				local ooTab = ooTabs:add('Kit1')
+				local ooTab = ooTabs:add('Kit2')
+				local ooTab = ooTabs:add('Kit3')
+
+				local oTab = oTabs:add('Inspect')
+				y = 0
+				for i=1,4 do
+					local member= self:_member(i)
+					if member and member._unit then
+						y = _drawPlayer(oTab.pnl, i, member, y)
+					end
 				end
+				_.l({
+					pnl = oTab.pnl,
+					x = 10, y = y+10, font = FONT, font_size = 20, color = cl.White,
+					align = 'center', vertical = 'center'
+				},{{'*to be announced',cl.Crimson}},true)
 			end
-			_.l({
-				pnl = tab.pnl,
-				x = 10, y = y+10, font = FONT, font_size = 20, color = cl.White,
-				align = 'center', vertical = 'center'
-			},{{'*to be announced',cl.Crimson}},true)
 		end
 	end)
 	if not r then _('MenuCallErr',err) end
@@ -2390,11 +2266,11 @@ function TPocoHud3:_hook()
 	end)
 
 --- DEBUG ONLY
-	hook( BlackMarketGui, 'equip_weapon_callback', function( ... )
+	--[[hook( BlackMarketGui, 'equip_weapon_callback', function( ... )
 		local self, data = unpack{...}
 		_('Eq,',zinspect(data,{depth=3}))
 		return Run('equip_weapon_callback', ...)
-	end)
+	end)]]
 end
 --- Utility functions ---
 function TPocoHud3:toggleVerbose(state)
