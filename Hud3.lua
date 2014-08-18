@@ -236,138 +236,9 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 end
 --- Internal functions ---
 function TPocoHud3:Menu(dismiss,...)
-	local titlecase = function (str)
-			local buf = {}
-			for word in string.gfind(str, '%S+') do
-					local first, rest = string.sub(word, 1, 1), string.sub(word, 2)
-					table.insert(buf, string.upper(first) .. string.lower(rest))
-			end
-			return table.concat(buf, ' ')
-	end
-	local _drawHeistStats = function(tab)
-		local pnl = tab.pnl
-		local w, h, ww, hh = 0,0, pnl:size()
-		local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size*1.05
-		local _rowCnt = 0
-
-		local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
-		local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
-		local x, y, tbl = 5, 5, {}
-		tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
-		local addJob = function(host,heist)
-			local job_string =managers.localization:to_upper_text(tweak_data.narrative.jobs[heist].name_id) or heist
-			local pro = tweak_data.narrative.jobs[heist].professional
-			if pro then
-				job_string = {job_string, cl.Red}
-			end
-			local rowObj = {host:upper(),job_string}
-
-			for i, name in ipairs( risks ) do
-				local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
-				local f = managers.statistics._global.sessions.jobs[heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'] or 0
-				if i > 1 or not pro then
-					table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
-				else
-					table.insert(rowObj, {c > 0 and c or 'N/A', cl.Tan:with_alpha(0.4)})
-				end
-			end
-			local multi = managers.job:get_job_heat_multipliers(heist)
-			local color = multi >= 1 and math.lerp( cl.Khaki, cl.Chartreuse, 2*(multi - 1) ) or math.lerp( cl.Crimson, cl.OrangeRed, multi )
-			table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..managers.job:get_job_heat(heist)..')',color:with_alpha(0.3)}})
-			tbl[#tbl+1] = rowObj
-		end
-		for host,jobs in pairs(host_list) do
-			for no,heist in pairs(jobs) do
-				job_list[table.get_key(job_list,heist)] = nil
-				addJob(host,heist)
-			end
-		end
-		for no,heist in pairs(job_list) do
-			addJob('N/A',heist) -- Just in case
-		end
-		local _lastHost = ''
-		for row, _tbl in pairs(tbl) do
-			if _lastHost == _tbl[1] then
-				_tbl[1] = ''
-			else
-				_lastHost = _tbl[1]
-			end
-			_rowCnt = _rowCnt + 1
-			y = self:_drawRow(pnl,fontSize,_tbl,x,y,970, _rowCnt % 2 == 0,{1,_rowCnt == 1 and 1 or 0})
-		end
-		tab:set_h(y)
-	end
-	local _drawUpgrades = function(pnl, data, isTeam, desc, offsetY)
-		local _ignore = {}
-		offsetY = offsetY or 0
-		pnl:text{
-			x = 10, y = offsetY+10, w = 600, h = 30,
-			name = 'tab_desc', text = Icon.Chapter..' '..desc,
-			font = FONTLARGE, font_size = 25, color = cl.CornFlowerBlue,
-		}
-		local large = 5
-		local y,fontSize,w = offsetY+35, 19, pnl:w()
-		if data then
-			local merged = table.deepcopy(data)
-			for category, upgrades in _pairs(merged) do
-				local row,cnt = {},0
-				y = self:_drawRow(pnl,fontSize*1.1,{{titlecase(category:gsub('_',' ')),cl.Peru},''},5,y,w)
-				for name,value in _pairs(upgrades) do
-					local isMulti = name:find('multiplier') or name:find('_chance') or name:find('_mul')
-					local val = isTeam and managers.player:team_upgrade_value(category, name, 1) or managers.player:upgrade_value(category, name, 1)
-					if not (isMulti and val == 1) then
-						cnt = cnt + 1
-						if isMulti and type(val) == 'number' then
-							val = _.s(val*100) .. '%'
-						elseif type(val) == 'table' then
-							val = _.s( type(val[1]) == 'number' and _.s(val[1]*100) .. '%' or _.s(val[1]==true and 'Yes' or val[1]), _.s(val[2],'sec') )
-						elseif val == true then
-							val = 'Yes'
-						else
-							val = _.s(val)
-						end
-						row[#row+1] = {
-							{(name:gsub('_multiplier',''):gsub('_',' '))..' ',cl.WhiteSmoke}
-						}
-						row[#row+1] = {
-							{val..' ',cl.LightSteelBlue}
-						}
-
-						if #row> large then
-							y = self:_drawRow(pnl,fontSize,row,15,y,w,true,{0,1,0,1,0,1})
-							row = {}
-						end
-					end
-				end
-				if cnt == 0 then
-					row[#row+1] =  {'Not effective',cl.LightSteelBlue}
-				end
-				if #row > 0 then
-					while (#row <= large) do
-						table.insert(row,'')
-					end
-					y = self:_drawRow(pnl,fontSize,row,15,y,w,true,{0,1,0,1,0,1})
-					row = {}
-				end
-			end
-			if pnl:h() < y then
-				pnl:set_h(y)
-			end
-		else
-			y = self:_drawRow(pnl,fontSize,{{'No upgrades acquired\n',cl.White:with_alpha(0.5)}},0,y,w)
-		end
-		return y
-	end
-	local _drawPlayer = function(pnl, pid, member, offsetY)
-		offsetY = offsetY or 0
-		pnl:text{
-			x = 10, y = offsetY+10, w = 600, h = 30,
-			name = 'tab_desc', text = self:_name(pid),
-			font = FONTLARGE, font_size = 25, color = self:_color(pid)
-		}
-		local y,fontSize,w = offsetY+35, 19, 970
-		return y
-	end
+	local C = PocoHud3Class
+	local _drawUpgrades = C._drawUpgrades
+	local _drawPlayer = C._drawPlayer
 
 	local r,err = pcall(function()
 		local menu = self.menuGui
@@ -384,7 +255,7 @@ function TPocoHud3:Menu(dismiss,...)
 			end
 		elseif not dismiss then -- Show
 			managers.menu_component:post_event('menu_enter')
-			local gui = PocoHud3Class.PocoMenu:new(self._ws)
+			local gui = C.PocoMenu:new(self._ws)
 			self.menuGui = gui
 			--- Install tabs Begin --- ===================================
 			do
@@ -400,7 +271,7 @@ function TPocoHud3:Menu(dismiss,...)
 					O:save()
 					me:Menu(true)
 				end
-				PocoHud3Class.PocoUIButton:new(tab,{
+				C.PocoUIButton:new(tab,{
 					onClick = function()
 						me:Menu(true)
 						TPocoHud3.Toggle()
@@ -412,7 +283,7 @@ function TPocoHud3:Menu(dismiss,...)
 					hintText = 'Some options will be applied on the next session.'
 				})
 
-				PocoHud3Class.PocoUIButton:new(tab,{
+				C.PocoUIButton:new(tab,{
 					onClick = function()
 						for __,obj in pairs(objs) do
 							obj[1]:val(O:get(obj[2],obj[3],true))
@@ -423,7 +294,7 @@ function TPocoHud3:Menu(dismiss,...)
 					text={'DISCARD CHANGES',cl.Gray},
 					hintText = 'Discard temporary changes and revert to previous settings'
 				})
-				PocoHud3Class.PocoUIButton:new(tab,{
+				C.PocoUIButton:new(tab,{
 					onClick = function()
 						for __,obj in pairs(objs) do
 							obj[1]:val(O:_default(obj[2],obj[3]))
@@ -435,7 +306,7 @@ function TPocoHud3:Menu(dismiss,...)
 					hintText = 'Revert to the default setting.'
 				})
 
-				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = tab})
+				local oTabs = C.PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = tab})
 				for category, objects in _pairs(O.scheme) do
 					local _y, m, half = 10, 5
 					local x,y = function()
@@ -481,19 +352,19 @@ function TPocoHud3:Menu(dismiss,...)
 							local hint = O:_hint(category,name)
 							local tName = name:gsub('(%U)(%u)','%1 %2'):upper()
 							if type == 'bool' then
-								objs[#objs+1] = {PocoHud3Class.PocoUIBoolean:new(oTab,{
+								objs[#objs+1] = {C.PocoUIBoolean:new(oTab,{
 									x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
 									fontSize = 20, text=tName , value = value ,
 									hintText = hint
 								}),category,name}
 							elseif type == 'color' then
-								objs[#objs+1] = {PocoHud3Class.PocoUIColorValue:new(oTab,{
+								objs[#objs+1] = {C.PocoUIColorValue:new(oTab,{
 									x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
 									fontSize = 20, text=tName, value = value,
 									hintText = hint
 								}),category,name}
 							elseif type == 'key' then
-								objs[#objs+1] = {PocoHud3Class.PocoUIKeyValue:new(oTab,{
+								objs[#objs+1] = {C.PocoUIKeyValue:new(oTab,{
 									x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
 									fontSize = 20, text=tName, value = value,
 									hintText = hint
@@ -503,13 +374,13 @@ function TPocoHud3:Menu(dismiss,...)
 								local vanity = O:_vanity(category,name)
 								local step = O:_step(category,name)
 
-								objs[#objs+1] = {PocoHud3Class.PocoUINumValue:new(oTab,{
+								objs[#objs+1] = {C.PocoUINumValue:new(oTab,{
 									x = x()+10, y = y(30), w=390, h=30, category = category, name = name, step = step,
 									fontSize = 20, text=tName, value = value, min = range[1], max = range[2], vanity = vanity,
 									hintText = hint
 								}),category,name}
 							else
-								PocoHud3Class.PocoUIButton:new(oTab,{
+								C.PocoUIButton:new(oTab,{
 									hintText = 'Not implemented for now.',
 									x = x()+10, y = y(30), w=390, h=30,
 									text=_.s(name,type,value)
@@ -522,7 +393,7 @@ function TPocoHud3:Menu(dismiss,...)
 			end
 			--- Test End ======================================
 			local tab = gui:add('About')
-			PocoHud3Class.PocoUIButton:new(tab,{
+			C.PocoUIButton:new(tab,{
 				onClick = function(self)
 					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 				end,
@@ -530,7 +401,7 @@ function TPocoHud3:Menu(dismiss,...)
 				text={{'PocoHud3 r'},{REV,cl.Gray},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\n'..TAG,cl.Silver}},
 				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 			})
-			--[[PocoHud3Class.PocoUIButton:new(tab,{
+			--[[C.PocoUIButton:new(tab,{
 				onClick = function(self)
 					Steam:http_request('http://steamcommunity.com/groups/pocomods/rss', function (success, body)
 						_(success,body)
@@ -539,7 +410,7 @@ function TPocoHud3:Menu(dismiss,...)
 				x = 420, y = 10, w = 400,h=100,
 				text='Test'
 			})]]
-			PocoHud3Class.PocoUIButton:new(tab,{
+			C.PocoUIButton:new(tab,{
 				onClick = function(self)
 					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 				end,
@@ -548,7 +419,7 @@ function TPocoHud3:Menu(dismiss,...)
 				hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki}}
 			})
 
-			PocoHud3Class.PocoUIButton:new(tab,{
+			C.PocoUIButton:new(tab,{
 				onClick = function(self)
 					Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 				end,
@@ -559,9 +430,9 @@ function TPocoHud3:Menu(dismiss,...)
 			local y = 0
 			tab = gui:add('Statistics')
 			do
-				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
+				local oTabs = C.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
 				local oTab = oTabs:add('Heist Status')
-				_drawHeistStats(oTab)
+				C._drawHeistStats(oTab)
 
 				oTab = oTabs:add('Upgrade Skills')
 				if inGame then
@@ -581,10 +452,10 @@ function TPocoHud3:Menu(dismiss,...)
 					pnl = tab.pnl,
 					x = 20, y = 10, w = tab.pnl:w()-20,h=20, font = FONT, font_size = 20, color = cl.Crimson,
 					align = 'right'},'* Tools section is currently Work in progress. Stay tuned :D')
-				local oTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'tools',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
+				local oTabs = C.PocoTabs:new(self._ws,{name = 'tools',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
 				local oTab = oTabs:add('Kit Profiler')
 
-				local ooTabs = PocoHud3Class.PocoTabs:new(self._ws,{name = 'kits',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = oTab.pnl:height()-50, pTab = oTab})
+				local ooTabs = C.PocoTabs:new(self._ws,{name = 'kits',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = oTab.pnl:height()-50, pTab = oTab})
 				local ooTab = ooTabs:add('Kit1')
 				local ooTab = ooTabs:add('Kit2')
 				local ooTab = ooTabs:add('Kit3')
