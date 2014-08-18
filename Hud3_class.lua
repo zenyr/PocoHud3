@@ -2419,7 +2419,7 @@ function PocoHud3Class._drawKit(tab)
 				K:save()
 				self:sound('item_buy')
 			else
-				me:err('No item to save')
+				self:sound('menu_error')
 			end
 			draw()
 		end,
