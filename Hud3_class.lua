@@ -314,7 +314,7 @@ local _drillNames = {
 	lance = 'Thermal Drill',
 	uload_database = 'Upload',
 	votingmachine2 = 'Voting Machine',
-	hack_suburbia = 'Hacking',
+	hack_suburbia = 'Hacking Machine',
 	digitalgui = 'Timelock',
 	huge_lance = 'The Beast',
 }
@@ -328,9 +328,20 @@ local _drillHosts = {
 	['8834e3a4da3df5c6'] = 'a tall safe',
 	['e3ab30d889c6db5f'] = 'a tall titan safe',
 	['4407f5e571e2f51a'] = 'a door',
-	['0afafcebe54ae7c4'] = 'a yellow cage door'
+	['0afafcebe54ae7c4'] = 'a cage door',
+	['1153b673d51ed6ad'] = 'a Gensec truck',
+	['04080fd150a77c7f'] = 'a crashed Gensec truck',
+	['0d07ff22a1333115'] = 'a sniped Gensec truck',
+	['a8715759c090b251'] = 'a fence door',
+	['a7b371bf0e3fd30a'] = 'a truck hinge',
+	['07e2cf254ef76c5e'] = 'a vault cage door',
 }
 local __n = {}
+function TFloat:_getName()
+	local name = self._name or 'Drill'
+	local host = self._host
+	return _.s(name:find('The ') and '' or 'A',name:lower(),host and 'on' or nil,host)
+end
 function TFloat:_getHost()
 	local mD = self.unit and alive(self.unit) and self.unit:mission_door_device()
 	local pD = mD and mD._parent_door
@@ -481,8 +492,7 @@ function TFloat:draw(t)
 
 			if not self._almost and leftT and leftT <= 10 then
 				self._almost = true
-				local host = self._host
-				me:Chat('drillAlmostDone',_.s('A',name:lower(),host and 'at' or nil,host,' < 10s left'))
+				me:Chat('drillAlmostDone',_.s(self:_getName(),' < 10s left'))
 			end
 		end
 		if category == 2 then -- Deadsimple text
@@ -549,9 +559,7 @@ function TFloat:destroy(skipAnim)
 	if self.category == 1 and not self._done then
 		local r,err = pcall(function()
 			self._done = true
-			local name = self._name or 'Drill'
-			local host = self._host
-			me:Chat('drillDone',_.s('A',name:lower(),host and 'at' or nil,host,'is done'))
+			me:Chat('drillDone',_.s(self:_getName(),'is done'))
 		end)
 		if not r then me:err(err) end
 	end
