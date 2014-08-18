@@ -1014,6 +1014,8 @@ function PocoUIBoolean:init(parent,config,inherited)
 	self:val(config.value or false)
 	self:_bind(PocoEvent.Pressed,function(self,x,y)
 		self:val(not self:val())
+		managers.menu_component:post_event('box_'..(self:val() and 'tick' or 'untick'))
+		self.mute = true
 	end)
 
 	if not inherited then
@@ -1184,9 +1186,12 @@ function PocoUIKeyValue:init(parent,config,inherited)
 	self.super.init(self,parent,config,true)
 	self:val(config.value or '')
 	self:_bind(PocoEvent.Pressed,function(self,x,y)
+		self.mute = true
 		if self._waiting then
+			managers.menu_component:post_event('menu_error')
 			self:cancel()
 		else
+			managers.menu_component:post_event('prompt_enter')
 			self:setup()
 		end
 	end)
@@ -1208,14 +1213,16 @@ function PocoUIKeyValue:setup()
 				if iKey ~= 'esc' then
 					managers.menu:show_key_binding_forbidden({KEY = keyName})
 				end
+				managers.menu_component:post_event('menu_error')
 				self:cancel()
 				return
 			end
 		end
+		managers.menu_component:post_event('menu_skill_investment')
 		self:val(keyName)
 		self:cancel()
 	end
-	_.l(self.valLbl,'?',true)
+	_.l(self.valLbl,'_',true)
 	self.valLbl:key_press(onKeyPress)
 end
 
