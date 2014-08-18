@@ -743,8 +743,10 @@ function PocoUIElem:_bind(eventVal,cbk)
 end
 
 function PocoUIElem:sound(sound)
-	managers.menu:post_event(sound)
+	managers.menu_component:post_event(sound)
 end
+
+
 function PocoUIElem:isHot(event,x,y)
 	return self.pnl:inside(x,y)
 end
@@ -757,7 +759,7 @@ function PocoUIElem:fire(event,x,y)
 	}
 	if self.config[event] then
 		if self.result == false then
-			managers.menu:post_event('menu_error')
+			self:sound('menu_error')
 			self.result = nil
 			return true
 		elseif self.mute then
@@ -1014,7 +1016,7 @@ function PocoUIBoolean:init(parent,config,inherited)
 	self:val(config.value or false)
 	self:_bind(PocoEvent.Pressed,function(self,x,y)
 		self:val(not self:val())
-		managers.menu_component:post_event('box_'..(self:val() and 'tick' or 'untick'))
+		self:sound('box_'..(self:val() and 'tick' or 'untick'))
 		self.mute = true
 	end)
 
@@ -1188,10 +1190,10 @@ function PocoUIKeyValue:init(parent,config,inherited)
 	self:_bind(PocoEvent.Pressed,function(self,x,y)
 		self.mute = true
 		if self._waiting then
-			managers.menu_component:post_event('menu_error')
+			self:sound('menu_error')
 			self:cancel()
 		else
-			managers.menu_component:post_event('prompt_enter')
+			self:sound('prompt_enter')
 			self:setup()
 		end
 	end)
@@ -1213,12 +1215,12 @@ function PocoUIKeyValue:setup()
 				if iKey ~= 'esc' then
 					managers.menu:show_key_binding_forbidden({KEY = keyName})
 				end
-				managers.menu_component:post_event('menu_error')
+				self:sound('menu_error')
 				self:cancel()
 				return
 			end
 		end
-		managers.menu_component:post_event('menu_skill_investment')
+		self:sound('menu_skill_investment')
 		self:val(keyName)
 		self:cancel()
 	end
@@ -1535,7 +1537,7 @@ function PocoTab:scroll(val, force)
 	else
 		self._errCnt = 0
 		if not force then
-			managers.menu_component:post_event(val>0 and 'slider_increase' or 'slider_decrease')
+			managers.menu:post_event(val>0 and 'slider_increase' or 'slider_decrease')
 		end
 	end
 	self.y = pVal
@@ -1547,7 +1549,6 @@ function PocoTab:canScroll(down,x,y)
 	if (self._errCnt or 0) > 1 then
 		local pos = self.y or 0
 		if (pos == 0) ~= down then
-			--managers.menu_component:post_event('menu_error')
 			result = false
 		end
 	end
@@ -1650,7 +1651,7 @@ function PocoTabs:goTo(index)
 		index = 1
 	end
 	if index ~= self.tabIndex then
-		managers.menu_component:post_event('slider_release' or 'Play_star_hit')
+		managers.menu:post_event('slider_release' or 'Play_star_hit')
 		self.tabIndex = index
 		self:repaint()
 	end
@@ -1841,7 +1842,7 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 		local currentTab = self.gui and self.gui.currentTab
 		if button == Idstring('mouse wheel down') then
 			if currentTab:isHot(PocoEvent.WheelDown, x,y, true) then
-				managers.menu_componenet:post_event('slider_grab')
+				managers.menu_component:post_event('slider_grab')
 				return true
 			end
 			local canScroll = {self.gui:canScroll(true,x,y)}
@@ -1855,7 +1856,7 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 			end
 		elseif button == Idstring('mouse wheel up') then
 			if currentTab:isHot(PocoEvent.WheelUp, x,y, true) then
-				managers.menu_componenet:post_event('slider_grab')
+				managers.menu_component:post_event('slider_grab')
 				return true
 			end
 			local canScroll = {self.gui:canScroll(false,x,y)}
