@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 131
-local TAG = '0.14 hotfix 5 (geb6a604)'
+local REV = 132
+local TAG = '0.14 hotfix 6 (g70004c8)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -258,175 +258,12 @@ function TPocoHud3:Menu(dismiss,...)
 			local gui = C.PocoMenu:new(self._ws)
 			self.menuGui = gui
 			--- Install tabs Begin --- ===================================
-			do
-				local tab = gui:add('Options')
-				local objs = {}
-				self.onMenuDismiss = function()
-					O:default()
-					for __,obj in pairs(objs) do
-						if not obj[1]:isDefault() then
-							O:set(obj[2],obj[3],obj[1]:val())
-						end
-					end
-					O:save()
-					me:Menu(true)
-				end
-				C.PocoUIButton:new(tab,{
-					onClick = function()
-						me:Menu(true)
-						TPocoHud3.Toggle()
-						PocoHud3 = nil -- will reload on its own
-					end,
-					x = 20, y = 10, w = 400, h=50,
-					fontSize = 30,font = FONTLARGE,
-					text={'APPLY & RELOAD',cl.SteelBlue},
-					hintText = 'Some options will be applied on the next session.'
-				})
+			local tab = gui:add('Options')
+			C._drawOptions(tab)
 
-				C.PocoUIButton:new(tab,{
-					onClick = function()
-						for __,obj in pairs(objs) do
-							obj[1]:val(O:get(obj[2],obj[3],true))
-						end
-					end,
-					x = 500, y = 10, w = 200, h=50,
-					fontSize = 25,font = FONTLARGE,
-					text={'DISCARD CHANGES',cl.Gray},
-					hintText = 'Discard temporary changes and revert to previous settings'
-				})
-				C.PocoUIButton:new(tab,{
-					onClick = function()
-						for __,obj in pairs(objs) do
-							obj[1]:val(O:_default(obj[2],obj[3]))
-						end
-					end,
-					x = 710, y = 10, w = 200, h=50,
-					fontSize = 25,font = FONTLARGE,
-					text={'RESET TO DEFAULT',cl.Gray},
-					hintText = 'Revert to the default setting.'
-				})
-
-				local oTabs = C.PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = tab})
-				for category, objects in _pairs(O.scheme) do
-					local _y, m, half = 10, 5
-					local x,y = function()
-						return half and 440 or 10
-					end, function(h)
-						_y = _y + h + m
-						return _y - h - m
-					end
-					local oTab = oTabs:add(category:gsub('(%U)(%u)','%1 %2'):upper())
-					if objects[1] then
-						local txts = objects[1]
-						local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=20, pnl = oTab.pnl, x = x(), y = y(0)},txts,true)
-						y(lbl:h())
-						--[[oTab.pnl:bitmap({
-							texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
-							color = cl.White, x = 5, y = y(3), w = oTab.pnl:w()-10, h = 3, alpha = 0.3 })]]
-					end
-
-					local c = 0
-					local _sy,_ty = _y
-					for name,values in _pairs(objects,function(a,b)
-						local t1, t2 = O:_type(category,a),O:_type(category,b)
-						if a == 'enable' then
-							return true
-						elseif b == 'enable' then
-							return  false
-						elseif t1 == 'bool' and t2 ~= 'bool' then
-							return true
-						elseif t1 ~= 'bool' and t2 == 'bool' then
-							return false
-						end
-						return tostring(a) <= tostring(b)
-					end) do
-						if type(name) ~= 'number' then
-							c = c + 1
-							if not half and c > table.size(objects) / 2 then
-								half = true
-								_ty = _y
-								_y = _sy
-							end
-							local type = O:_type(category,name)
-							local value = O:get(category,name,true)
-							local hint = O:_hint(category,name)
-							local tName = name:gsub('(%U)(%u)','%1 %2'):upper()
-							if type == 'bool' then
-								objs[#objs+1] = {C.PocoUIBoolean:new(oTab,{
-									x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
-									fontSize = 20, text=tName , value = value ,
-									hintText = hint
-								}),category,name}
-							elseif type == 'color' then
-								objs[#objs+1] = {C.PocoUIColorValue:new(oTab,{
-									x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
-									fontSize = 20, text=tName, value = value,
-									hintText = hint
-								}),category,name}
-							elseif type == 'key' then
-								objs[#objs+1] = {C.PocoUIKeyValue:new(oTab,{
-									x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
-									fontSize = 20, text=tName, value = value,
-									hintText = hint
-								}),category,name}
-							elseif type == 'num' then
-								local range = O:_range(category,name) or {}
-								local vanity = O:_vanity(category,name)
-								local step = O:_step(category,name)
-
-								objs[#objs+1] = {C.PocoUINumValue:new(oTab,{
-									x = x()+10, y = y(30), w=390, h=30, category = category, name = name, step = step,
-									fontSize = 20, text=tName, value = value, min = range[1], max = range[2], vanity = vanity,
-									hintText = hint
-								}),category,name}
-							else
-								C.PocoUIButton:new(oTab,{
-									hintText = 'Not implemented for now.',
-									x = x()+10, y = y(30), w=390, h=30,
-									text=_.s(name,type,value)
-								})
-							end
-						end
-					end
-					oTab:set_h(math.max(_y,_ty)+40)
-				end
-			end
-			--- Test End ======================================
 			local tab = gui:add('About')
-			C.PocoUIButton:new(tab,{
-				onClick = function(self)
-					Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
-				end,
-				x = 10, y = 10, w = 400,h=100,
-				text={{'PocoHud3 r'},{REV,cl.Gray},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\n'..TAG,cl.Silver}},
-				hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
-			})
-			--[[C.PocoUIButton:new(tab,{
-				onClick = function(self)
-					Steam:http_request('http://steamcommunity.com/groups/pocomods/rss', function (success, body)
-						_(success,body)
-					end)
-				end,
-				x = 420, y = 10, w = 400,h=100,
-				text='Test'
-			})]]
-			C.PocoUIButton:new(tab,{
-				onClick = function(self)
-					Steam:overlay_activate('url', 'http://twitter.com/zenyr')
-				end,
-				x = 10, y = 120, w = 400,h=40,
-				text={'@zenyr',cl.OrangeRed},
-				hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki}}
-			})
+			C._drawAbout(tab,REV,TAG)
 
-			C.PocoUIButton:new(tab,{
-				onClick = function(self)
-					Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
-				end,
-				x = 10, y = 170, w = 400,h=40,
-				text={'Color codes reference page', cl.Silver},-- no moar fun tho
-				hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
-			})
 			local y = 0
 			tab = gui:add('Statistics')
 			do
@@ -454,11 +291,7 @@ function TPocoHud3:Menu(dismiss,...)
 					align = 'right'},'* Tools section is currently Work in progress. Stay tuned :D')
 				local oTabs = C.PocoTabs:new(self._ws,{name = 'tools',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
 				local oTab = oTabs:add('Kit Profiler')
-
-				local ooTabs = C.PocoTabs:new(self._ws,{name = 'kits',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = oTab.pnl:height()-50, pTab = oTab})
-				local ooTab = ooTabs:add('Kit1')
-				local ooTab = ooTabs:add('Kit2')
-				local ooTab = ooTabs:add('Kit3')
+				PocoHud3Class._drawKit(oTab)
 
 				local oTab = oTabs:add('Inspect')
 				y = 0
