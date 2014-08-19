@@ -806,7 +806,7 @@ function PocoUIHintLabel:makeHintPanel()
 	local _reposition = function(x,y)
 		if hintPnl then
 			x = math.max(0,math.min(self.ppnl:w()-hintPnl:w(),x+10))
-			y = math.max(0,math.min(self.ppnl:h()-hintPnl:h(),y))
+			y = math.max(self.ppnl:world_y(),math.min(self.ppnl:h()-hintPnl:h(),y))
 			hintPnl:set_world_position(x,y+20)
 		end
 	end
@@ -1315,7 +1315,7 @@ function PocoUIStringValue:startEdit()
 	self.valLbl:set_selection(l,l)
 	self._rename_caret = self.pnl:rect({
 		name = 'caret',
-		layer = 1006,
+		layer = -1,
 		x = 10,
 		y = 10,
 		w = 2,
@@ -1783,7 +1783,6 @@ function PocoMenu:init(ws)
 		mouse_press = callback(self, self, 'mouse_pressed',true),
 		mouse_release = callback(self, self, 'mouse_released',true)
 	}
-	managers.mouse_pointer:set_mouse_world_position(ws:width()/2,ws:height()/2)
 
 	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
 	if camBase then
@@ -1792,8 +1791,53 @@ function PocoMenu:init(ws)
 	self._lastMove = 0
 end
 
+function PocoMenu:_fade(pnl, out, done_cb, seconds)
+	local pnl = self.pnl
+	pnl:set_visible( true )
+	pnl:set_alpha( out and 1 or 0 )
+	local t = seconds
+	local x,y = managers.mouse_pointer:world_position()
+	while t > 0 do
+		local dt = coroutine.yield()
+		t = t - dt
+		local r = t/seconds
+		pnl:set_alpha(out and r or 1-r)
+		if self._tabs then
+			for i,tabs in pairs(self._tabs) do
+				tabs.pnl:set_alpha(out and r or 1-r)
+			end
+		end
+		if self.gui and self.gui.pnl then
+			self.gui.pnl:set_alpha(out and r or 1-r)
+		end
+		if not out then
+			local tx,ty = 1010,20
+			managers.mouse_pointer:set_mouse_world_position(math.lerp(tx,x,r),math.lerp(ty,y,r))
+
+		end
+	end
+	if done_cb then
+		done_cb()
+	end
+end
+
+
+function PocoMenu:fadeIn()
+	self.pnl:stop()
+	self.pnl:animate( callback( self, self, '_fade' ), false, nil, 0.25 )
+end
+function PocoMenu:fadeOut(cbk)
+	self.pnl:stop()
+	self.pnl:animate( callback( self, self, '_fade' ), true, cbk, 0.25 )
+end
+
+
+
 function PocoMenu:add(...)
-	return self.gui:add(...)
+	self._tabs = self._tabs or {}
+	local newTabs = self.gui:add(...)
+	table.insert(self._tabs,newTabs)
+	return newTabs
 end
 
 function PocoMenu:update(...)
@@ -2385,13 +2429,13 @@ function PocoHud3Class._drawKit(tab)
 				_Current[category] = {elem,raw}
 				row[#row+1] = elem
 			else
-				local s,sNum = 'Config',1
+				local s,sNum = 'kit',1
 				while K.items[s..sNum] do
 					sNum = sNum + 1
 				end
 				local elem = PocoUIStringValue:new(tabEdt,{ pnl = pnl,
 					x = 0, y = 0, w=150, h=20, category = false, name = false,
-					fontSize = 18, text=' ' , value = 'Config'..sNum , max = 20
+					fontSize = 18, text=' ' , value = s..sNum , max = 20
 				})
 				_Current[category] = {elem}
 				row[#row+1] = elem
@@ -2456,8 +2500,8 @@ function PocoHud3Class._drawKit(tab)
 			lH = me:_drawRow(pnl,22,row,20,y(),pnl:w()-40,cnt % 2 == 0,true,1.1)
 			y(lH,true)
 		end
-		pnl:set_h(y()+50)
-		tabEdt:set_h(pnl:h())
+		tabEdt:set_h(y()+50)
+		pnl:set_h(tabEdt.pnl:h())
 
 		-- Kit Btn
 		if _kitPnlBtn and alive(_kitPnlBtn) then
@@ -2504,8 +2548,8 @@ function PocoHud3Class._drawKit(tab)
 				fontSize = 25, text={ind,cl[K:get(ind,'color')] or cl.Tomato}, hintText = row
 			})
 		end
-		pnl:set_h(y+h+50)
-		tabBtn:set_h(pnl:h())
+		tabBtn:set_h(y+h+50)
+		pnl:set_h(tabBtn.pnl:h())
 	end
 	PocoUIButton:new(tabEdt,{
 		onClick = function(self)
@@ -2520,14 +2564,14 @@ function PocoHud3Class._drawKit(tab)
 						result[cat] = obj[2]
 				end
 			end
-			if name and table.size(result) > 0 then
+			if name and name~='' and table.size(result) > 0 then
 				K.items[name] = result
 				K:save()
 				self:sound('item_buy')
+				draw()
 			else
 				self:sound('menu_error')
 			end
-			draw()
 		end,
 		x = 640, y = 105, w = 300, h=40,
 		text={'SAVE',cl.CornFlowerBlue},hintText = {{'Add',cl.Tan},' or ',{'overwrite',cl.Tomato},' depending on the SET NAME'}

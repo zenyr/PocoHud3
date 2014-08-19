@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 135
-local TAG = '0.14 hotfix 9 (ga5064c3)'
+local REV = 136
+local TAG = '0.14 hotfix 10 (gd4a6c29)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -248,18 +248,23 @@ function TPocoHud3:Menu(dismiss,...)
 		if menu then -- Remove
 			if not self._stringFocused or (now()-self._stringFocused > 0.1) then
 				self.menuGui = nil
+				self._guiFading = true
 				if self.onMenuDismiss then
 					local cbk = self.onMenuDismiss
 					self.onMenuDismiss = nil
 					cbk()
 				end
 				managers.menu_component:post_event('menu_exit')
-				menu:destroy()
+				menu:fadeOut(function()
+					self._guiFading = nil
+					menu:destroy()
+				end)
 			end
-		elseif not dismiss then -- Show
+		elseif not dismiss and not self._guiFading then -- Show
 			managers.menu_component:post_event('menu_enter')
 			local gui = C.PocoMenu:new(self._ws)
 			self.menuGui = gui
+			gui:fadeIn()
 			--- Install tabs Begin --- ===================================
 			local tab = gui:add('Options')
 			C._drawOptions(tab)
