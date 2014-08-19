@@ -805,7 +805,8 @@ function PocoUIHintLabel:makeHintPanel()
 
 	local _reposition = function(x,y)
 		if hintPnl then
-			x = math.min(self.ppnl:w()-hintPnl:w(),x+10)
+			x = math.max(0,math.min(self.ppnl:w()-hintPnl:w(),x+10))
+			y = math.max(0,math.min(self.ppnl:h()-hintPnl:h(),y))
 			hintPnl:set_world_position(x,y+20)
 		end
 	end
@@ -942,15 +943,19 @@ function PocoUIValue:init(parent,config,inherited)
 		end):_bind(PocoEvent.Move,function(self,x,y)
 			if self.arrowRight:inside(x,y) or self.arrowLeft:inside(x,y) then
 				self.cursor = 'link'
+			elseif shift() then
+				self.cursor = 'grab'
 			else
 				self.cursor = 'arrow'
 			end
 		end):_bind(PocoEvent.WheelUp,function()
 			if shift() then
+				self:sound('slider_increase')
 				return true, self:next()
 			end
 		end):_bind(PocoEvent.WheelDown,function(...)
 			if shift() then
+				self:sound('slider_decrease')
 				return true, self:prev()
 			end
 		end)
@@ -1272,6 +1277,8 @@ function PocoUIStringValue:init(parent,config,inherited)
 		else
 			if now() - (self._lastClick or 0) < 0.3 then
 				self:selectAll()
+			else
+				self:_setCaret(x)
 			end
 		end
 		self._lastClick = now()
@@ -1322,6 +1329,8 @@ end
 
 function PocoUIStringValue:selectAll()
 	self:_select(0, utf8.len(self:val()))
+	self._start = 0
+	self._shift = nil
 	self:repaint()
 end
 
@@ -1372,7 +1381,13 @@ function PocoUIStringValue:_setCaret(worldX)
 	if l == 0 then
 		self:select(0,0)
 	end
-	local x, y, w, h = self.valLbl:selection_rect()
+	local c, x, y, w, h = -1
+	repeat
+		c = c + 1
+		self:_select(c,c)
+		x, y, w, h = self.valLbl:selection_rect()
+	until x>=worldX or c > l
+	self:_select(c-1,c-1)
 	self:repaint()
 end
 
@@ -1471,7 +1486,7 @@ function PocoUIStringValue:key_press(o, k)
 		lbl:set_selection(n, n)
 	elseif k == Idstring('home') then
 		lbl:set_selection(0, 0)
-	elseif k == Idstring('enter') then
+	elseif k == Idstring('enter') or k == Idstring('tab') then
 		self:endEdit()
 	elseif k == Idstring('esc') then
 		self:endEdit(true)
@@ -1864,7 +1879,6 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 		local currentTab = self.gui and self.gui.currentTab
 		if button == Idstring('mouse wheel down') then
 			if currentTab:isHot(PocoEvent.WheelDown, x,y, true) then
-				managers.menu_component:post_event('slider_grab')
 				return true
 			end
 			local canScroll = {self.gui:canScroll(true,x,y)}
@@ -1878,7 +1892,6 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 			end
 		elseif button == Idstring('mouse wheel up') then
 			if currentTab:isHot(PocoEvent.WheelUp, x,y, true) then
-				managers.menu_component:post_event('slider_grab')
 				return true
 			end
 			local canScroll = {self.gui:canScroll(false,x,y)}
@@ -2076,24 +2089,70 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		onClick = function(self)
 			Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 		end,
-		x = 10, y = 10, w = 400,h=100,
+		x = 10, y = 10, w = 200,h=100,
 		text={{'PocoHud3 r'},{REV,cl.Gray},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\n'..TAG,cl.Silver}},
 		hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 	})
-	--[[C.PocoUIButton:new(tab,{
-		onClick = function(self)
-			Steam:http_request('http://steamcommunity.com/groups/pocomods/rss', function (success, body)
-				_(success,body)
-			end)
-		end,
-		x = 420, y = 10, w = 400,h=100,
-		text='Test'
-	})]]
+	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = tab.pnl, x = 220, y = 10},'Loading RSS...',true)
+	local _strip = function(s)
+		return s:gsub('&lt;','<'):gsub('&gt;','>'):gsub('<br>','\n'):gsub(string.char(13),''):gsub('<.->',''):gsub('&amp;','&'):gsub('&amp;','&')
+	end
+	local _onRSS = function (success, body, _rss)
+		if not Poco then return end
+		if success then
+			local rss = _rss or {}
+			if body then
+				for title,desc,date,link in body:gmatch('<item>.-<title>(.-)</title>.-<description>(.-)</description>.-<pubDate>(.-)</pubDate>.-<guid.->(.-)</guid>') do
+					local diffH = math.round((_.t()-_.t(1)) / 360)/10
+					-- Based on http://stackoverflow.com/a/4600967
+					local days,day,month,year,hour,min,sec=date:match('(.-), (.-) (.-) (.-) (.-):(.-):(.-) ')
+					local MON={Jan=1,Feb=2,Mar=3,Apr=4,May=5,Jun=6,Jul=7,Aug=8,Sep=9,Oct=10,Nov=11,Dec=12}
+					month=MON[month]
+					local d = os.time({day=day,month=month,year=year,hour=hour,min=min,sec=sec})+diffH*3600
+					local diffS = - _.t(false,d)
+					if diffS < 3600*24 then
+						local h = math.floor(diffS/3600)
+						date = _.s( h==1 and 'an' or h,h>1 and 'hrs' or 'hr','ago')
+					else
+						local d = math.floor(diffS/3600/24)
+						date = _.s( d==1 and 'a' or d,d>1 and 'days' or 'day','ago')
+					end
+					rss[#rss+1] = {_strip(title),_strip(desc),date,link}
+
+				end
+			end
+			Poco._rss = rss
+			if not alive(lbl) then return end
+			_.l(lbl,'Recent PocoMod Updates',true)
+			local y = 35
+			for ind,obj in pairs(rss) do
+				PocoUIButton:new(tab,{
+					onClick = function(self)
+						Steam:overlay_activate('url', obj[4])
+					end,
+					x = 220, y = y, w = 400, h=50,
+					fontSize = 22,align = 'left',
+					text={'   ',{obj[1],cl.CornFlowerBlue}},
+					hintText = {obj[2]:sub(1,200)..'...'}
+				})
+				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = tab.pnl, x = 240, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
+
+				y = y + 60
+				tab:set_h(y)
+				--_.l(lbl,obj[1]..'\n'..obj[2],true)
+			end
+		end
+	end
+	if Poco._rss then
+		_onRSS(true,nil,Poco._rss)
+	else
+		Steam:http_request('http://steamcommunity.com/groups/pocomods/rss', _onRSS)
+	end
 	PocoUIButton:new(tab,{
 		onClick = function(self)
 			Steam:overlay_activate('url', 'http://twitter.com/zenyr')
 		end,
-		x = 10, y = 120, w = 400,h=40,
+		x = 10, y = 120, w = 200,h=40,
 		text={'@zenyr',cl.OrangeRed},
 		hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki}}
 	})
@@ -2102,7 +2161,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		onClick = function(self)
 			Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 		end,
-		x = 10, y = 170, w = 400,h=40,
+		x = 10, y = 170, w = 200,h=40,
 		text={'Color codes reference page', cl.Silver},-- no moar fun tho
 		hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
 	})
@@ -2256,8 +2315,11 @@ function PocoHud3Class._drawKit(tab)
 	end
 	local categories_vanity = ('set name,primary,secondary,armor,gadget,melee'):upper():split(',')
 	local categories = ('name,primaries,secondaries,armor,gadget,melee'):split(',')
+	local __, lbl = _.l({font=FONT, color=cl.Gray, font_size=20, pnl = tab.pnl, x = 10, y = 10},
+		'* Kit profiler is dependant on your inventory setup. Any changes in your inventory(mods, sell) will be applied to the result.',true)
+
 	local draw, _Current
-	local oTabs = PocoTabs:new(me._ws,{name = 'kits',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
+	local oTabs = PocoTabs:new(me._ws,{name = 'kits',x = 10, y = 40, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 
 	local tabBtn = oTabs:add('USE KIT')
 	local tabEdt =oTabs:add('EDIT')
@@ -2269,8 +2331,45 @@ function PocoHud3Class._drawKit(tab)
 		local pnl = tabEdt.pnl:panel{}
 		_kitPnl = pnl
 		local cnt,row = 0
+		local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = y(0)},
+			{PocoHud3Class.Icon.Chapter ..' Current Kit',{' '..PocoHud3Class.Icon.RC..' Save to the profiler. Unchecked items will be removed.',cl.White}},true)
+		y(lbl:h())
+		-- New Header with OpenIcon
+		local mcm = _.g('managers.menu_component._mission_briefing_gui')
+		local openInventory = function(num)
+			num = num - 1
+			if num == 3 or num == 4 then
+				num = num + 1
+			elseif num == 5 then
+				num = 3
+			end
+			local lot = mcm and mcm._new_loadout_item
+			if lot then
+				me:Menu(true)
+				lot:open_node(num)
+			end
+		end
+		local hElems = {}
+		for ind,name in pairs(categories_vanity) do
+			if mcm and ind > 1 then
+				hElems[#hElems+1] = PocoUIButton:new(tabEdt,{ pnl = pnl,
+					onClick = function(self)
+						openInventory(ind)
+					end,
+					x = 0, y = 0, w=150, h=24,
+					fontSize = 22, text=name
+				})
+			else
+				hElems[#hElems+1] = name
+			end
+		end
+		local lH = me:_drawRow(pnl,20,hElems,20,y(),pnl:w()-40,true,true,1.3)
+		y(lH,true)
+
+		--[[ OLD drawRow
 		local lH = me:_drawRow(pnl,20,categories_vanity,20,y(),pnl:w()-40,true,true,1.3)
 		y(lH,true)
+		--]]
 		-- Current
 		row = {}
 		_Current = {}
@@ -2299,17 +2398,21 @@ function PocoHud3Class._drawKit(tab)
 			end
 		end
 		local elem = PocoUIColorValue:new(tabEdt,{ pnl = pnl,
-			x = 330, y = 80, w = 300, h=30, category = false, name = false,
-			fontSize = 18, text='Color' , value = 'White'
+			x = 330, y = 110, w = 300, h=30, category = false, name = false,
+			fontSize = 18, text=('Button Color'):upper() , value = 'White'
 		})
 		_Current['color'] = {elem}
 
 		lH = me:_drawRow(pnl,20,row,20,y(),pnl:w()-40,false,true)
 		y(lH,true)
-		y(70)
+		y(50)
+		__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = y(0)},
+			{PocoHud3Class.Icon.Chapter ..' Saved Kits',{' '..PocoHud3Class.Icon.RC ..' Edit or remove saved kits',cl.White}},true)
+		y(lbl:h())
 		lH = me:_drawRow(pnl,20,categories_vanity,20,y(),pnl:w()-40,true,true,1.3)
 		y(lH,true)
 		-- Kit Edt
+
 		for ind,obj in _pairs(K.items,function(a,b)return tostring(a)<tostring(b) end) do
 			row = {}
 			cnt = cnt + 1
@@ -2364,12 +2467,15 @@ function PocoHud3Class._drawKit(tab)
 		_kitPnlBtn = pnl
 
 		local c,x,y,m,ww,w,h = 0,0,0,10,pnl:w()-20,300,100
+		local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = 15},
+			{PocoHud3Class.Icon.Chapter ..' Profiler',{' '..PocoHud3Class.Icon.RC ..' Double click to equip a kit setup',cl.White}},true)
+
 		if table.size(K.items) == 0 then
-			_.l({font=FONT, color=cl.LightSteelBlue, font_size=25, pnl = pnl, x = m, y=m},'No Kit profiles available',true)
+			_.l({font=FONT, color=cl.Silver, font_size=25, pnl = pnl, x = m, y=m},'No Kit profiles available',true)
 		end
 		for ind,obj in _pairs(K.items,function(a,b)return tostring(a)<tostring(b) end) do
 			x = m+(c % 3) * (w+m)
-			y = m+math.floor(c / 3) * (h+m)
+			y = 15+lbl:h()+ m+math.floor(c / 3) * (h+m)
 			c = c + 1
 			local name = ind
 			local row = {}
@@ -2395,7 +2501,7 @@ function PocoHud3Class._drawKit(tab)
 					end
 				end,
 				x = x, y = y, w=w, h=h,
-				fontSize = 25, text={ind,cl[K:get(ind,'color')] or cl.Red}, hintText = row
+				fontSize = 25, text={ind,cl[K:get(ind,'color')] or cl.Tomato}, hintText = row
 			})
 		end
 		pnl:set_h(y+h+50)
@@ -2423,12 +2529,12 @@ function PocoHud3Class._drawKit(tab)
 			end
 			draw()
 		end,
-		x = 640, y = 75, w = 300, h=40,
-		text='SAVE'
+		x = 640, y = 105, w = 300, h=40,
+		text={'SAVE',cl.CornFlowerBlue},hintText = {{'Add',cl.Tan},' or ',{'overwrite',cl.Tomato},' depending on the SET NAME'}
 	})
 	tabEdt.pnl:bitmap({
 		texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
-		color = cl.White, x = 5, y = 70, w = tabEdt.pnl:w()-10, h = 2, alpha = 0.8
+		color = cl.White, x = 5, y = 150, w = tabEdt.pnl:w()-10, h = 2, alpha = 0.8
 	})
 
 	draw()

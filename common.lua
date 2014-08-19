@@ -344,6 +344,15 @@ _ = {
 		 end
 		 return orig
 	end,
+	T = function(utc, compare)
+		-- HORRIBLY inaccurate due to game's lua engine
+		local t = os.time( os.date((utc and '!' or '') ..'*t') )
+		if not compare then
+			return t
+		else
+			return compare - t
+		end
+	end,
 	W = function(...)io.stderr:write(_.S(...)..'\n')end
 }
 if type(_) ~= 'table' then

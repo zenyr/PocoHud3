@@ -302,7 +302,33 @@ function Kits:save()
 end
 
 function Kits:equip(index)
-	_('Equip all items in INDEX of:',index)
+	local _uoi = MenuCallbackHandler._update_outfit_information
+	MenuCallbackHandler._update_outfit_information = function() end -- Avoid repeated submit
+
+	local r,err = pcall(function()
+		local obj = self.items[index]
+		if not obj then return false end
+		for cat, slot in pairs(obj) do
+			if cat == 'primaries' or cat == 'secondaries' then
+				managers.blackmarket:equip_weapon(cat,slot)
+			elseif cat == 'color' then
+				-- ignore
+			elseif cat == 'armor' then
+				managers.blackmarket:equip_armor(slot)
+			elseif cat == 'gadget' then
+				managers.blackmarket:equip_deployable(slot)
+			elseif cat == 'melee' then
+				managers.blackmarket:equip_melee_weapon(slot)
+			else
+				_('KitsEquip:',cat,'?')
+			end
+		end
+	end)
+	if not r then me:err(err) end
+	local mcm = _.g('managers.menu_component._mission_briefing_gui:reload()')
+
+	MenuCallbackHandler._update_outfit_information = _uoi -- restore
+	MenuCallbackHandler:_update_outfit_information()
 end
 
 function Kits:get(index,category,asText)
@@ -317,7 +343,7 @@ function Kits:get(index,category,asText)
 	end
 	local _asText = {
 		primaries = function(val)
-			local obj = val and Global.blackmarket_manager.crafted_items[category][val]
+			local obj = val and managers.blackmarket:get_crafted_category_slot(category, val) --Global.blackmarket_manager.crafted_items[category][val]
 			if obj then
 				local s = managers.weapon_factory:has_perk( 'silencer', obj.factory_id, obj.blueprint ) and PocoHud3Class.Icon.Ghost or ''
 				return s..managers.blackmarket:get_weapon_name_by_category_slot(category,val)

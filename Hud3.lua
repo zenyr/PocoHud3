@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 134
-local TAG = '0.14 hotfix 8 (g4f92561)'
+local REV = 135
+local TAG = '0.14 hotfix 9 (ga5064c3)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1976,6 +1976,10 @@ function TPocoHud3:_hook()
 	hook( MenuManager, 'toggle_menu_state', function( ... )
 		if me.menuGui then
 			me:Menu(true) -- dismiss Menu when actual game-menu is called
+			if managers.menu:active_menu() then
+				managers.menu:active_menu().renderer:disable_input(0.2)
+			end
+
 		else
 			return Run('toggle_menu_state', ...)
 		end
@@ -1988,11 +1992,7 @@ function TPocoHud3:_hook()
 	end)
 
 --- DEBUG ONLY
-	--[[hook( BlackMarketGui, 'equip_weapon_callback', function( ... )
-		local self, data = unpack{...}
-		_('Eq,',zinspect(data,{depth=3}))
-		return Run('equip_weapon_callback', ...)
-	end)]]
+--------------
 end
 --- Utility functions ---
 function TPocoHud3:toggleVerbose(state)
