@@ -728,7 +728,13 @@ function TPocoHud3:_updatePlayers(t)
 			local unit = nData and nData.movement._unit
 			local distance = unit and mvector3.distance(unit:position(),self.camPos) or 0
 			local boost = self:Stat(i,'boost') > now()
-
+			if nData._infamy ~= fltO.showIcon then
+				local icon = nData.panel:child('infamy')
+				if icon then
+					icon:set_visible(not not fltO.showIcon) -- :p
+				end
+				nData._infamy = fltO.showIcon
+			end
 			txts = {
 				_show('Rank',true) and {rank,cl.White},_show('Rank',true) and {lvl..' ',cl.White:with_alpha(0.8)},
 				{fltO.uppercaseNames and utf8.to_upper(name) or name,color},
@@ -738,8 +744,8 @@ function TPocoHud3:_updatePlayers(t)
 			_.l(nLbl,txts)
 			local x,__,w,h = nLbl:text_rect()
 			nLbl:set_size(w,h)
-			nData.bag:set_x(nLbl:x()+w)
-			nData.panel:set_width(nLbl:x()+w + 20)
+			nData.bag:set_x(nLbl:x()+w+5)
+			nData.panel:set_width(nLbl:x()+w + 30)
 		end
 	end
 end

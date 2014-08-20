@@ -50,6 +50,7 @@ local scheme = {
 	}, playerFloat = {	'Floating info panel above crew members\' head',
 		enable = {'bool',TRUE},
 		uppercaseNames = {'bool',TRUE,nil,'Name as uppercase'},
+		showIcon = {'num',2,{0,2},'Infamy Spade icon','Verbose'},
 		showRank = {'num',2,{0,2},'e.g) V-100','Verbose'},
 		showDistance = {'num',2,{0,2},'e.g) 25m','Verbose'},
 		showInspire = {'num',2,{0,2},'Inspire speed-boost','Verbose'},
@@ -132,7 +133,7 @@ local scheme = {
 		corpseLimit = {'num',3,{1,10},'In-game corpse limit','corpse'},
 		cantedSightCrook = {'num',4,{1,4},'In-game canted sight(as gadget) indicator','cantedSight'},
 		rememberGadgetState = {'bool',TRUE,nil,'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps'},
-		subtitleFontSize = {'num',20,{10,30},'Subtitle font size'},
+		subtitleFontSize = {'num',22,{10,30},'Subtitle font size'},
 		subtitleFontColor = {'color','White',nil,'Subtitle font color'},
 		subtitleOpacity = {'num',100,{10,100},'Subtitle opacity',nil,10},
 	}
