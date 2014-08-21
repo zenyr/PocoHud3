@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 140
-local TAG = '0.15 hotfix 3 (gc8aa99c)'
+local REV = 141
+local TAG = '0.15 hotfix 4 (g06c9603)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -734,12 +734,12 @@ function TPocoHud3:_updatePlayers(t)
 			local unit = nData and nData.movement._unit
 			local distance = unit and mvector3.distance(unit:position(),self.camPos) or 0
 			local boost = self:Stat(i,'boost') > now()
-			if nData._infamy ~= fltO.showIcon then
+			if nData._infamy ~= _show('Icon',true) then
 				local icon = nData.panel:child('infamy')
 				if icon then
-					icon:set_visible(not not fltO.showIcon) -- :p
+					icon:set_visible(not not _show('Icon',true)) -- :p
 				end
-				nData._infamy = fltO.showIcon
+				nData._infamy = _show('Icon',true)
 			end
 			txts = {
 				_show('Rank',true) and {rank,cl.White},_show('Rank',true) and {lvl..' ',cl.White:with_alpha(0.8)},
