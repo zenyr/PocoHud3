@@ -2512,7 +2512,7 @@ function PocoHud3Class._drawKit(tab)
 
 		local c,x,y,m,ww,w,h = 0,0,0,10,pnl:w()-20,300,100
 		local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = 15},
-			{PocoHud3Class.Icon.Chapter ..' Profiler',{' '..PocoHud3Class.Icon.RC ..' Double click to equip a kit setup',cl.White},me.inGameDeep and {' '..PocoHud3Class.Icon.BigDot..' Since you\'re in-game, changes will be applied to the next session.',cl.Red} or false},true)
+			{PocoHud3Class.Icon.Chapter ..' Profiler',{' '..PocoHud3Class.Icon.RC ..' Double click to equip a kit setup',cl.White},me.inGameDeep and {' '..PocoHud3Class.Icon.BigDot..' Disabled in game.',cl.Red} or false},true)
 
 		if table.size(K.items) == 0 then
 			_.l({font=FONT, color=cl.Silver, font_size=25, pnl = pnl, x = m, y=m*2+lbl:h()},'No Kit profiles available',true)
@@ -2536,13 +2536,13 @@ function PocoHud3Class._drawKit(tab)
 					end
 				end
 			end
-			row[#row+1] = '* DoubleClick to Equip this item'
+			row[#row+1] = inGameDeep and 'N/A in game' or '* DoubleClick to Equip this item'
 			PocoUIButton:new(tabBtn,{ pnl = pnl,
 				onPressed = function(self)
 					self.mute = true
 				end,
 				onClick = function(self)
-					if self._t and now()-self._t<0.2 then
+					if not inGameDeep and self._t and now()-self._t<0.2 then
 						K:equip(ind)
 						self:sound('finalize_mask')
 					else
