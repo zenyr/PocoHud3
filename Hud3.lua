@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 139
-local TAG = '0.15 hotfix 2 (gbf99d78)'
+local REV = 140
+local TAG = '0.15 hotfix 3 (gc8aa99c)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -379,6 +379,7 @@ function TPocoHud3:_slowUpdate(t,dt)
 end
 function TPocoHud3:_update(t,dt)
 	inGameDeep = inGame and BaseNetworkHandler._verify_gamestate(BaseNetworkHandler._gamestate_filter.any_ingame_playing)
+	self.inGameDeep = inGameDeep
 	self:_upd_dbgLbl(t,dt)
 	self.cam = managers.viewport:get_current_camera()
 	if not self.cam then return end

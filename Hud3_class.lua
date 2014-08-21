@@ -816,11 +816,11 @@ function PocoUIHintLabel:makeHintPanel()
 		}
 		local __, hintLbl = _.l({
 			pnl = hintPnl,x=5, y=5, font = config.hintFont or FONT, font_size = config.hintFontSize or 18, color = config.hintFontColor or cl.White,
-			align = config.align, vertical = config.vAlign, layer = 1006, rotation = 360
+			align = config.align, vertical = config.vAlign, layer = 2, rotation = 360
 		},config.hintText or '',true)
 		hintPnl:set_size(hintLbl:size())
 		hintPnl:grow(10,10)
-		hintPnl:rect{ color = cl.Black:with_alpha(0.7), layer = 1005, rotation = 360}
+		hintPnl:rect{ color = cl.Black:with_alpha(0.7), layer = 1, rotation = 360}
 		_reposition(x,y)
 	end
 	self:_bind(PocoEvent.In, function(self,x,y)
@@ -2461,7 +2461,8 @@ function PocoHud3Class._drawKit(tab)
 			cnt = cnt + 1
 			for col,category in pairs(categories) do
 				if col ~= 1 then
-					row[#row+1] = K:get(ind,category,true) or {'LEAVE AS IS',cl.Gray}
+					local val = K:get(ind,category,true)
+					row[#row+1] = val and {val,K:locked(ind,category) and cl.Red:with_alpha(0.6) or cl.White} or {'LEAVE AS IS',cl.Gray}
 				else
 					row[#row+1] = PocoUIButton:new(tabEdt,{ pnl = pnl,
 						onClick = function(self)
@@ -2482,7 +2483,7 @@ function PocoHud3Class._drawKit(tab)
 									else
 										if K:get(ind,cat) then
 											obj[2] = K:get(ind,cat)
-											_.l(obj[1].lbl,K:get(ind,cat,true),true)
+											_.l(obj[1].lbl,{K:get(ind,cat,true),K:locked(ind,cat) and cl.Red or cl.White},true)
 											obj[1]:val(true)
 										else
 											obj[1]:val(false)
@@ -2492,7 +2493,7 @@ function PocoHud3Class._drawKit(tab)
 							end
 						end,
 						x = 0, y = 0, w=150, h=22,
-						fontSize = 22, text={ind,cl[K:get(ind,'color') or 'White']}, hintText = {'Click to ',{'Edit',cl.Tan},'\nDoubleClick to ',{'Remove',cl.Red},' this item'}
+						fontSize = 22, text={ind,cl[K:get(ind,'color') or 'White']}, hintText = {'Click to ',{'copy',cl.Tan},'\nDoubleClick to ',{'Remove',cl.Red},' this item'}
 					})
 				end
 			end
@@ -2511,10 +2512,10 @@ function PocoHud3Class._drawKit(tab)
 
 		local c,x,y,m,ww,w,h = 0,0,0,10,pnl:w()-20,300,100
 		local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = 15},
-			{PocoHud3Class.Icon.Chapter ..' Profiler',{' '..PocoHud3Class.Icon.RC ..' Double click to equip a kit setup',cl.White}},true)
+			{PocoHud3Class.Icon.Chapter ..' Profiler',{' '..PocoHud3Class.Icon.RC ..' Double click to equip a kit setup',cl.White},me.inGameDeep and {' '..PocoHud3Class.Icon.BigDot..' Since you\'re in-game, changes will be applied to the next session.',cl.Red} or false},true)
 
 		if table.size(K.items) == 0 then
-			_.l({font=FONT, color=cl.Silver, font_size=25, pnl = pnl, x = m, y=m},'No Kit profiles available',true)
+			_.l({font=FONT, color=cl.Silver, font_size=25, pnl = pnl, x = m, y=m*2+lbl:h()},'No Kit profiles available',true)
 		end
 		for ind,obj in _pairs(K.items,function(a,b)return tostring(a)<tostring(b) end) do
 			x = m+(c % 3) * (w+m)
@@ -2525,9 +2526,14 @@ function PocoHud3Class._drawKit(tab)
 			for col,category in pairs(categories) do
 				if col ~= 1 then
 					local val = K:get(ind,category,true)
-
-					row[#row+1] = {categories_vanity[col]..' : ',val and cl.Tan or cl.Gray}
-					row[#row+1] = {(val or '-')..'\n',val and cl.White or cl.Gray}
+					local locked = K:get(ind,category) and K:locked(ind,category)
+					local enabled = val and not locked
+					row[#row+1] = {categories_vanity[col]..' : ',enabled and cl.Tan or cl.Gray}
+					if locked then
+						row[#row+1] = {_.s(locked)..'\n',cl.Red:with_alpha(0.8)}
+					else
+						row[#row+1] = {(val or '-')..'\n',enabled and cl.White or cl.Gray}
+					end
 				end
 			end
 			row[#row+1] = '* DoubleClick to Equip this item'
