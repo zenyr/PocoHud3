@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 141
-local TAG = '0.15 hotfix 4 (g06c9603)'
+local REV = 142
+local TAG = '0.15 hotfix 5 (gac31ddd)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me

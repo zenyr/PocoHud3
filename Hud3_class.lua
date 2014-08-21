@@ -489,8 +489,8 @@ function TFloat:draw(t)
 				self._name = name
 				self._host = self:_getHost()
 			end
-
-			if not self._almost and leftT and leftT <= 10 then
+			self.isDrill = not not tGUI
+			if self.isDrill and not self._almost and leftT and leftT <= 10 then
 				self._almost = true
 				me:Chat('drillAlmostDone',_.s(self:_getName(),' < 10s left'))
 			end
@@ -556,7 +556,7 @@ function TFloat:renew(data)
 	self.dead = false
 end
 function TFloat:destroy(skipAnim)
-	if self.category == 1 and not self._done then
+	if self.category == 1 and self.isDrill and not self._done then
 		local r,err = pcall(function()
 			self._done = true
 			me:Chat('drillDone',_.s(self:_getName(),'is done'))
