@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 137
-local TAG = '0.15'
+local REV = 139
+local TAG = '0.15 hotfix 2 (gbf99d78)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -138,7 +138,7 @@ function TPocoHud3:Update(t,dt)
 	if not r then _(err) end
 end
 function TPocoHud3:onDestroy(gameEnd)
-	self:Menu(true) -- Force dismiss menu
+	self:Menu(true,true) -- Force dismiss menu
 	if( alive( self._ws ) ) then
 		managers.gui_data:destroy_workspace(self._ws)
 	end
@@ -238,7 +238,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	if not r then _(err) end
 end
 --- Internal functions ---
-function TPocoHud3:Menu(dismiss,...)
+function TPocoHud3:Menu(dismiss,skipAnim)
 	local C = PocoHud3Class
 	local _drawUpgrades = C._drawUpgrades
 	local _drawPlayer = C._drawPlayer
@@ -255,10 +255,15 @@ function TPocoHud3:Menu(dismiss,...)
 					cbk()
 				end
 				managers.menu_component:post_event('menu_exit')
-				menu:fadeOut(function()
-					self._guiFading = nil
+				if skipAnim then
 					menu:destroy()
-				end)
+					self._guiFading = nil
+				else
+					menu:fadeOut(function()
+						self._guiFading = nil
+						menu:destroy()
+					end)
+				end
 			end
 		elseif not dismiss and not self._guiFading then -- Show
 			managers.menu_component:post_event('menu_enter')
@@ -1970,20 +1975,6 @@ function TPocoHud3:_hook()
 			return Run('mouse_moved*', ...)
 		end
 	end)
-	hook( MenuInput, 'mouse_pressed', function( ... )
-		local self, o, button, x, y = unpack{...}
-		if me.menuGui and me.menuGui.mouse_pressed then
-			return me.menuGui:mouse_pressed(false, o, button, x,y)
-		end
-		return Run('mouse_pressed', ...)
-	end)
-	hook( MenuRenderer, 'mouse_released', function( ... )
-		local self, o, button, x, y = unpack{...}
-		if me.menuGui and me.menuGui.mouse_released then
-			return me.menuGui:mouse_released(false, o, button, x,y)
-		end
-		return Run('mouse_released', ...)
-	end)
 	hook( MenuManager, 'toggle_menu_state', function( ... )
 		if me.menuGui then
 			me:Menu(true) -- dismiss Menu when actual game-menu is called
@@ -1995,13 +1986,6 @@ function TPocoHud3:_hook()
 			return Run('toggle_menu_state', ...)
 		end
 	end)
-	hook( MenuInput, 'update**', function( ... )
-		if me.menuGui and self.mouse_moved then
-			return --me.menuGui:mouse_moved(managers.mouse_pointer:mouse(), managers.mouse_pointer:world_position())
-		end
-		return Run('update**', ...)
-	end)
-
 --- DEBUG ONLY
 --------------
 end
@@ -2128,7 +2112,7 @@ function TPocoHud3:_drawRow(pnl, fontSize, texts, _x, _y, _w, bg, align, lineHei
 					text:set_x(math.round(_x+iw*(i-1)))
 				end
 			else
-				local res, lbl = _.l({ pnl=pnl,font=FONT, color=cl.White, font_size=fontSize, x=_x + iw*(i-0.5), y=math.floor(_y), w = iw, h = _fontSize, text='', align = isCenter(i) and 'center', vertical = 'center', blend_mode='add'},text)
+				local res, lbl = _.l({ pnl=pnl,font=FONT, color=cl.White, font_size=fontSize, x=_x + iw*(i-0.5), y=math.floor(_y), w = iw, h = _fontSize, text='', align = isCenter(i) and 'center', vertical = 'center', blend_mode='add'},text,not isCenter(i))
 				lbl:set_x(math.round(_x+iw*(i-1)))
 				--[[if isCenter(i) then
 					lbl:set_center_x(math.round(_x + iw*(i-0.5)))

@@ -1776,7 +1776,6 @@ function PocoMenu:init(ws)
 	lbl:set_right(1000)
 
 	PocoMenu.m_id = PocoMenu.m_id or managers.mouse_pointer:get_id()
-	PocoMenu.__active = managers.mouse_pointer._active
 	managers.mouse_pointer:use_mouse{
 		id = PocoMenu.m_id,
 		mouse_move = callback(self, self, 'mouse_moved',true),
@@ -1812,7 +1811,7 @@ function PocoMenu:_fade(pnl, out, done_cb, seconds)
 		end
 		if not out then
 			local tx,ty = 1010,20
-			managers.mouse_pointer:set_mouse_world_position(math.lerp(tx,x,r),math.lerp(ty,y,r))
+			--managers.mouse_pointer:set_mouse_world_position(math.lerp(tx,x,r),math.lerp(ty,y,r))
 
 		end
 	end
@@ -2226,7 +2225,7 @@ function PocoHud3Class._drawOptions(tab)
 	end
 	PocoUIButton:new(tab,{
 		onClick = function()
-			me:Menu(true)
+			me:Menu(true,true)
 			PocoHud3Class.TPocoHud3.Toggle()
 			PocoHud3 = nil -- will reload on its own
 		end,

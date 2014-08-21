@@ -365,8 +365,6 @@ setmetatable(_,{__call = function(__,...) return UNDERSCORE.W(...) end})
 for k,v in pairs(table.deepcopy(_)) do
 	_[k:lower()] = v
 end
-_assert = _assert or assert
-assert = function()	end
 function string:usub(start,num)
 	local r = ''
 	for i,t in ipairs(utf8.characters(self) or {}) do
