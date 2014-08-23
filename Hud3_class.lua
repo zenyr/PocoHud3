@@ -779,7 +779,7 @@ function PocoUIElem:fire(event,x,y)
 		if sound[event] then
 			self:sound(sound[event])
 		end
-		return true, unpack(result)
+		return unpack(result)
 	end
 end
 
@@ -1277,8 +1277,10 @@ function PocoUIStringValue:init(parent,config,inherited)
 		else
 			if now() - (self._lastClick or 0) < 0.3 then
 				self:selectAll()
-			else
+			elseif self.valLbl:inside(x,y) then
 				self:_setCaret(x)
+			else
+				self:endEdit()
 			end
 		end
 		self._lastClick = now()
@@ -1505,42 +1507,119 @@ end
 local PocoScrollBox = class(PocoUIElem)
 PocoHud3Class.PocoScrollBox = PocoScrollBox
 function PocoScrollBox:init(parent,config,inherited)
-	self.super.init(self,parent,config,true)
-	local wrapper = self.pnl
-	self.wrapper = wrapper
-	self.pnl = self.wrapper:panel({ x=0, y=0, w = wrapper:w(), h = wrapper:h(), name = 'content'})
+	self.parent = parent
+	self.config = config
+	self.wrapper = config.pnl:panel(config)
+	self.pnl = self.wrapper:panel{ x=0, y=0, w =self.wrapper:w(), h = self.wrapper:h(), name = 'content'}
+	local m,sW = 10,4
+	local sH = self.wrapper:h()-(2*m)
+	local _matchScroll = function()
+		local pH,wH = self.pnl:h(), self.wrapper:h()
+		self.sPnl:set_y(m-self.pnl:y()*wH/pH)
+		self.sPnl:set_h(self.wrapper:h()/self.pnl:h() * sH - m)
+	end
+	self._matchScroll = _matchScroll
+	self.sPnl = self.wrapper:panel{ x=self.wrapper:w()-sW-m/2, y=m, w =sW, h = sH, name = 'scroll', visible = false}
+	BoxGuiObject:new(self.sPnl, { sides = {2,2,0,0} }):set_aligns('scale', 'scale')
+	self.sPnl:stop()
+	self.sPnl:animate(function(p)
+		while alive(p) do
+			if p:visible() then
+				local a = math.max(0.1,0.3-now()+(self._t or 0))*4
+				if a ~= self._a then
+					p:set_alpha(a)
+					self._a = a
+				end
+			end
+			coroutine.yield()
+		end
+	end)
 
+	self.pnl:stop()
+	self.pnl:animate(function(panel)
+		while alive(panel) do
+			if panel:visible() then
+				local tY,cY = self.y or 0,panel:y()
+				local rY = math.floor(cY + ((tY-cY)/5))
+				if math.abs(tY - rY)<5 then
+					rY = tY
+				end
+				if tY~=rY then
+					self._t = now()
+					panel:set_y(1+rY)
+					_matchScroll()
+				end
+			end
+			coroutine.yield()
+		end
+	end)
+
+	local scrollStep = 60
+	self:_bind(PocoEvent.WheelUp,function(_self,x,y)
+		if not shift() and self:canScroll(false,x,y) then
+			return true, self:scroll(scrollStep)
+		end
+	end):_bind(PocoEvent.WheelDown,function(_self,x,y)
+		if not shift() and self:canScroll(true,x,y) then
+			return true, self:scroll(-scrollStep)
+		end
+	end)
 	if not inherited then
 		self:postInit(self)
 	end
 end
 
 function PocoScrollBox:set_h(_h)
-	self.pnl:set_h(math.max(self.pnl:h(),h))
+	self.pnl:set_h(math.max(self.wrapper:h(),_h))
+	if self.pnl:h() > self.wrapper:h() then
+		self.sPnl:set_visible(true)
+	else
+		self.sPnl:set_visible(false)
+		self:scroll(0,true)
+	end
+	self:_matchScroll()
 end
 
+function PocoScrollBox:isLarge()
+	return self.pnl:h() > self.wrapper:h()
+end
+
+function PocoScrollBox:canScroll(down,x,y)
+	local result = self:isLarge() and self.wrapper:inside(x,y) and self
+	if (self._errCnt or 0) > 1 then
+		local pos = self.y or 0
+		if (pos == 0) ~= down then
+			result = false
+		end
+	end
+	return result
+end
+
+function PocoScrollBox:scroll(val,force)
+	local tVal = force and 0 or (self.y or 0) + val
+	local pVal = math.clamp(tVal,self.wrapper:h()-self.pnl:h()-20,0)
+	if pVal ~= tVal then
+		self._errCnt = 1+ (self._errCnt or 0)
+	else
+		self._errCnt = 0
+		if not force then
+			managers.menu:post_event(val>0 and 'slider_increase' or 'slider_decrease')
+		end
+	end
+	self.y = pVal
+end
 
 local PocoTab = class()
 PocoHud3Class.PocoTab = PocoTab
 
 function PocoTab:init(parent,ppnl,tabName)
+	self.parent = parent -- tabs
 	self.ppnl = ppnl
 	self.name = tabName
-	self.wrapper = ppnl:panel({ x=0, y=parent.config.th,w = ppnl:w(), h = ppnl:h()-parent.config.th, name = tabName})
-	self.pnl = self.wrapper:panel({ x=0, y=0, w = ppnl:w(), h = self.wrapper:h(), name = 'content'})
 	self.hotZones = {}
+	self.box = PocoScrollBox:new(self,{ pnl = ppnl, x=0, y=parent.config.th,w = ppnl:w(), h = ppnl:h()-parent.config.th, name = tabName})
+	self.pnl = self.box.pnl
 
-	local function t(panel)
-		while true do
-			local tY,cY = self.y or 0,panel:y()
-			if tY ~= cY then
-				panel:set_y(1+math.floor(cY + ((tY-cY)/5)))
-			end
-			coroutine.yield()
-		end
-	end
-	self.pnl:stop()
-	self.pnl:animate(t)
 end
 
 function PocoTab:insideTabHeader(x,y,noChildren)
@@ -1563,13 +1642,17 @@ function PocoTab:addHotZone(event,item)
 end
 
 function PocoTab:isHot(event, x, y, autoFire)
-	if self.hotZones[event] and alive(self.wrapper) and self.wrapper:inside(x,y) then
+	if self.hotZones[event] and alive(self.pnl) and self.pnl:inside(x,y) then
 		for i,hotZone in pairs(self.hotZones[event]) do
 			if hotZone:isHot(event, x,y) then
 				if autoFire then
-					return hotZone:fire(event, x, y)
+					local r = hotZone:fire(event, x, y)
+					if r then
+						return r
+					end
+				else
+					return hotZone
 				end
-				return hotZone
 			end
 		end
 	end
@@ -1583,37 +1666,16 @@ function PocoTab:isHot(event, x, y, autoFire)
 end
 
 function PocoTab:scroll(val, force)
-	local tVal = force and 0 or (self.y or 0) + val
-	local pVal = math.clamp(tVal,self.wrapper:h()-self.pnl:h()-20,0)
-	if pVal ~= tVal then
-		self._errCnt = 1+ (self._errCnt or 0)
-	else
-		self._errCnt = 0
-		if not force then
-			managers.menu:post_event(val>0 and 'slider_increase' or 'slider_decrease')
-		end
-	end
-	self.y = pVal
+	return self.box:scroll(val,force)
 --	return self.pnl:set_y(pVal)
 end
 
 function PocoTab:canScroll(down,x,y)
-	local result = self:isLarge() and self.wrapper:inside(x,y) and self
-	if (self._errCnt or 0) > 1 then
-		local pos = self.y or 0
-		if (pos == 0) ~= down then
-			result = false
-		end
-	end
-	return result
-end
-
-function PocoTab:isLarge()
-	return self.pnl:h() > self.ppnl:h()
+	return self.box:canScroll(down,x,y)
 end
 
 function PocoTab:set_h(h)
-	self.pnl:set_h(math.max(self.pnl:h(),h))
+	self.box:set_h(h)
 end
 
 function PocoTab:children(child)
@@ -1758,6 +1820,9 @@ function PocoTabs:repaint()
 		x = x + w + 22
 		itm.bg = bg
 		itm.hPnl = hPnl
+		if itm.box then
+			itm.box.wrapper:set_visible(isSelected)
+		end
 		itm.pnl:set_visible(isSelected)
 	end
 	if self.currentTab then
@@ -1934,15 +1999,10 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 	if not me or me.dead then return end
 	if self.dead then return end
 	pcall(function()
-		local scrollStep = 60
 		local currentTab = self.gui and self.gui.currentTab
 		if button == Idstring('mouse wheel down') then
 			if currentTab:isHot(PocoEvent.WheelDown, x,y, true) then
 				return true
-			end
-			local canScroll = {self.gui:canScroll(true,x,y)}
-			if canScroll[1] then
-				return canScroll[1]:scroll(-scrollStep)
 			end
 			local tabHdr = {self.gui:insideTabHeader(x,y)}
 			if tabHdr[1] and now() - self._lastMove > 0.05 then
@@ -1953,11 +2013,6 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 			if currentTab:isHot(PocoEvent.WheelUp, x,y, true) then
 				return true
 			end
-			local canScroll = {self.gui:canScroll(false,x,y)}
-			if canScroll[1] then
-				return canScroll[1]:scroll(scrollStep)
-			end
-
 			local tabHdr = {self.gui:insideTabHeader(x,y)}
 			if tabHdr[1] and now() - self._lastMove > 0.05 then
 				self._lastMove = now()
@@ -2069,8 +2124,9 @@ function PocoHud3Class._drawHeistStats (tab)
 	tab:set_h(y)
 end
 
-function PocoHud3Class._drawUpgrades (pnl, data, isTeam, desc, offsetY)
+function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
 	local _ignore = {}
+	local pnl = tab.pnl
 	offsetY = offsetY or 0
 	pnl:text{
 		x = 10, y = offsetY+10, w = 600, h = 30,
@@ -2122,9 +2178,7 @@ function PocoHud3Class._drawUpgrades (pnl, data, isTeam, desc, offsetY)
 				row = {}
 			end
 		end
-		if pnl:h() < y then
-			pnl:set_h(y)
-		end
+		tab:set_h(y)
 	else
 		y = me:_drawRow(pnl,fontSize,{{'No upgrades acquired\n',cl.White:with_alpha(0.5)}},0,y,w)
 	end

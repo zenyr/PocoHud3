@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 147
-local TAG = '0.151'
+local REV = 148
+local TAG = '0.151 hotfix 1 (g35a7e4a)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -288,12 +288,12 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 				if inGame then
 					for pid,upg in pairs(_.g('Global.player_manager.synced_team_upgrades',{})) do
 						if upg then
-							y = _drawUpgrades(oTab.pnl,upg,true,'Crew bonus from '..self:_name(pid),y)
+							y = _drawUpgrades(oTab,upg,true,'Crew bonus from '..self:_name(pid),y)
 						end
 					end
 				end
-				y = _drawUpgrades(oTab.pnl,_.g('Global.player_manager.team_upgrades'),true,'Perks that you and your crew will benefit from',y)
-				y = _drawUpgrades(oTab.pnl,_.g('Global.player_manager.upgrades'),false,'Perks that you have acquired',y)
+				y = _drawUpgrades(oTab,_.g('Global.player_manager.team_upgrades'),true,'Perks that you and your crew will benefit from',y)
+				y = _drawUpgrades(oTab,_.g('Global.player_manager.upgrades'),false,'Perks that you have acquired',y)
 			end
 
 			tab = gui:add('Tools')
