@@ -1502,6 +1502,22 @@ function PocoUIStringValue:key_press(o, k)
 end
 
 
+local PocoScrollBox = class(PocoUIElem)
+PocoHud3Class.PocoScrollBox = PocoScrollBox
+function PocoScrollBox:init(parent,config,inherited)
+	self.super.init(self,parent,config,true)
+	local wrapper = self.pnl
+	self.wrapper = wrapper
+	self.pnl = self.wrapper:panel({ x=0, y=0, w = wrapper:w(), h = wrapper:h(), name = 'content'})
+
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
+function PocoScrollBox:set_h(_h)
+	self.pnl:set_h(math.max(self.pnl:h(),h))
+end
 
 
 local PocoTab = class()
