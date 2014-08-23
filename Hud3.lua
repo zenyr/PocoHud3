@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 143
-local TAG = '0.15 hotfix 6 (gdfd7234)'
+local REV = 144
+local TAG = '0.15 hotfix 7 (g56ce9fb)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1156,7 +1156,9 @@ function TPocoHud3:_hook()
 				local wb = self._equipped_unit:base()
 				if wb and me.gadget and me.gadget[wb._name_id] then
 					wb:set_gadget_on(me.gadget[wb._name_id] )
-					self:_stance_entered()
+					if me.gadget[wb._name_id] > 0 then
+						self:_stance_entered()
+					end
 				end
 			end
 		end)

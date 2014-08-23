@@ -2349,6 +2349,7 @@ function PocoHud3Class._drawKit(tab)
 	if not K then
 		K = PocoHud3Class.Kits:new()
 	end
+	local inGameDeep = me.inGameDeep
 	local C,_y,m = PocoHud3Class,10,5
 	local y = function(h,set)
 		h = h and h+m or 0
