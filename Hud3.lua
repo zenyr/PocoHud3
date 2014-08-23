@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 144
-local TAG = '0.15 hotfix 7 (g56ce9fb)'
+local REV = 145
+local TAG = '0.15 hotfix 8 (g2a3221e)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1150,6 +1150,14 @@ function TPocoHud3:_hook()
 				}) )
 			end
 		end)
+		local _tempStanceDisable
+		local _matchStance = function(tempDisable)
+			_tempStanceDisable = tempDisable
+			if self.state and self.state._stance_entered then
+				self.state:_stance_entered()
+			end
+			_tempStanceDisable = nil
+		end
 		hook( PlayerStandard, '_start_action_equip_weapon', function( self,t )
 			Run('_start_action_equip_weapon', self, t)
 			if O:get('game','rememberGadgetState') then
@@ -1157,7 +1165,10 @@ function TPocoHud3:_hook()
 				if wb and me.gadget and me.gadget[wb._name_id] then
 					wb:set_gadget_on(me.gadget[wb._name_id] )
 					if me.gadget[wb._name_id] > 0 then
-						self:_stance_entered()
+						local on = wb and wb.is_second_sight_on and wb:is_second_sight_on()
+						if on then
+							_matchStance()
+						end
 					end
 				end
 			end
@@ -1165,7 +1176,7 @@ function TPocoHud3:_hook()
 		hook( FPCameraPlayerBase, 'clbk_stance_entered', function( ... )
 			local self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration = unpack{...}
 			local crook = O:get('game','cantedSightCrook') or 0
-			if crook > 1 then
+			if crook > 1 and not _tempStanceDisable then
 				local state = managers.player:player_unit():movement():current_state()
 				local wb = state._equipped_unit and state._equipped_unit:base()
 				local second_sight_on = wb and wb.is_second_sight_on and wb:is_second_sight_on()
@@ -1179,7 +1190,7 @@ function TPocoHud3:_hook()
 						local translation = stance_mod.translation or Vector3()
 						local rotation = stance_mod.rotation or Rotation()
 						mvector3.add(translation, sMod.translation)
-						mvector3.add(translation, Vector3(-10,0,0))
+						mvector3.add(translation, Vector3(-10,2,0))
 						mrotation.multiply(rotation, sMod.rotation)
 						stance_mod.translation = translation
 						stance_mod.rotation = rotation
@@ -1264,7 +1275,14 @@ function TPocoHud3:_hook()
 				}) )
 			end
 		end)
+		hook( PlayerStandard, '_start_action_running', function( ... )
+			_matchStance(true)
+			Run('_start_action_running', ... )
+		end)
 		hook( PlayerStandard, '_end_action_running', function( self,t, input, complete  )
+			if not self._end_running_expire_t then
+				_matchStance()
+			end
 			Run('_end_action_running', self, t, input, complete )
 			local et = self._end_running_expire_t
 			if not (self.RUN_AND_SHOOT or O:get('buff','noSprintDelay')) and et then
@@ -1293,6 +1311,7 @@ function TPocoHud3:_hook()
 		end)
 		hook( PlayerStandard, '_start_action_reload', function( self,t  )
 			Run('_start_action_reload', self, t )
+			_matchStance(true)
 			local et = self._state_data.reload_expire_t
 			if et then
 				pcall(me.Buff,me,({
@@ -1353,9 +1372,17 @@ function TPocoHud3:_hook()
 		hook( PlayerStandard, '_interupt_action_reload', function( self,t  )
 			if self:_is_reloading() then
 				me:RemoveBuff('transition')
+				_matchStance()
 			end
 			Run('_interupt_action_reload', self, t )
 		end)
+
+		hook( StatisticsManager, 'reloaded', function( ... )
+			-- To restore stance once reload is done, without too much work
+			Run('reloaded', ... )
+			_matchStance()
+		end)
+
 		--PlayerMovement
 		hook( PlayerMovement, 'on_morale_boost', function( self, benefactor_unit )
 			local r =Run('on_morale_boost',  self, benefactor_unit )
