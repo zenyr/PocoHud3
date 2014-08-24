@@ -28,6 +28,7 @@ local scheme = {
 		ignoreStamina = {'bool',FALSE,nil,'Stamina indicator'},
 		ignoreCharge = {'bool',FALSE,nil,'Melee charge indicator'},
 		ignoreTransition = {'bool',FALSE,nil,'Transitions like weapon swap, melee cooldown'},
+		ignoreReload = {'bool',FALSE,nil,'Ignore reload timer.\n* This event also depends on \'Transition\' option'},
 		ignoreCarryDrop = {'bool',FALSE,nil,'Bag interaction cooldown'},
 		ignoreInteract = {'bool',FALSE,nil,'Shout cooldown'},
 		ignoreInteraction = {'bool',FALSE,nil,'Interaction timer that involves holding USE key'},
@@ -45,7 +46,7 @@ local scheme = {
 
 		noSprintDelay  = {'bool',TRUE,nil,'Ignore after-sprint delay '},
 		hideInteractionCircle  = {'bool',FALSE,nil,'Hide vanilla game\'s interaction circle'},
-		simpleBusy  = {'bool',TRUE,nil,'Replace \'busy\' icons with simple red circle at the crosshair'},
+		simpleBusy  = {'bool',TRUE,nil,'Replace \'busy\' icons with simple red circle at the crosshair.\n* This also depends on \'Transition\' option.'},
 		simpleBusyRadius  = {'num',10,{5,30},'Set size of SimpleBusy indicator if simpleBusy is used',nil,5},
 	}, playerFloat = {	'Floating info panel above crew members\' head',
 		enable = {'bool',TRUE},
@@ -133,7 +134,7 @@ local scheme = {
 		corpseLimit = {'num',3,{1,10},'In-game corpse limit','corpse'},
 		cantedSightCrook = {'num',4,{1,4},'In-game canted sight(as gadget) indicator','cantedSight'},
 		rememberGadgetState = {'bool',TRUE,nil,'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps'},
-		subtitleFontSize = {'num',22,{10,30},'Subtitle font size'},
+		subtitleFontSize = {'num',20,{10,30},'Subtitle font size'},
 		subtitleFontColor = {'color','White',nil,'Subtitle font color'},
 		subtitleOpacity = {'num',100,{10,100},'Subtitle opacity',nil,10},
 	}

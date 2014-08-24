@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 150
-local TAG = '0.152'
+local REV = 151
+local TAG = '0.152 hotfix 1 (g4eae944)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1312,7 +1312,7 @@ function TPocoHud3:_hook()
 		hook( PlayerStandard, '_start_action_reload', function( self,t  )
 			Run('_start_action_reload', self, t )
 			_matchStance(true)
-			local et = self._state_data.reload_expire_t
+			local et = not O:get('buff','ignoreReload') and self._state_data.reload_expire_t
 			if et then
 				pcall(me.Buff,me,({
 					key='transition', good=false,
