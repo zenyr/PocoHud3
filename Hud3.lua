@@ -7,7 +7,7 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 local _ = UNDERSCORE
 local REV = 151
-local TAG = '0.152 hotfix 1 (g4eae944)'
+local TAG = '0.152 hotfix 1 (ged3be32)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1153,7 +1153,8 @@ function TPocoHud3:_hook()
 		local _tempStanceDisable
 		local _matchStance = function(tempDisable)
 			_tempStanceDisable = tempDisable
-			if self.state and self.state._stance_entered then
+			local crook = O:get('game','cantedSightCrook') or 0
+			if crook>1 and self.state and self.state._stance_entered then
 				self.state:_stance_entered()
 			end
 			_tempStanceDisable = nil
@@ -1275,12 +1276,16 @@ function TPocoHud3:_hook()
 				}) )
 			end
 		end)
-		hook( PlayerStandard, '_start_action_running', function( ... )
-			_matchStance(true)
-			Run('_start_action_running', ... )
+		hook( PlayerStandard, 'set_running', function( ... )
+			local self, running = unpack{...}
+			if not self.RUN_AND_SHOOT and running then
+				_matchStance(true)
+			end
+			Run('set_running', ... )
+
 		end)
 		hook( PlayerStandard, '_end_action_running', function( self,t, input, complete  )
-			if not self._end_running_expire_t then
+			if self._running and not self._end_running_expire_t then
 				_matchStance()
 			end
 			Run('_end_action_running', self, t, input, complete )

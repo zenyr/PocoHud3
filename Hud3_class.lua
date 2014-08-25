@@ -1525,7 +1525,7 @@ function PocoScrollBox:init(parent,config,inherited)
 	self.sPnl:animate(function(p)
 		while alive(p) do
 			if p:visible() then
-				local a = math.max(0.1,0.3-now()+(self._t or 0))*4
+				local a = math.max(0.05,0.3-now()+(self._t or 0))*4
 				if a ~= self._a then
 					p:set_alpha(a)
 					self._a = a
@@ -1539,14 +1539,15 @@ function PocoScrollBox:init(parent,config,inherited)
 	self.pnl:animate(function(panel)
 		while alive(panel) do
 			if panel:visible() then
-				local tY,cY = self.y or 0,panel:y()
+				local tY,cY = math.floor(self.y or 0),math.floor(panel:y())
 				local rY = math.floor(cY + ((tY-cY)/5))
-				if math.abs(tY - rY)<5 then
-					rY = tY
-				end
 				if tY~=rY then
+					if math.abs(tY - rY)<5 then
+						rY = tY
+					end
+					rY = math.floor(rY + 1)
 					self._t = now()
-					panel:set_y(1+rY)
+					panel:set_y(rY)
 					_matchScroll()
 				end
 			end
@@ -2071,14 +2072,16 @@ local titlecase = function (str)
 end
 
 function PocoHud3Class._drawHeistStats (tab)
-	local pnl = tab.pnl
+	local oTabs = PocoTabs:new(me._ws,{name = 'Options',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
+	local oTab = oTabs:add('Heist')
+	local pnl = oTab.pnl
 	local w, h, ww, hh = 0,0, pnl:size()
 	local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size*0.98
 	local _rowCnt = 0
 
 	local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
 	local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
-	local x, y, tbl = 5, 5, {}
+	local x, y, tbl = 10, 10, {}
 	tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
 	local addJob = function(host,heist)
 		local job_string =managers.localization:to_upper_text(tweak_data.narrative.jobs[heist].name_id) or heist
@@ -2119,9 +2122,9 @@ function PocoHud3Class._drawHeistStats (tab)
 			_lastHost = _tbl[1]
 		end
 		_rowCnt = _rowCnt + 1
-		y = me:_drawRow(pnl,fontSize,_tbl,x,y,970, _rowCnt % 2 == 0,{1,_rowCnt == 1 and 1 or 0})
+		y = me:_drawRow(pnl,fontSize,_tbl,x,y,ww-20, _rowCnt % 2 == 0,{1,_rowCnt == 1 and 1 or 0})
 	end
-	tab:set_h(y)
+	oTab:set_h(y)
 end
 
 function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
