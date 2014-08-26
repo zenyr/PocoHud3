@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 154
-local TAG = '0.152 hotfix 4 (gb4e197a)'
+local REV = 155
+local TAG = '0.152 hotfix 5 (g9b047f6)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -28,6 +28,8 @@ if not PocoHud3Class then return end
 _req ('poco/Hud3_Options.lua')
 if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
+local K = PocoHud3Class.Kits:new()
+PocoHud3Class.K = K
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
 local ALTFONT= PocoHud3Class.ALTFONT
@@ -101,16 +103,7 @@ function TPocoHud3:onInit() -- ★설정
 	local dbgO = O:get('corner')
 	self.dbgLbl = self.pnl.dbg:text{text='HUD '..(inGame and 'Ingame' or 'Outgame'), font= dbgO.defaultFont and FONT or ALTFONT, font_size = dbgO.size, color = dbgO.color:with_alpha(dbgO.opacity/100), x=0,y=self.pnl.dbg:height()-dbgO.size, layer=0}
 	self:_hook()
-	local verboseKey = O:get('root','verboseKey')
-	if verboseKey then
-		if O:get('root','verboseToggle') then
-			Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose','toggle'))
-		else
-			Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose',true),callback(self,self,'toggleVerbose',false))
-		end
-	end
-	Poco:Bind(self,14,callback(self,self,'Menu',false))
-
+	self:_updateBind()
 	return true
 end
 function TPocoHud3:onResolutionChanged()
@@ -246,6 +239,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 	local r,err = pcall(function()
 		local menu = self.menuGui
 		if menu then -- Remove
+			self:_updateBind()
 			if not self._stringFocused or (now()-self._stringFocused > 0.1) then
 				self.menuGui = nil
 				self._guiFading = true
@@ -265,7 +259,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 					end)
 				end
 			end
-		elseif not dismiss and not self._guiFading then -- Show
+		elseif not dismiss and not self._guiFading and not managers.system_menu:is_active() then -- Show
 			managers.menu_component:post_event('menu_enter')
 			local gui = C.PocoMenu:new(self._ws)
 			self.menuGui = gui
@@ -280,7 +274,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 			local y = 0
 			tab = gui:add('Statistics')
 			do
-				local oTabs = C.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
+				local oTabs = C.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 				local oTab = oTabs:add('Heist Status')
 				C._drawHeistStats(oTab)
 
@@ -302,7 +296,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 					pnl = tab.pnl,
 					x = 20, y = 10, w = tab.pnl:w()-20,h=20, font = FONT, font_size = 20, color = cl.Crimson,
 					align = 'right'},'* Tools section is currently Work in progress. Stay tuned :D')
-				local oTabs = C.PocoTabs:new(self._ws,{name = 'tools',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
+				local oTabs = C.PocoTabs:new(self._ws,{name = 'tools',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 				local oTab = oTabs:add('Kit Profiler')
 				PocoHud3Class._drawKit(oTab)
 
@@ -457,7 +451,7 @@ function TPocoHud3:Float(unit,category,temp,tag)
 	if float then
 		float:renew({tag=tag,temp=temp})
 	else
-		if category == 1 and not O:get('float','drills') then
+		if category == 1 and not O:get('float','showDrills') then
 			--
 		else
 			self.floats[key] = PocoHud3Class.TFloat:new(self,{category=category,key=key,unit=unit,temp=temp, tag=tag})
@@ -482,6 +476,28 @@ end
 
 function TPocoHud3:Popup(data) -- {pos=pos,text={{},{}},stay=true,st,et}
 	table.insert(self.pops ,PocoHud3Class.TPop:new(self,data))
+end
+
+function TPocoHud3:_updateBind()
+	Poco:UnBind(self)
+	local verboseKey = O:get('root','detailedModeKey')
+	if verboseKey then
+		if O:get('root','detailedModeToggle') then
+			Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose','toggle'))
+		else
+			Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose',true),callback(self,self,'toggleVerbose',false))
+		end
+	end
+	Poco:Bind(self,14,callback(self,self,'Menu',false))
+	local keys = K:keys()
+	for key,index in pairs(keys) do
+		Poco:Bind(self,key,function()
+			if not inGameDeep and ctrl() and alt() and not managers.system_menu:is_active() then
+				K:equip(index,not O:get('root','silentKitShortcut'))
+				managers.menu:post_event('finalize_mask')
+			end
+		end)
+	end
 end
 
 function TPocoHud3:_checkBuff(t)
@@ -596,7 +612,11 @@ function TPocoHud3:_updatePlayers(t)
 									local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
 									local defaultLbl = bPnl._panel:child( 'name' )
 									local nameBg =  bPnl._panel:child( 'name_bg' )
-									self:_lbl(defaultLbl,{{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},{self:_name(i),self:_color(i)}})
+									local nameTxt = self:_name(i)
+									if btmO.uppercaseNames then
+										nameTxt = utf8.to_upper(nameTxt)
+									end
+									self:_lbl(defaultLbl,{{rank,cl.White},{lvl..' ',cl.White:with_alpha(0.8)},{nameTxt,self:_color(i)}})
 									local txtRect = {defaultLbl:text_rect()}
 									defaultLbl:set_size(txtRect[3],txtRect[4])
 									local shape = {defaultLbl:shape()}
@@ -676,7 +696,7 @@ function TPocoHud3:_updatePlayers(t)
 				txts[#txts+1]={' ±'..avgDmg,color:with_alpha(0.8)}
 			end
 
-			if _show('Minion') then
+			if _show('ConvertedEnemy') then
 				local minion = self:Stat(i,'minion')
 				if minion ~= 0 and alive(minion) then
 					local cd = minion:character_damage()
@@ -769,7 +789,7 @@ function TPocoHud3:_updateItems(t,dt)
 	self:_scanSmoke(t)
 	self:_updatePlayers(t)
 	-- ScanFloat
-	if O:get('float','unit') then
+	if O:get('float','showTargets') then
 		local r = _.r(_mask)
 		if r and r.unit then
 			local unit = r.unit
@@ -777,10 +797,13 @@ function TPocoHud3:_updateItems(t,dt)
 				unit = unit:parent()
 			end
 			unit = (unit:movement() or unit:carry_data()) and unit
+			local isBag = unit:carry_data()
 			if unit then
 				local cHealth = unit:character_damage() and unit:character_damage()._health or false
-				if cHealth and cHealth > 0 or (unit:carry_data() and unit:interaction()._active) then
-					self:Float(unit,0,true)
+				if not isBag and cHealth and cHealth > 0 then
+					self:Float(unit,0,true) -- unit
+				elseif isBag and unit:interaction()._active and O:get('float','showBags') then
+					self:Float(unit,0,true)	-- lootbag
 				end
 			end
 		end
@@ -814,8 +837,8 @@ function TPocoHud3:_updateItems(t,dt)
 			end
 		end
 		local x,y,move = self._ws:size()
-		x = x * buffO.originLeft/100 - size/2
-		y = y * buffO.originTop/100 - size/2
+		x = x * buffO.xPosition/100 - size/2
+		y = y * buffO.yPosition/100 - size/2
 		local oX,oY = x,y
 		if align == 1 then
 			move = size
@@ -868,7 +891,7 @@ end
 function TPocoHud3:_upd_dbgLbl(t,dt)
 	if self.dead then return end
 	local dO = O:get('corner')
-	if dO.verboseOnly then
+	if dO.detailedOnly then
 		self.dbgLbl:set_visible(self.verbose)
 	end
 	self._keyList = ''--_.s(#(Poco._kbd:down_list() or {})>0 and Poco._kbd:down_list() or '')
@@ -1967,7 +1990,7 @@ function TPocoHud3:_hook()
 
 	end -- End of if inGame
 	-- Kick menu
-	if O:get('game','kickMenuRank') then
+	if O:get('game','showRankInKickMenu') then
 		hook( KickPlayer, 'modify_node', function( ... )
 			local self, node, up = unpack{...}
 			local new_node = deep_clone( node )

@@ -424,7 +424,7 @@ function TPoco:init()
 	self.addOns = {}
 	self.funcs = {}
 	self.save = {}
-	self.binds = {down={},up={}}
+	self.binds = {}
 	self._kbd = Input:keyboard()
 	if not setup._update then
 		setup._update = setup.update
@@ -437,24 +437,85 @@ function TPoco:init()
 	end
 	_('Poco:Init')
 end
-function TPoco:Bind(sender,key,downCbk,upCbk)
-	local name = sender:name(1)
-	if type(key) == 'number' then
+function TPoco:sanitizeKey(key)
+	local keyT = type(key)
+	if keyT == 'number' then
 		if key == 0 then
 			key = 11
 		elseif key < 10 then -- Number key
 			key = key + 1
 		end
-	elseif type(key) == 'string' then
+	elseif keyT == 'string' then
 		key = string.lower(key)
-		key = Input:keyboard():has_button( Idstring( key ) ) and Input:keyboard():button_index( Idstring( key ) )
+		key = self._kbd:has_button( Idstring( key ) ) and self._kbd:button_index( Idstring( key ) )
+		keyT = type(key)
 	end
-	if type(key) ~= 'number' then
+	if keyT ~= 'number' then
 		return _('Poco:Bind err;invalid key:',key)
+	else
+		return key
 	end
-	self.binds.down[key] = downCbk and {name,downCbk} or nil
-	self.binds.up[key] = upCbk and {name,upCbk} or nil
 end
+function TPoco:addBind(event,name,key,cbk)
+	-- event > {name,key,cbk}
+	key = self:sanitizeKey(key)
+	if key then
+		self.binds[event] = self.binds[event] or {}
+		local events = self.binds[event]
+		table.insert(events,{name,key,cbk})
+	end
+end
+
+function TPoco:_runBinds(t,dt)
+	if not (
+		(managers.menu_component._blackmarket_gui and managers.menu_component._blackmarket_gui._renaming_item) or
+		(managers.hud and managers.hud._chat_focus) or
+		(managers.menu_component._game_chat_gui and managers.menu_component._game_chat_gui:input_focus())
+		) then
+		for event,events in pairs(self.binds) do
+			for __,obj in pairs(events) do
+				local name, key, cbk = unpack(obj)
+				local eventPass = false
+				if event == 'down' then
+					eventPass = self._kbd:pressed(key)
+				elseif event == 'up' then
+					eventPass = self._kbd:released(key)
+				end
+				if eventPass then
+					cbk(t,dt,key)
+				end
+			end
+		end
+	end
+end
+
+function TPoco:removeBind(event,name,key)
+	if event and self.binds[event] then
+		if name then
+			local events = self.binds[event]
+			for ind,obj in pairs(events) do
+				if obj[1] == name then
+					if not key or obj[2] == key then
+						events[ind] = nil
+					end
+				end
+			end
+		else
+			self.binds[event] = {}
+		end
+	end
+end
+
+function TPoco:Bind(sender,key,downCbk,upCbk)
+	local name = sender:name(1)
+	if downCbk then
+		self:addBind('down',name,key,downCbk)
+	end
+	if upCbk then
+		self:addBind('up',name,key,upCbk)
+	end
+end
+
 function TPoco:LoadOptions(key,obj)
 	local extOpt = io.open('poco\\'..key..'_config.lua','r')
 	local merge
@@ -475,19 +536,14 @@ function TPoco:LoadOptions(key,obj)
 		_('No config file found. (poco\\'..key..'_config.lua)')
 	end
 end
+
 function TPoco:UnBind(sender)
 	local name = sender:name(1)
-	for key,cbk in pairs(clone(self.binds.down)) do
-		if cbk[1]==name then
-			self.binds.down[key] = nil
-		end
-	end
-	for key,cbk in pairs(clone(self.binds.up)) do
-		if cbk[1]==name then
-			self.binds.up[key] = nil
-		end
+	for event in pairs(self.binds) do
+		self:removeBind(event,name)
 	end
 end
+
 function TPoco:Kill(name)
 	local addOn = self.addOns[name]
 	self:UnBind(addOn)
@@ -512,22 +568,7 @@ function TPoco:Update(t,dt)
 	for __,func in pairs(self.funcs) do
 		func(t,dt)
 	end
-	if not (
-		(managers.menu_component._blackmarket_gui and managers.menu_component._blackmarket_gui._renaming_item) or
-		(managers.hud and managers.hud._chat_focus) or
-		(managers.menu_component._game_chat_gui and managers.menu_component._game_chat_gui:input_focus())
-		) then
-		for key,cbks in pairs(self.binds.down) do
-			if cbks and self._kbd:pressed(key) then
-				cbks[2](t,dt)
-			end
-		end
-		for key,cbks in pairs(self.binds.up) do
-			if cbks and self._kbd:released(key) then
-				cbks[2](t,dt)
-			end
-		end
-	end
+	self:_runBinds(t,dt)
 end
 function TPoco:register(key,func)
 	if not self.funcs[key] then

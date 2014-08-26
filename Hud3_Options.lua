@@ -2,14 +2,15 @@ local TRUE,FALSE = true,false
 local scheme = {
 	root = {	'PocoHud3 Main configuration',
 		enable = {'bool',TRUE,nil,'Not implemented.'},
-		verboseKey = {'key','`',nil,'Keybind for verbose mode.\nDefault: ` (tilde key)\nRequires reloading'},
-		verboseToggle = {'bool',FALSE,nil,'Toggle verbose mode.\nRequires reloading'},
+		detailedModeKey = {'key','`',nil,'Keybind for detailed(verbose) mode.\nDefault: ` (tilde key)'},
+		detailedModeToggle = {'bool',FALSE,nil,'Make detailed mode key toggles mode.'},
+		silentKitShortcut = {'bool',FALSE,nil,'Ignore Kit Profiler shortcuts success message'},
 	}, corner = {	'Static text ticker which works as FPS counter / Outgame clock',
 		color  = {'color','White','color','Font color'},
 		opacity = {'num',80,{0,100},'Font opacity',nil,5},
 		size  = {'num',22,{10,30},'Font size'},
-		defaultFont  = {'bool',FALSE,nil,'Use sans-serif font'},
-		verboseOnly  = {'bool',FALSE,nil,'Hide corner text while \'Verbose\' mode is not activated'},
+		defaultFont  = {'bool',TRUE,nil,'Use sans-serif font'},
+		detailedOnly  = {'bool',FALSE,nil,'Hide corner text while \'Detailed\' mode is not activated'},
 		showFPS  = {'bool',TRUE,nil,'Show FPS'},
 		showClockIngame  = {'bool',FALSE,nil,'Show in-game clock'},
 		showClockOutgame  = {'bool',TRUE,nil,'Show out-game clock'},
@@ -17,36 +18,36 @@ local scheme = {
 		enable = {'bool',TRUE},
 
 		xPosition = {'num',10,{0,100},'Origin point X (% from left of screen)',nil,2,1},
-		yPosition = {'num',22,{0,100},'Origin point Y (% from top of screen)',nil,2,2},
+		yPosition = {'num',22,{0,100},'Origin point Y (% from top of screen)',nil,2,1},
 		maxFPS  = {'num',50,nil,'FPS cap to reduce performance hit',nil,5,3},
-		buffSize = {'num',70,nil,'Icon size (ignored with Vanilla style)',nil,nil,4},
-		gap = {'num',10,nil,'Icon gap',nil,nil,5},
-		justify = {'num',1,{1,3},'Icon alignment (vertical for Vanilla style)','align',nil,6},
-		style = {'num',1,{1,2},'Buff icon style','style',nil,7},
+		buffSize = {'num',70,nil,'Icon size (ignored with Vanilla style)',nil,nil,2},
+		gap = {'num',10,nil,'Icon gap',nil,nil,2},
+		justify = {'num',1,{1,3},'Icon alignment (vertical for Vanilla style)','align',nil,2},
+		style = {'num',1,{1,2},'Buff icon style','style',nil,2},
 
-		hideBerserker = {'bool',FALSE,nil,'Berserker indicator'},
-		hideStamina = {'bool',FALSE,nil,'Stamina indicator'},
-		hideCharge = {'bool',FALSE,nil,'Melee charge indicator'},
-		hideTransition = {'bool',FALSE,nil,'Transitions like weapon swap, melee cooldown'},
-		hideCarryDrop = {'bool',FALSE,nil,'Bag interaction cooldown'},
-		hideInteract = {'bool',FALSE,nil,'Shout cooldown'},
-		hideInteraction = {'bool',FALSE,nil,'Interaction timer that involves holding USE key'},
-		hideInspire = {'bool',FALSE,nil,'Inspire cooldown (giving end)'},
-		hideBoost = {'bool',FALSE,nil,'Inspire duration (receiving end)'},
-		hideShield = {'bool',FALSE,nil,'Shield recovery cooldown'},
-		hideECM = {'bool',FALSE,nil,'ECM duration'},
-		hideFeedback = {'bool',FALSE,nil,'ECM Feedback duration'},
-		hideTapeLoop = {'bool',FALSE,nil,'Tapeloop duration'},
-		hideOverkill = {'bool',FALSE,nil,'Overkill duration'},
-		hideCombatMedic = {'bool',FALSE,nil,'Combat medic duration'},
-		hideUnderdog = {'bool',FALSE,nil,'Underdog duration'},
-		hideBulletstorm = {'bool',FALSE,nil,'Bulletstorm duration'},
-		hideSuppressed = {'bool',TRUE,nil,'Suppression that prevents shield recovery and increases bullet deviation.\n(Bullet deviation not in effect)'},
+		showBerserker = {'bool',TRUE,nil,'Berserker indicator'},
+		showStamina = {'bool',TRUE,nil,'Stamina indicator'},
+		showCharge = {'bool',TRUE,nil,'Melee charge indicator'},
+		showTransition = {'bool',TRUE,nil,'Transitions like weapon swap, melee cooldown'},
+		showCarryDrop = {'bool',TRUE,nil,'Bag interaction cooldown'},
+		showInteract = {'bool',TRUE,nil,'Shout cooldown'},
+		showInteraction = {'bool',TRUE,nil,'Interaction timer that involves holding USE key'},
+		showInspire = {'bool',TRUE,nil,'Inspire cooldown (giving end)'},
+		showBoost = {'bool',TRUE,nil,'Inspire duration (receiving end)'},
+		showShield = {'bool',TRUE,nil,'Shield recovery cooldown'},
+		showECM = {'bool',TRUE,nil,'ECM duration'},
+		showFeedback = {'bool',TRUE,nil,'ECM Feedback duration'},
+		showTapeLoop = {'bool',TRUE,nil,'Tapeloop duration'},
+		showOverkill = {'bool',TRUE,nil,'Overkill duration'},
+		showCombatMedic = {'bool',TRUE,nil,'Combat medic duration'},
+		showUnderdog = {'bool',TRUE,nil,'Underdog duration'},
+		showBulletstorm = {'bool',TRUE,nil,'Bulletstorm duration'},
+		showSuppressed = {'bool',FALSE,nil,'Suppression that prevents shield recovery and increases bullet deviation.\n(Bullet deviation not in effect)'},
 
-		noSprintDelay  = {'bool',TRUE,nil,'Ignore after-sprint delay '},
-		hideInteractionCircle  = {'bool',FALSE,nil,'Hide vanilla game\'s interaction circle'},
-		simpleBusyIndicator = {'bool',TRUE,nil,'Replace \'busy\' icons with simple red circle at the crosshair\nSuch as: Reloading, Weapon-swap, melee'},
-		simpleBusySize = {'num',10,{5,30},'Set size of SimpleBusy indicator if simpleBusy is used',nil,5},
+		noSprintDelay  = {'bool',TRUE,nil,'Ignore after-sprint delay ',nil,nil,4},
+		hideInteractionCircle  = {'bool',FALSE,nil,'Hide vanilla game\'s interaction circle',nil,nil,4},
+		simpleBusyIndicator = {'bool',TRUE,nil,'Replace \'busy\' icons with simple red circle at the crosshair\nSuch as: Reloading, Weapon-swap, melee',nil,nil,4},
+		simpleBusySize = {'num',10,{5,30},'Set size of SimpleBusy indicator if simpleBusy is used',nil,5,4},
 	}, playerFloat = {	'Floating info panel above crew members\' head',
 		enable = {'bool',TRUE},
 		uppercaseNames = {'bool',TRUE,nil,'Name as uppercase'},
@@ -56,9 +57,10 @@ local scheme = {
 		showInspire = {'num',2,{0,2},'Inspire speed-boost','Verbose'},
 	}, playerBottom = {	'Info text at the bottom of the HUD',
 		enable = {'bool',TRUE},
-		size = {'num',17,{15,30},'Text size',nil,2},
-		offset = {'num',0,{-30,30},'Vertical offset if you REALLY want to move it around',nil,2},
-		underneath = {'bool',TRUE,nil,'Put PlayerBottom infobox at the very bottom of the screen'},
+		size = {'num',17,{15,30},'Text size',nil,2,1},
+		offset = {'num',0,{-30,30},'Vertical offset if you REALLY want to move it around',nil,2,1},
+		underneath = {'bool',TRUE,nil,'Put PlayerBottom infobox at the very bottom of the screen',nil,nil,1},
+		uppercaseNames = {'bool',TRUE,nil,'Name as uppercase',nil,nil,1},
 		showClock = {'num',2,{0,2},'Put a clock after local player info','Verbose'},
 		showRank = {'bool',TRUE,nil,'Add Infamy & level info in front of player names'},
 		showInteraction = {'num',2,{0,2},'Interaction label if one is busy','Verbose'},
@@ -69,79 +71,79 @@ local scheme = {
 		showAverageDamage = {'num',1,{0,2},'Average Damage per bullet','Verbose'},
 		showDistance = {'num',2,{0,2},'Distance boost status (if casted by local player)','Verbose'},
 		showDowns = {'num',2,{0,2},'Downs counter','Verbose'},
-		showPing = {'num',1,{0,2},'Distance as meter','Verbose'},
-		showMinion = {'num',1,{0,2},'Minion health as percent if one has any','Verbose'},
+		showPing = {'num',2,{0,2},'Latency as miliseconds','Verbose'},
+		showConvertedEnemy = {'num',1,{0,2},'Minion health as percent if one has any','Verbose'},
 	}, popup = {	'Shows damages in 3D space',
 		enable = {'bool',TRUE},
-		size  = {'num',22,{10,30},'Text size'},
-		damageDecay  = {'num',10,{3,15},'Decay time'},
-		myDamage  = {'bool',TRUE,nil,'Show local player\'s damage'},
-		crewDamage  = {'bool',TRUE,nil,'Show other player\'s damage'},
-		AIDamage  = {'bool',TRUE,nil,'Show AI\'s damage'},
-		handsUp  = {'bool',TRUE,nil,'Show when an AI is going to surrender'},
-		dominated  = {'bool',TRUE,nil,'Show when an AI has cuffed himself'},
+		size  = {'num',22,{10,30},'Text size',nil,nil,1},
+		damageDecay  = {'num',10,{3,15},'Decay time',nil,nil,1},
+		myDamage  = {'bool',TRUE,nil,'Show local player\'s damage',nil,nil,2},
+		crewDamage  = {'bool',TRUE,nil,'Show other player\'s damage',nil,nil,2},
+		AiDamage  = {'bool',TRUE,nil,'Show AI\'s damage',nil,nil,3},
+		handsUp  = {'bool',TRUE,nil,'Show when an AI is going to surrender',nil,nil,4},
+		dominated  = {'bool',TRUE,nil,'Show when an AI has cuffed himself',nil,nil,4},
 
-	}, chat = {	{'If an event listed below happens and fulfill set condition, PocoHud will tell others through chat.\nPossible targets are:\n',{' No one: No One\n',cl.White:with_alpha(0.75)},{' Only me: Only me\n',cl.White:with_alpha(0.8)},{' Everyone-Host: Everyone if I am host\n',cl.White:with_alpha(0.85)},{' Everyone-EM: Everyone if I have attended the entire match\n',cl.White:with_alpha(0.9)},{' Everyone-Alone: Everyone if I am the only one who has PocoHud\n',cl.White:with_alpha(0.95)},{' Everyone-Always: Everyone, regardless of someone else already broadcasted with PocoHud or not',cl.White:with_alpha(1)}},
+	}, chat = {	{'If an event listed below happens and fulfill set condition, PocoHud will tell others via chat. Possible targets are:\n',{' No one: No One\n',cl.White:with_alpha(0.5)},{' Only me: Only me\n',cl.White:with_alpha(0.6)},{' Everyone-Host: Everyone if I am host\n',cl.White:with_alpha(0.7)},{' Everyone-EM: Everyone if I have attended the entire match\n',cl.White:with_alpha(0.8)},{' Everyone-Alone: Everyone if I am the only one who has PocoHud\n',cl.White:with_alpha(0.9)},{' Everyone-Always: Everyone, regardless of someone else already broadcasted with PocoHud or not',cl.White:with_alpha(1)}},
 		enable = {'bool',TRUE},
 		fallbackToMe = {'bool',TRUE,nil,'if an event is set to be sent to everyone but the condition is not fulfilled, show it to myself instead.',nil,nil,1},
 		midstatAnnounce = {'num',0,{0,2},'Announce stats on every X kills. Considered as \'Midgame stat\'','MidStat',nil,2},
 		midStat  = {'num',1,{0,2},'Midgame stat. (limited to ServerSend)','ChatSend',nil,2},
-		endStat  = {'num',2,{0,4},'Endgame stat','ChatSend',nil,2},
-		endStatCredit  = {'num',2,{0,4},'PocoMods group plug after endgame stat ;)','ChatSend',nil,2},
-		dominated  = {'num',2,{0,4},'Someone dominated a police enforcer','ChatSend',nil,2},
-		converted  = {'num',2,{0,4},'Someone converted a police enforcer','ChatSend',nil,2},
-		minionLost  = {'num',2,{0,4},'Someone lost a minion','ChatSend',nil,2},
-		minionShot  = {'num',4,{0,4},'Someone shot a minion','ChatSend',nil,2},
-		hostageChanged  = {'num',2,{0,4},'Hostage count has been changed (Not implemented)','ChatSend',nil,2},
-		custody  = {'num',2,{0,4},'Someone is in custody','ChatSend',nil,2},
-		downed  = {'num',1,{0,4},'Someone is downed','ChatSend',nil,2},
-		downedWarning  = {'num',4,{0,4},'Someone is downed more than twice in a row','ChatSend',nil,2},
-		replenished  = {'num',3,{0,4},'Someone replenished health(usually by Med kit)','ChatSend',nil,2},
-		messiah  = {'num',5,{0,5},'You consumed a pistol messiah shot','ChatSend',nil,2},
-		drillDone = {'num',2,{0,4},'A drill is done.\n* Requires Float-Drill option enabled','ChatSend',nil,2},
-		drillAlmostDone = {'num',2,{0,4},'A drill has less than 10 seconds left.\n* Requires Float-Drill option enabled','ChatSend',nil,2},
+		endStat  = {'num',2,{0,4},'Endgame stat','ChatSend',nil,3},
+		endStatCredit  = {'num',2,{0,4},'PocoMods group plug after endgame stat ;)','ChatSend',nil,3},
+		dominated  = {'num',2,{0,4},'Someone dominated a police enforcer','ChatSend',nil,4},
+		converted  = {'num',2,{0,4},'Someone converted a police enforcer','ChatSend',nil,4},
+		minionLost  = {'num',2,{0,4},'Someone lost a minion','ChatSend',nil,4},
+		minionShot  = {'num',4,{0,4},'Someone shot a minion','ChatSend',nil,4},
+		hostageChanged  = {'num',2,{0,4},'Hostage count has been changed\n* Not implemented','ChatSend',nil,4},
+		custody  = {'num',2,{0,4},'Someone is in custody','ChatSend',nil,4},
+		downed  = {'num',1,{0,4},'Someone is downed','ChatSend',nil,4},
+		downedWarning  = {'num',4,{0,4},'Someone is downed more than twice in a row','ChatSend',nil,4},
+		replenished  = {'num',3,{0,4},'Someone replenished health(usually by Med kit)','ChatSend',nil,4},
+		messiah  = {'num',5,{0,5},'You consumed a pistol messiah shot','ChatSend',nil,5},
+		drillDone = {'num',2,{0,4},'A drill is done.\n* Requires Float-ShowDrills option enabled','ChatSend',nil,6},
+		drillAlmostDone = {'num',2,{0,4},'A drill has less than 10 seconds left.\n* Requires Float-ShowDrills option enabled','ChatSend',nil,6},
 	}, hit = {	'Hit indicator that shows where you\'ve been shot from',
 		enable = {'bool',TRUE},
-		duration  = {'num',0,{0,10},'Seconds. 0 means auto (follows shield recovery time)','Auto'},
-		opacity  = {'num',50,{0,100},'Max opacity',nil,5},
-		number  = {'bool',TRUE,nil,'Show the exact amount you lost'},
-		numberSize  = {'num',25,{20,30},'Number size'},
-		numberDefaultFont  = {'bool',FALSE,nil,'Number uses default font'},
-		sizeStart  = {'num',100,{50,150},'Size at the beginning',nil,50},
-		sizeEnd  = {'num',200,{100,300},'Size at the end',nil,50},
-		shieldColor = {'color','LawnGreen','color','Shield lost color, full amount'},
-		healthColor = {'color','Red','color','Health lost color, full amount'},
-		shieldColorDepleted = {'color','Aqua','color','Shield lost color, depleted'},
-		healthColorDepleted = {'color','Magenta','color','Health lost color, depleted'},
+		duration  = {'num',0,{0,10},'Seconds. 0 means auto (follows shield recovery time)','Auto',nil,1},
+		opacity  = {'num',50,{0,100},'Max opacity',nil,5,1},
+		number  = {'bool',TRUE,nil,'Show the exact amount you lost',nil,nil,1},
+		numberSize  = {'num',25,{20,30},'Number size',nil,nil,1},
+		numberDefaultFont  = {'bool',FALSE,nil,'Number uses default font',nil,nil,1},
+		sizeStart  = {'num',100,{50,250},'Size at the beginning',nil,50,2},
+		sizeEnd  = {'num',200,{50,500},'Size at the end',nil,50,3},
+		shieldColor = {'color','LawnGreen','color','Shield lost color, full amount',nil,nil,4},
+		healthColor = {'color','Red','color','Health lost color, full amount',nil,nil,5},
+		shieldColorDepleted = {'color','Aqua','color','Shield lost color, depleted',nil,nil,4},
+		healthColorDepleted = {'color','Magenta','color','Health lost color, depleted',nil,nil,5},
 	}, float = {	'Floating infobox in 3D position',
 		enable = {'bool',TRUE},
-		border = {'bool',FALSE,nil,'Alternative box background'},
-		size = {'num',15,{10,20},'Font size'},
-		margin = {'num',3,{0,5},'Box inner padding'},
-		keepOnScreen = {'bool',TRUE,nil,'Keep floating boxes on screen'},
-		keepOnScreenMarginX = {'num',2,{0,20},'Margin for Left and Right'},
-		keepOnScreenMarginY = {'num',15,{0,20},'Margin for Top and Bottom'},
-		opacity  = {'num',90,{10,100},'Max opacity',nil,5},
-		unit = {'bool',TRUE,nil,'Show pointed mobs'},
-		drills = {'bool',TRUE,nil,'Show active drills'},
-		highlight = {'bool',TRUE,nil,'Configuration not implemented'},
-		minion = {'bool',TRUE,nil,'Configuration not implemented'},
-		bags = {'bool',TRUE,nil,'Configuration not implemented'},
+		frame = {'bool',FALSE,nil,'Alternative box frame',nil,nil,1},
+		size = {'num',15,{10,20},'Font size',nil,nil,1},
+		margin = {'num',3,{0,5},'Box inner padding',nil,nil,1},
+		keepOnScreen = {'bool',TRUE,nil,'Keep floating boxes on screen',nil,nil,2},
+		keepOnScreenMarginX = {'num',2,{0,20},'Margin for Left and Right',nil,nil,2},
+		keepOnScreenMarginY = {'num',15,{0,20},'Margin for Top and Bottom',nil,nil,2},
+		opacity  = {'num',90,{10,100},'Max opacity',nil,5,1},
+		showTargets = {'bool',TRUE,nil,'Show pointed mobs',nil,nil,3},
+		showDrills = {'bool',TRUE,nil,'Show active drills'},
+		showHighlighted = {'bool',TRUE,nil,'Configuration not implemented'},
+		showConvertedEnemy = {'bool',TRUE,nil,'Configuration not implemented'},
+		showBags = {'bool',TRUE,nil,'Show pointed bags.\n* Requires \'Show Targets\' enabled'},
 	}, game = {	'Game specific enhancements',
-		fasterDesyncResolve = {'num',2,{1,3},'In-game Player husks will catch up severe desync faster and represent more accurate position.\n','DesyncResolve'},
-		ingameJoinRemaining = {'bool',TRUE,nil,'In-game SOMEONE IS JOINING dialog will show you how many seconds left'},
-		kickMenuRank = {'bool',TRUE,nil,'In-game Kick menu will display player levels with their name'},
-		corpseLimit = {'num',3,{1,10},'In-game corpse limit\nDefault is 8.\nEach step multiplies/divides result by 2.','corpse'},
-		cantedSightCrook = {'num',4,{1,4},'In-game canted sight(as gadget) indicator','cantedSight'},
-		rememberGadgetState = {'bool',TRUE,nil,'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps'},
-		subtitleFontSize = {'num',20,{10,30},'Subtitle font size'},
-		subtitleFontColor = {'color','White',nil,'Subtitle font color'},
-		subtitleOpacity = {'num',100,{10,100},'Subtitle opacity',nil,10},
+		fasterDesyncResolve = {'num',2,{1,3},'In-game Player husks will catch up severe desync faster and represent more accurate position.','DesyncResolve',nil,1},
+		ingameJoinRemaining = {'bool',TRUE,nil,'In-game SOMEONE IS JOINING dialog will show you how many seconds left',nil,nil,1},
+		showRankInKickMenu = {'bool',TRUE,nil,'In-game Kick menu will display player levels with their name',nil,nil,1},
+		corpseLimit = {'num',3,{1,10},'In-game corpse limit\nDefault is 8.\nEach step multiplies/divides result by 2.','corpse',nil,2},
+		cantedSightCrook = {'num',4,{1,4},'In-game canted sight(as gadget) indicator','cantedSight',nil,2},
+		rememberGadgetState = {'bool',TRUE,nil,'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps',nil,nil,2},
+		subtitleFontSize = {'num',20,{10,30},'Subtitle font size',nil,nil,3},
+		subtitleFontColor = {'color','White',nil,'Subtitle font color',nil,nil,3},
+		subtitleOpacity = {'num',100,{10,100},'Subtitle opacity',nil,10,3},
 	}
 }
 local _vanity = {
 	ChatSend = 'No one,Only me,Everyone-Host,Everyone-EM,Everyone-Alone,Everyone-Always',
-	Verbose = 'Never,Verbose only,Always',
+	Verbose = 'Never,Detailed mode only,Always',
 	MidStat = 'Never,50,100',
 	align = 'none,Start,Middle,End',
 	style = 'N/A,PocoHud,Vanilla',
@@ -313,6 +315,9 @@ function Kits:locked(index,category)
 		primaries = function()
 			local weapon_data = Global.blackmarket_manager.weapons
 			local obj = val and managers.blackmarket:get_crafted_category_slot(category, val)
+			if not obj then
+				return 'invalid value'
+			end
 			local w_id = obj and obj.weapon_id
 			local w_data = w_id and weapon_data[w_id]
 			if not w_data then
@@ -326,16 +331,23 @@ function Kits:locked(index,category)
 		end,
 		armor = function()
 			local obj = val and Global.blackmarket_manager.armors[val]
+			if not obj then
+				return 'invalid value'
+			end
 			local unlocked = obj and obj.unlocked
 			return not unlocked and 'Locked'
 		end,
 		melee = function()
 			local obj = val and Global.blackmarket_manager.melee_weapons[val]
+			if not obj then
+				return 'invalid value'
+			end
 			local unlocked = obj and obj.unlocked
 			return not unlocked and 'Locked'
 		end,
 		color = function() return end
 	}
+	funcs.key = funcs.color
 	funcs.secondaries = funcs.primaries
 	if funcs[category] then
 		local r,err = pcall(funcs[category])
@@ -349,21 +361,32 @@ function Kits:locked(index,category)
 	end
 end
 
-function Kits:equip(index)
+function Kits:keys()
+	local r = {}
+	for index,obj in pairs(self.items) do
+		local nKey = obj.key and obj.key~='' and Poco:sanitizeKey(obj.key)
+		if nKey then
+			r[nKey] = index
+		end
+	end
+	return r
+end
+
+function Kits:equip(index,showMessage)
 	local _uoi = MenuCallbackHandler._update_outfit_information
 	MenuCallbackHandler._update_outfit_information = function() end -- Avoid repeated submit
-	local msg = {}
+	local msg,gMsg = {},{}
 
 	local r,err = pcall(function()
 		local obj = self.items[index]
 		if not obj then return false end
 		for cat, slot in pairs(obj) do
 			if self:locked(index,cat) then
-				-- msg[#msg+1] = _.s('[',cat:upper(),'] was invalid(Reason: ',self:locked(index,cat),'). ignored.\n')
+				msg[#msg+1] = _.s('[',cat:upper(),'] was invalid(Reason: ',self:locked(index,cat),'). ignored.\n')
 			else
 				if cat == 'primaries' or cat == 'secondaries' then
 					managers.blackmarket:equip_weapon(cat,slot)
-				elseif cat == 'color' then
+				elseif cat == 'color' or cat == 'key' then
 					-- ignore
 				elseif cat == 'armor' then
 					managers.blackmarket:equip_armor(slot)
@@ -374,6 +397,11 @@ function Kits:equip(index)
 				else
 					_('KitsEquip:',cat,'?')
 				end
+				if cat == 'color' or cat == 'key' then
+					-- ignore gMsg
+				else
+					gMsg[#gMsg+1] = self:get(index,cat,true)
+				end
 			end
 		end
 	end)
@@ -383,6 +411,12 @@ function Kits:equip(index)
 	MenuCallbackHandler._update_outfit_information = _uoi -- restore
 	MenuCallbackHandler:_update_outfit_information()
 
+	if #msg == 0 and showMessage then
+		msg = {_.s('Successfully equipped.',gMsg)}
+		for __,o in ipairs(gMsg) do
+
+		end
+	end
 	if #msg > 0 then
 		managers.system_menu:show{
 			button_list = { {
@@ -390,7 +424,7 @@ function Kits:equip(index)
 					text = 'OK'
 				} },
 			text = table.concat(msg),
-			title = 'Kits Profiler'
+			title = 'Kits Profiler'..(index and ' : '..index or '')
 		}
 	end
 end
@@ -433,7 +467,7 @@ function Kits:get(index,category,asText)
 		color = function(a) return a end
 	}
 	_asText.secondaries = _asText.primaries
-	return asText and _asText[category](obj[category]) or obj[category]
+	return asText and (_asText[category] and _asText[category](obj[category]) or 'asText'..category..'??') or obj[category]
 end
 
 --[[function Kits:set(index,category,slot)

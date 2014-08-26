@@ -67,7 +67,7 @@ function TBuff:_make()
 	local simple = self.owner:_isSimple(data.key)
 	self.created = true
 	if simple then
-		local simpleRadius = buffO.simpleBusyRadius
+		local simpleRadius = buffO.simpleBusySize
 		local pnl = self.ppnl:panel({x = self.owner.ww/2-simpleRadius,y=self.owner.hh/2-simpleRadius, w=simpleRadius*2,h=simpleRadius*2})
 		self.pnl = pnl
 		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
@@ -300,7 +300,7 @@ function TFloat:_make()
 	local pnl = self.ppnl:panel({x = 0,y=-size, w=300,h=100})
 	local texture = 'guis/textures/pd2/hud_health' or 'guis/textures/pd2/hud_progress_32px'
 	self.pnl = pnl
-	self.bg = floatO.border
+	self.bg = floatO.frame
 		and HUDBGBox_create(pnl, {x= 0,y= 0,w= 1,h= 1},{color=cl.White:with_alpha(1)})
 		or pnl:bitmap( { name='blur', texture='guis/textures/test_blur_df', render_template='VertexColorTexturedBlur3D', layer=-1, x=0,y=0 } )
 	self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=m,y=m,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'normal', layer = 4} )
@@ -1226,7 +1226,13 @@ function PocoUIKeyValue:setup()
 	local onKeyPress = function(o, key)
 		me._stringFocused = now()
 		local keyName = Input:keyboard():button_name_str(key)
-		local ignore = ('backspace,space,esc,num abnt c1,num abnt c2,@,ax,convert,kana,kanji,no convert,oem 102,stop,unlabeled,yen,mouse 8,mouse 9'):split(',')
+		if key == Idstring('backspace') then
+			self:sound('menu_error')
+			self:val('')
+			self:cancel()
+			return
+		end
+		local ignore = ('space,esc,num abnt c1,num abnt c2,@,ax,convert,kana,kanji,no convert,oem 102,stop,unlabeled,yen,mouse 8,mouse 9'):split(',')
 		for __,iKey in pairs(ignore) do
 			if key == Idstring(iKey) then
 				if iKey ~= 'esc' then
@@ -1255,7 +1261,12 @@ end
 function PocoUIKeyValue:val(set)
 	local val = PocoUIValue.val(self,set)
 	if set then
-		_.l(self.valLbl,val:upper(),true)
+		if set == '' then
+			set = {'NONE',cl.Silver}
+		else
+			set = set:upper()
+		end
+		_.l(self.valLbl,set,true)
 	end
 	return val
 end
@@ -2331,7 +2342,7 @@ function PocoHud3Class._drawOptions(tab)
 		hintText = 'Revert to the default setting.'
 	})
 
-	local oTabs = PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-120, pTab = tab})
+	local oTabs = PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-90, pTab = tab})
 	for category, objects in _pairs(O.scheme) do
 		local _y, m, half = 10, 5
 		local x,y = function()
@@ -2360,13 +2371,13 @@ function PocoHud3Class._drawOptions(tab)
 			elseif b == 'enable' then
 				return  false
 			elseif s1 ~= s2 and type(s1) == type(s2) then
-				return s1 <= s2
+				return s1 < s2
 			elseif t1 == 'bool' and t2 ~= 'bool' then
 				return true
 			elseif t1 ~= 'bool' and t2 == 'bool' then
 				return false
 			end
-			return tostring(a) <= tostring(b)
+			return tostring(a) < tostring(b)
 		end) do
 			if type(name) ~= 'number' then
 				c = c + 1
@@ -2423,7 +2434,7 @@ end
 local _kitPnl,_kitPnlBtn
 function PocoHud3Class._drawKit(tab)
 	if not K then
-		K = PocoHud3Class.Kits:new()
+		K = PocoHud3Class.K
 	end
 	local inGameDeep = me.inGameDeep
 	local C,_y,m = PocoHud3Class,10,5
@@ -2439,7 +2450,7 @@ function PocoHud3Class._drawKit(tab)
 		'* Kit profiler is dependant on your inventory setup. Any changes in your inventory(mods, sell) will be applied to the result.',true)
 
 	local draw, _Current
-	local oTabs = PocoTabs:new(me._ws,{name = 'kits',x = 10, y = 40, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
+	local oTabs = PocoTabs:new(me._ws,{name = 'kits',x = 10, y = 40, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
 
 	local tabBtn = oTabs:add('USE KIT')
 	local tabEdt =oTabs:add('EDIT')
@@ -2511,7 +2522,7 @@ function PocoHud3Class._drawKit(tab)
 				end
 				local elem = PocoUIStringValue:new(tabEdt,{ pnl = pnl,
 					x = 0, y = 0, w=150, h=20, category = false, name = false,
-					fontSize = 18, text=' ' , value = s..sNum , max = 20
+					fontSize = 18, text=' ' , value = s..sNum , max = 20, hintText = 'Set this kit\'s Vanity name for yourself.'
 				})
 				_Current[category] = {elem}
 				row[#row+1] = elem
@@ -2519,9 +2530,20 @@ function PocoHud3Class._drawKit(tab)
 		end
 		local elem = PocoUIColorValue:new(tabEdt,{ pnl = pnl,
 			x = 330, y = 110, w = 300, h=30, category = false, name = false,
-			fontSize = 18, text=('Button Color'):upper() , value = 'White'
+			fontSize = 18, text=('Button Color'):upper() , value = 'White', hintText = 'Set this kit\'s Vanity color for yourself.'
 		})
 		_Current['color'] = {elem}
+
+		elem = PocoUIKeyValue:new(tabEdt,{ pnl = pnl,
+			x = 120, y = 110, w = 200, h=30, category = false, name = false,
+			fontSize = 18, text=('Key Bind'):upper() , value = '',
+			hintText = {
+				'If set, press ',{'Ctrl + ALT + THIS',cl.Yellow},' key while out-game to equip this kit.',
+				{'\nCustom key-combination not available.\nDuplicated keybind can result unexpected result.\n(Only one kit can/will be equipped)',cl.Silver},
+				{'\nBackspace to Remove bound key.',cl.Red}
+			}
+		})
+		_Current['key'] = {elem}
 
 		lH = me:_drawRow(pnl,20,row,20,y(),pnl:w()-40,false,true)
 		y(lH,true)
@@ -2554,9 +2576,9 @@ function PocoHud3Class._drawKit(tab)
 								for cat,obj in pairs(_Current) do
 									if cat == 'name' then
 										obj[1]:val(ind)
-									elseif cat == 'color' then
+									elseif cat == 'color' or cat == 'key' then
 										obj[2] = K:get(ind,cat)
-										obj[1]:val(obj[2])
+										obj[1]:val(obj[2] or cat == 'key' and '')
 									else
 										if K:get(ind,cat) then
 											obj[2] = K:get(ind,cat)
@@ -2613,6 +2635,11 @@ function PocoHud3Class._drawKit(tab)
 					end
 				end
 			end
+			local boundKey = K:get(ind,'key')
+			if not inGameDeep and boundKey and boundKey ~= '' then
+				row[#row+1] = {'KeyBind : ',cl.Tan}
+				row[#row+1] = {'CTRL + ALT + '..boundKey..'\n',cl.Lime}
+			end
 			row[#row+1] = inGameDeep and 'N/A in game' or '* DoubleClick to Equip this item'
 			PocoUIButton:new(tabBtn,{ pnl = pnl,
 				onPressed = function(self)
@@ -2640,7 +2667,7 @@ function PocoHud3Class._drawKit(tab)
 			for cat,obj in pairs(_Current) do
 				if cat == 'name' then
 					name = obj[1]:val()
-				elseif cat == 'color' then
+				elseif cat == 'color' or cat == 'key' then
 					result[cat] = obj[1]:val()
 				elseif obj[1]:val() then
 						result[cat] = obj[2]
@@ -2651,6 +2678,7 @@ function PocoHud3Class._drawKit(tab)
 				K:save()
 				self:sound('item_buy')
 				draw()
+				me:_updateBind()
 			else
 				self:sound('menu_error')
 			end
