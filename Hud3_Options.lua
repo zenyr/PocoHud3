@@ -16,38 +16,37 @@ local scheme = {
 	}, buff = {	'Shows realtime buff status',
 		enable = {'bool',TRUE},
 
-		originLeft = {'num',10,{0,100},'Origin point X (% of the screen)',nil,2},
-		originTop = {'num',22,{0,100},'Origin point Y (% of the screen)',nil,2},
-		maxFPS  = {'num',50,nil,'FPS cap to reduce performance hit',nil,5},
-		size = {'num',70,nil,'Icon size (ignored with Vanilla style)'},
-		gap = {'num',10,nil,'Icon gap'},
-		align = {'num',1,{1,3},'Icon alignment (vertical for Vanilla style)','align'},
-		style = {'num',1,{1,2},'Buff icon style','style'},
+		xPosition = {'num',10,{0,100},'Origin point X (% from left of screen)',nil,2,1},
+		yPosition = {'num',22,{0,100},'Origin point Y (% from top of screen)',nil,2,2},
+		maxFPS  = {'num',50,nil,'FPS cap to reduce performance hit',nil,5,3},
+		buffSize = {'num',70,nil,'Icon size (ignored with Vanilla style)',nil,nil,4},
+		gap = {'num',10,nil,'Icon gap',nil,nil,5},
+		justify = {'num',1,{1,3},'Icon alignment (vertical for Vanilla style)','align',nil,6},
+		style = {'num',1,{1,2},'Buff icon style','style',nil,7},
 
-		ignoreBerserker = {'bool',FALSE,nil,'Berserker indicator'},
-		ignoreStamina = {'bool',FALSE,nil,'Stamina indicator'},
-		ignoreCharge = {'bool',FALSE,nil,'Melee charge indicator'},
-		ignoreTransition = {'bool',FALSE,nil,'Transitions like weapon swap, melee cooldown'},
-		ignoreReload = {'bool',FALSE,nil,'Ignore reload timer.\n* This event also depends on \'Transition\' option'},
-		ignoreCarryDrop = {'bool',FALSE,nil,'Bag interaction cooldown'},
-		ignoreInteract = {'bool',FALSE,nil,'Shout cooldown'},
-		ignoreInteraction = {'bool',FALSE,nil,'Interaction timer that involves holding USE key'},
-		ignoreInspire = {'bool',FALSE,nil,'Inspire cooldown (giving end)'},
-		ignoreBoost = {'bool',FALSE,nil,'Inspire duration (receiving end)'},
-		ignoreShield = {'bool',FALSE,nil,'Shield recovery cooldown'},
-		ignoreECM = {'bool',FALSE,nil,'ECM duration'},
-		ignoreFeedback = {'bool',FALSE,nil,'ECM Feedback duration'},
-		ignoreTapeLoop = {'bool',FALSE,nil,'Tapeloop duration'},
-		ignoreOverkill = {'bool',FALSE,nil,'Overkill duration'},
-		ignoreCombatMedic = {'bool',FALSE,nil,'Combat medic duration'},
-		ignoreUnderdog = {'bool',FALSE,nil,'Underdog duration'},
-		ignoreBulletstorm = {'bool',FALSE,nil,'Bulletstorm duration'},
-		ignoreSuppressed = {'bool',TRUE,nil,'Suppression that prevents shield recovery and increases bullet deviation.\n(Bullet deviation not in effect)'},
+		hideBerserker = {'bool',FALSE,nil,'Berserker indicator'},
+		hideStamina = {'bool',FALSE,nil,'Stamina indicator'},
+		hideCharge = {'bool',FALSE,nil,'Melee charge indicator'},
+		hideTransition = {'bool',FALSE,nil,'Transitions like weapon swap, melee cooldown'},
+		hideCarryDrop = {'bool',FALSE,nil,'Bag interaction cooldown'},
+		hideInteract = {'bool',FALSE,nil,'Shout cooldown'},
+		hideInteraction = {'bool',FALSE,nil,'Interaction timer that involves holding USE key'},
+		hideInspire = {'bool',FALSE,nil,'Inspire cooldown (giving end)'},
+		hideBoost = {'bool',FALSE,nil,'Inspire duration (receiving end)'},
+		hideShield = {'bool',FALSE,nil,'Shield recovery cooldown'},
+		hideECM = {'bool',FALSE,nil,'ECM duration'},
+		hideFeedback = {'bool',FALSE,nil,'ECM Feedback duration'},
+		hideTapeLoop = {'bool',FALSE,nil,'Tapeloop duration'},
+		hideOverkill = {'bool',FALSE,nil,'Overkill duration'},
+		hideCombatMedic = {'bool',FALSE,nil,'Combat medic duration'},
+		hideUnderdog = {'bool',FALSE,nil,'Underdog duration'},
+		hideBulletstorm = {'bool',FALSE,nil,'Bulletstorm duration'},
+		hideSuppressed = {'bool',TRUE,nil,'Suppression that prevents shield recovery and increases bullet deviation.\n(Bullet deviation not in effect)'},
 
 		noSprintDelay  = {'bool',TRUE,nil,'Ignore after-sprint delay '},
 		hideInteractionCircle  = {'bool',FALSE,nil,'Hide vanilla game\'s interaction circle'},
-		simpleBusy  = {'bool',TRUE,nil,'Replace \'busy\' icons with simple red circle at the crosshair.\n* This also depends on \'Transition\' option.'},
-		simpleBusyRadius  = {'num',10,{5,30},'Set size of SimpleBusy indicator if simpleBusy is used',nil,5},
+		simpleBusyIndicator = {'bool',TRUE,nil,'Replace \'busy\' icons with simple red circle at the crosshair\nSuch as: Reloading, Weapon-swap, melee'},
+		simpleBusySize = {'num',10,{5,30},'Set size of SimpleBusy indicator if simpleBusy is used',nil,5},
 	}, playerFloat = {	'Floating info panel above crew members\' head',
 		enable = {'bool',TRUE},
 		uppercaseNames = {'bool',TRUE,nil,'Name as uppercase'},
@@ -82,24 +81,25 @@ local scheme = {
 		handsUp  = {'bool',TRUE,nil,'Show when an AI is going to surrender'},
 		dominated  = {'bool',TRUE,nil,'Show when an AI has cuffed himself'},
 
-	}, chat = {	'Broadcasts certain event.\nPossible conditions are: Never < ReadOnly < SendServer < SendFullClient < SendDropInClient < Always.\nLeft means less importance, right means more importance that people should know about.',
+	}, chat = {	{'If an event listed below happens and fulfill set condition, PocoHud will tell others through chat.\nPossible targets are:\n',{' No one: No One\n',cl.White:with_alpha(1)},{' Only me: Only me\n',cl.White:with_alpha(1)},{' Everyone-Host: Everyone if I am host\n',cl.White:with_alpha(1)},{' Everyone-EM: Everyone if I have attended the entire match\n',cl.White:with_alpha(1)},{' Everyone-Alone: Everyone if I am the only one who has PocoHud\n',cl.White:with_alpha(1)},{' Everyone-Always: Everyone, regardless of someone else already broadcasted with PocoHud or not',cl.White:with_alpha(1)}},
 		enable = {'bool',TRUE},
-		midstatAnnounce = {'num',0,{0,2},'Announce stats on every X kills. Considered as \'Midgame stat\'','MidStat'},
-		midStat  = {'num',1,{0,2},'Midgame stat. (limited to ServerSend)','ChatSend'},
-		endStat  = {'num',2,{0,4},'Endgame stat','ChatSend'},
-		endStatCredit  = {'num',2,{0,4},'PocoMods group plug after endgame stat ;)','ChatSend'},
-		dominated  = {'num',2,{0,4},'Someone dominated a police enforcer','ChatSend'},
-		converted  = {'num',2,{0,4},'Someone converted a police enforcer','ChatSend'},
-		minionLost  = {'num',2,{0,4},'Someone lost a minion','ChatSend'},
-		minionShot  = {'num',4,{0,4},'Someone shot a minion','ChatSend'},
-		hostageChanged  = {'num',2,{0,4},'Hostage count has been changed (Not implemented)','ChatSend'},
-		custody  = {'num',2,{0,4},'Someone is in custody','ChatSend'},
-		downed  = {'num',1,{0,4},'Someone is downed','ChatSend'},
-		downedWarning  = {'num',4,{0,4},'Someone is downed more than twice in a row','ChatSend'},
-		replenished  = {'num',3,{0,4},'Someone replenished health(usually by Med kit)','ChatSend'},
-		messiah  = {'num',5,{0,5},'You consumed a pistol messiah shot','ChatSend'},
-		drillDone = {'num',2,{0,4},'A drill/timer is done.\n* Requires Float-Drill option enabled','ChatSend'},
-		drillAlmostDone = {'num',2,{0,4},'A drill/timer has 10 seconds left.\n* Requires Float-Drill option enabled','ChatSend'},
+		fallbackToMe = {'bool',TRUE,nil,'if an event is set to be sent to everyone but the condition is not fulfilled, show it to myself instead.',nil,nil,1},
+		midstatAnnounce = {'num',0,{0,2},'Announce stats on every X kills. Considered as \'Midgame stat\'','MidStat',nil,2},
+		midStat  = {'num',1,{0,2},'Midgame stat. (limited to ServerSend)','ChatSend',nil,2},
+		endStat  = {'num',2,{0,4},'Endgame stat','ChatSend',nil,2},
+		endStatCredit  = {'num',2,{0,4},'PocoMods group plug after endgame stat ;)','ChatSend',nil,2},
+		dominated  = {'num',2,{0,4},'Someone dominated a police enforcer','ChatSend',nil,2},
+		converted  = {'num',2,{0,4},'Someone converted a police enforcer','ChatSend',nil,2},
+		minionLost  = {'num',2,{0,4},'Someone lost a minion','ChatSend',nil,2},
+		minionShot  = {'num',4,{0,4},'Someone shot a minion','ChatSend',nil,2},
+		hostageChanged  = {'num',2,{0,4},'Hostage count has been changed (Not implemented)','ChatSend',nil,2},
+		custody  = {'num',2,{0,4},'Someone is in custody','ChatSend',nil,2},
+		downed  = {'num',1,{0,4},'Someone is downed','ChatSend',nil,2},
+		downedWarning  = {'num',4,{0,4},'Someone is downed more than twice in a row','ChatSend',nil,2},
+		replenished  = {'num',3,{0,4},'Someone replenished health(usually by Med kit)','ChatSend',nil,2},
+		messiah  = {'num',5,{0,5},'You consumed a pistol messiah shot','ChatSend',nil,2},
+		drillDone = {'num',2,{0,4},'A drill is done.\n* Requires Float-Drill option enabled','ChatSend',nil,2},
+		drillAlmostDone = {'num',2,{0,4},'A drill has less than 10 seconds left.\n* Requires Float-Drill option enabled','ChatSend',nil,2},
 	}, hit = {	'Hit indicator that shows where you\'ve been shot from',
 		enable = {'bool',TRUE},
 		duration  = {'num',0,{0,10},'Seconds. 0 means auto (follows shield recovery time)','Auto'},
@@ -131,7 +131,7 @@ local scheme = {
 		fasterDesyncResolve = {'num',2,{1,3},'In-game Player husks will catch up severe desync faster and represent more accurate position.\n','DesyncResolve'},
 		ingameJoinRemaining = {'bool',TRUE,nil,'In-game SOMEONE IS JOINING dialog will show you how many seconds left'},
 		kickMenuRank = {'bool',TRUE,nil,'In-game Kick menu will display player levels with their name'},
-		corpseLimit = {'num',3,{1,10},'In-game corpse limit','corpse'},
+		corpseLimit = {'num',3,{1,10},'In-game corpse limit\nDefault is 8.\nEach step multiplies/divides result by 2.','corpse'},
 		cantedSightCrook = {'num',4,{1,4},'In-game canted sight(as gadget) indicator','cantedSight'},
 		rememberGadgetState = {'bool',TRUE,nil,'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps'},
 		subtitleFontSize = {'num',20,{10,30},'Subtitle font size'},
@@ -140,7 +140,7 @@ local scheme = {
 	}
 }
 local _vanity = {
-	ChatSend = 'never,readOnly,serverSend,clientFullSend,clientMidSend,alwaysSend',
+	ChatSend = 'No one,Only me,Everyone-Host,Everyone-EM,Everyone-Alone,Everyone-Always',
 	Verbose = 'Never,Verbose only,Always',
 	MidStat = 'Never,50,100',
 	align = 'none,Start,Middle,End',
@@ -161,7 +161,7 @@ local Option = class()
 PocoHud3Class.Option = Option
 function Option:init()
 	self:default()
-	self.scheme = table.deepcopy(scheme)
+	self.scheme = scheme
 end
 
 function Option:reset()
@@ -216,6 +216,10 @@ end
 
 function Option:_step(category,name)
 	return self:_get(true,category,name)[6]
+end
+
+function Option:_sort(category,name)
+	return self:_get(true,category,name)[7]
 end
 
 function Option:set(category, name, value)

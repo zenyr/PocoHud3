@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 152
-local TAG = '0.152 hotfix 2 (ga00d85f)'
+local REV = 153
+local TAG = '0.152 hotfix 3 (g270c1b3)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -756,7 +756,7 @@ function TPocoHud3:_updatePlayers(t)
 	end
 end
 function TPocoHud3:_isSimple(key)
-	return O:get('buff','simpleBusy') and (key == 'transition' or key == 'charge')
+	return O:get('buff','simpleBusyIndicator') and (key == 'transition' or key == 'charge')
 end
 local _mask = World:make_slot_mask(1, 8, 11, 12, 14, 16, 18, 21, 22, 24, 25, 26, 33, 34, 35 )
 function TPocoHud3:_updateItems(t,dt)
@@ -802,8 +802,8 @@ function TPocoHud3:_updateItems(t,dt)
 		local buffO = O:get('buff')
 		local style = buffO.style
 		local vanilla = style == 2
-		local align = buffO.align
-		local size = (vanilla and 40 or buffO.size) + buffO.gap
+		local align = buffO.justify
+		local size = (vanilla and 40 or buffO.buffSize) + buffO.gap
 		local count = 0
 		for key,buff in pairs(self.buffs) do
 			if not (buff.dead or buff.dying or self:_isSimple(key)) then

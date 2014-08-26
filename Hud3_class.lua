@@ -806,7 +806,7 @@ function PocoUIHintLabel:makeHintPanel()
 	local _reposition = function(x,y)
 		if hintPnl then
 			x = math.max(0,math.min(self.ppnl:w()-hintPnl:w(),x+10))
-			y = math.max(self.ppnl:world_y(),math.min(self.ppnl:h()-hintPnl:h(),y))
+			y = math.max(self.ppnl:world_y(),math.min((me.hh or 0)-20-hintPnl:h(),y))
 			hintPnl:set_world_position(x,y+20)
 		end
 	end
@@ -1643,7 +1643,7 @@ function PocoTab:addHotZone(event,item)
 end
 
 function PocoTab:isHot(event, x, y, autoFire)
-	if self.hotZones[event] and alive(self.pnl) and self.pnl:inside(x,y) then
+	if self.hotZones[event] and alive(self.pnl) and self.box.wrapper:inside(x,y) then
 		for i,hotZone in pairs(self.hotZones[event]) do
 			if hotZone:isHot(event, x,y) then
 				if autoFire then
@@ -2354,10 +2354,13 @@ function PocoHud3Class._drawOptions(tab)
 		local _sy,_ty = _y
 		for name,values in _pairs(objects,function(a,b)
 			local t1, t2 = O:_type(category,a),O:_type(category,b)
+			local s1, s2 = O:_sort(category,a) or 99,O:_sort(category,b) or 99
 			if a == 'enable' then
 				return true
 			elseif b == 'enable' then
 				return  false
+			elseif s1 ~= s2 and type(s1) == type(s2) then
+				return s1 <= s2
 			elseif t1 == 'bool' and t2 ~= 'bool' then
 				return true
 			elseif t1 ~= 'bool' and t2 == 'bool' then
