@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 151
-local TAG = '0.152 hotfix 1 (ged3be32)'
+local REV = 152
+local TAG = '0.152 hotfix 2 (ga00d85f)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -463,7 +463,7 @@ function TPocoHud3:Float(unit,category,temp,tag)
 end
 function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
 	if not O:get('buff','enable') then return end
-	if O:get('buff','ignore'.. ((data.key):gsub('^%l', string.upper)) ) then return end
+	if O:get('buff','hide'.. ((data.key):gsub('^%l', string.upper)) ) then return end
 	local buff = self.buffs[data.key]
 	if buff and (buff.data.et ~= data.et or buff.data.good ~= data.good )then
 		buff:destroy(1)
@@ -1317,7 +1317,7 @@ function TPocoHud3:_hook()
 		hook( PlayerStandard, '_start_action_reload', function( self,t  )
 			Run('_start_action_reload', self, t )
 			_matchStance(true)
-			local et = not O:get('buff','ignoreReload') and self._state_data.reload_expire_t
+			local et = not O:get('buff','hideReload') and self._state_data.reload_expire_t
 			if et then
 				pcall(me.Buff,me,({
 					key='transition', good=false,
