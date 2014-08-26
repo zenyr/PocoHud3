@@ -382,7 +382,7 @@ function Kits:equip(index,showMessage)
 		if not obj then return false end
 		for cat, slot in pairs(obj) do
 			if self:locked(index,cat) then
-				msg[#msg+1] = _.s('[',cat:upper(),'] was invalid(Reason: ',self:locked(index,cat),'). ignored.\n')
+				msg[#msg+1] = _.s('Ignored',cat:upper(),':',self:locked(index,cat),'.\n')
 			else
 				if cat == 'primaries' or cat == 'secondaries' then
 					managers.blackmarket:equip_weapon(cat,slot)
@@ -411,10 +411,10 @@ function Kits:equip(index,showMessage)
 	MenuCallbackHandler._update_outfit_information = _uoi -- restore
 	MenuCallbackHandler:_update_outfit_information()
 
-	if #msg == 0 and showMessage then
-		msg = {_.s('Successfully equipped.',gMsg)}
+	if showMessage then
+		msg[#msg+1] = 'Successfully equipped:\n'
 		for __,o in ipairs(gMsg) do
-
+			msg[#msg+1] = o .. (__<#gMsg and ', ' or '')
 		end
 	end
 	if #msg > 0 then
@@ -467,7 +467,7 @@ function Kits:get(index,category,asText)
 		color = function(a) return a end
 	}
 	_asText.secondaries = _asText.primaries
-	return asText and (_asText[category] and _asText[category](obj[category]) or 'asText'..category..'??') or obj[category]
+	return asText and _asText[category] and _asText[category](obj[category]) or obj[category]
 end
 
 --[[function Kits:set(index,category,slot)

@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 155
-local TAG = '0.152 hotfix 5 (g9b047f6)'
+local REV = 156
+local TAG = '0.152 hotfix 6 (gd552aaa)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -2056,6 +2056,14 @@ function TPocoHud3:toggleVerbose(state)
 		self.verbose = not self.verbose
 	else
 		self.verbose = state
+	end
+	if not inGameDeep and self.verbose then
+		pcall(function()
+			self:Menu()
+			if self.menuGui then
+				self.menuGui.gui:goTo(3)
+			end
+		end)
 	end
 end
 function TPocoHud3:test()
