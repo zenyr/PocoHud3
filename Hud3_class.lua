@@ -1793,7 +1793,7 @@ function PocoTabs:repaint()
 		if isSelected then
 			self.currentTab = itm
 		end
-		local hPnl = self.pnl:panel{w = 200, h = self.config.th, x = x, y = 0,layer = 5}
+		local hPnl = self.pnl:panel{w = 200, h = self.config.th, x = x, y = 0}
 		if itm.hPnl then
 			self.pnl:remove(itm.hPnl)
 		end
@@ -1809,7 +1809,7 @@ function PocoTabs:repaint()
 			font = FONT,
 			font_size = self.config.fontSize,
 			color = isSelected and cl.Black or cl.White,
-			layer = 2,
+			layer = 1,
 			align = 'center',
 			vertical = 'center'
 		})

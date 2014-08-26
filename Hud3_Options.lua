@@ -81,7 +81,7 @@ local scheme = {
 		handsUp  = {'bool',TRUE,nil,'Show when an AI is going to surrender'},
 		dominated  = {'bool',TRUE,nil,'Show when an AI has cuffed himself'},
 
-	}, chat = {	{'If an event listed below happens and fulfill set condition, PocoHud will tell others through chat.\nPossible targets are:\n',{' No one: No One\n',cl.White:with_alpha(1)},{' Only me: Only me\n',cl.White:with_alpha(1)},{' Everyone-Host: Everyone if I am host\n',cl.White:with_alpha(1)},{' Everyone-EM: Everyone if I have attended the entire match\n',cl.White:with_alpha(1)},{' Everyone-Alone: Everyone if I am the only one who has PocoHud\n',cl.White:with_alpha(1)},{' Everyone-Always: Everyone, regardless of someone else already broadcasted with PocoHud or not',cl.White:with_alpha(1)}},
+	}, chat = {	{'If an event listed below happens and fulfill set condition, PocoHud will tell others through chat.\nPossible targets are:\n',{' No one: No One\n',cl.White:with_alpha(0.75)},{' Only me: Only me\n',cl.White:with_alpha(0.8)},{' Everyone-Host: Everyone if I am host\n',cl.White:with_alpha(0.85)},{' Everyone-EM: Everyone if I have attended the entire match\n',cl.White:with_alpha(0.9)},{' Everyone-Alone: Everyone if I am the only one who has PocoHud\n',cl.White:with_alpha(0.95)},{' Everyone-Always: Everyone, regardless of someone else already broadcasted with PocoHud or not',cl.White:with_alpha(1)}},
 		enable = {'bool',TRUE},
 		fallbackToMe = {'bool',TRUE,nil,'if an event is set to be sent to everyone but the condition is not fulfilled, show it to myself instead.',nil,nil,1},
 		midstatAnnounce = {'num',0,{0,2},'Announce stats on every X kills. Considered as \'Midgame stat\'','MidStat',nil,2},
