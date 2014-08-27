@@ -9,6 +9,8 @@ Payday2 Interface enhancer MOD
 
 License
 
-* MPL v2 licence for PocoHUD3. (Common.lua & Hud3.lua)
+* This work has dependancy on Overkill's copyrighted materials. Hence, any notice from Overkill will be applied as soon as I can.
+
+* MPL v2 licence for PocoHUD3. (all files except for 3rdPartyLibrary.lua)
 
 * Other 3rd party files are not applied.
