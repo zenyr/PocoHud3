@@ -4,7 +4,7 @@ local scheme = {
 		enable = {'bool',TRUE,nil,'Not implemented.'},
 		detailedModeKey = {'key','`',nil,'Keybind for detailed(verbose) mode.\nDefault: ` (tilde key)'},
 		detailedModeToggle = {'bool',FALSE,nil,'Make detailed mode key toggles mode.'},
-		silentKitShortcut = {'bool',FALSE,nil,'Ignore Kit Profiler shortcuts success message'},
+		silentKitShortcut = {'bool',TRUE,nil,'Ignore Kit Profiler shortcuts success message'},
 	}, corner = {	'Static text ticker which works as FPS counter / Outgame clock',
 		color  = {'color','White','color','Font color'},
 		opacity = {'num',80,{0,100},'Font opacity',nil,5},
@@ -43,6 +43,7 @@ local scheme = {
 		showUnderdog = {'bool',TRUE,nil,'Underdog duration'},
 		showBulletstorm = {'bool',TRUE,nil,'Bulletstorm duration'},
 		showSuppressed = {'bool',FALSE,nil,'Suppression that prevents shield recovery and increases bullet deviation.\n(Bullet deviation not in effect)'},
+		showReload = {'bool',TRUE,nil,'Show Reload indicator'},
 
 		noSprintDelay  = {'bool',TRUE,nil,'Ignore after-sprint delay ',nil,nil,4},
 		hideInteractionCircle  = {'bool',FALSE,nil,'Hide vanilla game\'s interaction circle',nil,nil,4},

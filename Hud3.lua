@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 156
-local TAG = '0.152 hotfix 6 (gd552aaa)'
+local REV = 157
+local TAG = '0.152 hotfix 7 (g483ffbf)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -460,7 +460,7 @@ function TPocoHud3:Float(unit,category,temp,tag)
 end
 function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
 	if not O:get('buff','enable') then return end
-	if O:get('buff','hide'.. ((data.key):gsub('^%l', string.upper)) ) then return end
+	if not O:get('buff','show'.. ((data.key):gsub('^%l', string.upper)) ) then return end
 	local buff = self.buffs[data.key]
 	if buff and (buff.data.et ~= data.et or buff.data.good ~= data.good )then
 		buff:destroy(1)
@@ -796,8 +796,8 @@ function TPocoHud3:_updateItems(t,dt)
 			if unit and unit:in_slot( 8 ) and alive( unit:parent() ) then -- shield
 				unit = unit:parent()
 			end
-			unit = (unit:movement() or unit:carry_data()) and unit
-			local isBag = unit:carry_data()
+			unit = unit and (unit:movement() or unit:carry_data()) and unit
+			local isBag = unit and unit:carry_data()
 			if unit then
 				local cHealth = unit:character_damage() and unit:character_damage()._health or false
 				if not isBag and cHealth and cHealth > 0 then
@@ -1343,7 +1343,7 @@ function TPocoHud3:_hook()
 		hook( PlayerStandard, '_start_action_reload', function( self,t  )
 			Run('_start_action_reload', self, t )
 			_matchStance(true)
-			local et = not O:get('buff','hideReload') and self._state_data.reload_expire_t
+			local et = O:get('buff','showReload') and self._state_data.reload_expire_t
 			if et then
 				pcall(me.Buff,me,({
 					key='transition', good=false,
@@ -1501,7 +1501,7 @@ function TPocoHud3:_hook()
 		hook( PlayerDamage, 'consume_messiah_charge', function( self)
 			local result = Run('consume_messiah_charge', self)
 			if result then
-				me:Chat('messiah',_.s('Used pistol messiah.', self._messiah_charges ,'charges left'))
+				me:Chat('messiah',_.s('Used pistol messiah.', self._messiah_charges ,'charge'..(self._messiah_charges>1 and 's' or '')..' left'))
 			end
 			return result
 		end)

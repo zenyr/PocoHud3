@@ -62,7 +62,7 @@ end
 function TBuff:_make()
 	local buffO = O:get('buff')
 	local style = buffO.style
-	local size = style==2 and 40 or buffO.size
+	local size = style==2 and 40 or buffO.buffSize
 	local data = self.data
 	local simple = self.owner:_isSimple(data.key)
 	self.created = true
@@ -340,7 +340,14 @@ local __n = {}
 function TFloat:_getName()
 	local name = self._name or 'Drill'
 	local host = self._host
-	return _.s(name:find('The ') and '' or 'A',name:lower(),host and 'on' or nil,host)
+	local a = not name:find('The ') and 'A'
+	if a then
+		local n = name:sub(1,1):lower()
+		if n == 'a' or n == 'e' or n == 'i' or n == 'o' or n == 'u' then
+			a = a .. 'n'
+		end
+	end
+	return _.s(a,name:lower(),host and 'on' or nil,host)
 end
 function TFloat:_getHost()
 	local mD = self.unit and alive(self.unit) and self.unit:mission_door_device()
