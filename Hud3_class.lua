@@ -1239,7 +1239,7 @@ function PocoUIKeyValue:setup()
 			self:cancel()
 			return
 		end
-		local ignore = ('space,esc,num abnt c1,num abnt c2,@,ax,convert,kana,kanji,no convert,oem 102,stop,unlabeled,yen,mouse 8,mouse 9'):split(',')
+		local ignore = ('enter,space,esc,num abnt c1,num abnt c2,@,ax,convert,kana,kanji,no convert,oem 102,stop,unlabeled,yen,mouse 8,mouse 9'):split(',')
 		for __,iKey in pairs(ignore) do
 			if key == Idstring(iKey) then
 				if iKey ~= 'esc' then
@@ -2299,6 +2299,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		text={'Color codes reference page', cl.Silver},-- no moar fun tho
 		hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
 	})
+	--managers.groupai:state():teammate_comment(nil, 'f11e_plu', nil, false, nil, true)
 end
 
 function PocoHud3Class._drawOptions(tab)

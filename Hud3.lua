@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 163
-local TAG = '0.16 hotfix 1 (gfd5d4c6)'
+local REV = 164
+local TAG = '0.16 hotfix 2 (g3bbc1fe)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -260,7 +260,12 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 				end
 			end
 		elseif not dismiss and not self._guiFading and not managers.system_menu:is_active() then -- Show
-			managers.menu_component:post_event('menu_enter')
+			local sound = _.g('managers.player:player_unit():sound()')
+			if sound then
+				sound:say('a01x_any',true,true)
+			else
+				managers.menu_component:post_event('menu_enter')
+			end
 			local gui = C.PocoMenu:new(self._ws)
 			self.menuGui = gui
 			gui:fadeIn()
