@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 162
-local TAG = '0.16'
+local REV = 163
+local TAG = '0.16 hotfix 1 (gfd5d4c6)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -488,14 +488,6 @@ function TPocoHud3:_updateBind()
 			Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose',true),callback(self,self,'toggleVerbose',false))
 		end
 	end
-	Poco:Bind(self,28,function(...)
-		if alt() then
-			if managers.menu:active_menu() then
-				managers.menu:active_menu().renderer:disable_input(0.1)
-			end
-			managers.viewport:set_fullscreen(not RenderSettings.fullscreen)
-		end
-	end)
 	Poco:Bind(self,14,function()
 		self:Menu(false,false)
 	end)
@@ -2057,6 +2049,14 @@ function TPocoHud3:_hook()
 			return Run('toggle_menu_state', ...)
 		end
 	end)
+	hook( MenuInput, 'update**', function( ... )
+		if Poco._kbd:pressed(28) and alt() then
+			managers.viewport:set_fullscreen(not RenderSettings.fullscreen)
+		else
+			return Run('update**', ...)
+		end
+	end)
+
 --- DEBUG ONLY
 --------------
 end
