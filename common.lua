@@ -443,7 +443,7 @@ function TPoco:sanitizeKey(key)
 		if key == 0 then
 			key = 11
 		elseif key < 10 then -- Number key
-			key = key + 1
+			--key = key + 1
 		end
 	elseif keyT == 'string' then
 		key = string.lower(key)
