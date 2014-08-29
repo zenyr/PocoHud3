@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 164
-local TAG = '0.16 hotfix 2 (g3bbc1fe)'
+local REV = 165
+local TAG = '0.16 hotfix 3 (g629279b)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -248,7 +248,13 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 					self.onMenuDismiss = nil
 					cbk()
 				end
-				managers.menu_component:post_event('menu_exit')
+				local sound = _.g('managers.player:player_unit():sound()')
+				if sound then
+					sound:say('g92',true,true)
+				else
+					managers.menu_component:post_event('menu_exit')
+				end
+
 				if skipAnim then
 					menu:destroy()
 					self._guiFading = nil
@@ -261,9 +267,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 			end
 		elseif not dismiss and not self._guiFading and not managers.system_menu:is_active() then -- Show
 			local sound = _.g('managers.player:player_unit():sound()')
-			if sound then
-				sound:say('a01x_any',true,true)
-			else
+			if not sound:say('bar_huge_lance_fix',true,true) then
 				managers.menu_component:post_event('menu_enter')
 			end
 			local gui = C.PocoMenu:new(self._ws)
@@ -1185,12 +1189,15 @@ function TPocoHud3:_hook()
 		end)
 		local _tempStanceDisable
 		local _matchStance = function(tempDisable)
-			_tempStanceDisable = tempDisable
-			local crook = O:get('game','cantedSightCrook') or 0
-			if crook>1 and self.state and self.state._stance_entered then
-				self.state:_stance_entered()
-			end
-			_tempStanceDisable = nil
+			local r,err = pcall(function()
+				_tempStanceDisable = tempDisable
+				local crook = O:get('game','cantedSightCrook') or 0
+				if crook>1 and self.state and self.state._stance_entered then
+					self.state:_stance_entered()
+				end
+				_tempStanceDisable = nil
+			end)
+			if not r then me:err(_.s('MatchStance:',err)) end
 		end
 		hook( PlayerStandard, '_start_action_equip_weapon', function( self,t )
 			Run('_start_action_equip_weapon', self, t)
@@ -1208,28 +1215,33 @@ function TPocoHud3:_hook()
 			end
 		end)
 		hook( FPCameraPlayerBase, 'clbk_stance_entered', function( ... )
-			local self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration = unpack{...}
-			local crook = O:get('game','cantedSightCrook') or 0
-			if crook > 1 and not _tempStanceDisable then
-				local state = managers.player:player_unit():movement():current_state()
-				local wb = state._equipped_unit and state._equipped_unit:base()
-				local second_sight_on = wb and wb.is_second_sight_on and wb:is_second_sight_on()
-				if second_sight_on and not state:in_steelsight() then
-					local sMod = wb.stance_mod and wb:stance_mod()
-					if crook == 2 then
-						stance_mod.rotation = Rotation(0,0,-7)
-					elseif crook == 3 then
-						stance_mod.rotation = Rotation(0,0,-15)
-					elseif crook == 4 and sMod then
-						local translation = stance_mod.translation or Vector3()
-						local rotation = stance_mod.rotation or Rotation()
-						mvector3.add(translation, sMod.translation)
-						mvector3.add(translation, Vector3(-10,2,0))
-						mrotation.multiply(rotation, sMod.rotation)
-						stance_mod.translation = translation
-						stance_mod.rotation = rotation
+			local r,err = pcall(function()
+				local self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration = unpack{...}
+				local crook = O:get('game','cantedSightCrook') or 0
+				if crook > 1 and not _tempStanceDisable then
+					local state = managers.player:player_unit():movement():current_state()
+					local wb = state._equipped_unit and state._equipped_unit:base()
+					local second_sight_on = wb and wb.is_second_sight_on and wb:is_second_sight_on()
+					if second_sight_on and not state:in_steelsight() then
+						local sMod = wb.stance_mod and wb:stance_mod()
+						if crook == 2 then
+							stance_mod.rotation = Rotation(0,0,-7)
+						elseif crook == 3 then
+							stance_mod.rotation = Rotation(0,0,-15)
+						elseif crook == 4 and sMod then
+							local translation = stance_mod.translation or Vector3()
+							local rotation = stance_mod.rotation or Rotation()
+							mvector3.add(translation, sMod.translation)
+							mvector3.add(translation, Vector3(-10,2,0))
+							mrotation.multiply(rotation, sMod.rotation)
+							stance_mod.translation = translation
+							stance_mod.rotation = rotation
+						end
 					end
 				end
+			end)
+			if not r then
+				me:err(_.s('CBSE',err))
 			end
 			Run('clbk_stance_entered', self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration)
 		end)
@@ -1318,7 +1330,7 @@ function TPocoHud3:_hook()
 
 		end)
 		hook( PlayerStandard, '_end_action_running', function( self,t, input, complete  )
-			if self._running and not self._end_running_expire_t then
+			if self._running and not self._end_running_expire_t and not self.RUN_AND_SHOOT then
 				_matchStance()
 			end
 			Run('_end_action_running', self, t, input, complete )
