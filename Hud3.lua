@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 167
-local TAG = '0.161 hotfix 1 (g4e9a4ae)'
+local REV = 170
+local TAG = '0.161 hotfix 4 (g004d50f)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -249,9 +249,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 					cbk()
 				end
 				local sound = _.g('managers.player:player_unit():sound()')
-				if sound then
-					sound:say('g92',true,true)
-				else
+				if not (sound and sound:say('g92',true,true)) then
 					managers.menu_component:post_event('menu_exit')
 				end
 
@@ -267,7 +265,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 			end
 		elseif not dismiss and not self._guiFading and not managers.system_menu:is_active() then -- Show
 			local sound = _.g('managers.player:player_unit():sound()')
-			if not (sound and sound:say('bar_huge_lance_fix',true,true)) then
+			if not (sound and sound:say('a01x_any',true,true)) then
 				managers.menu_component:post_event('menu_enter')
 			end
 			local gui = C.PocoMenu:new(self._ws)
