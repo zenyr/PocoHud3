@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 171
-local TAG = '0.161 hotfix 5 (gb61e222)'
+local REV = 172
+local TAG = '0.161 hotfix 6 (g925a52c)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -231,6 +231,12 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	if not r then _(err) end
 end
 --- Internal functions ---
+function TPocoHud3:say(line,sync)
+	if line then
+		local sound = _.g('managers.player:player_unit():sound()')
+		return sound and sound:say(line,true,sync)
+	end
+end
 function TPocoHud3:Menu(dismiss,skipAnim)
 	local C = PocoHud3Class
 	local _drawUpgrades = C._drawUpgrades
@@ -248,8 +254,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 					self.onMenuDismiss = nil
 					cbk()
 				end
-				local sound = _.g('managers.player:player_unit():sound()')
-				if not (sound and sound:say('g92',true,true)) then
+				if not self:say('g92',true) then
 					managers.menu_component:post_event('menu_exit')
 				end
 
@@ -264,8 +269,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 				end
 			end
 		elseif not dismiss and not self._guiFading and not managers.system_menu:is_active() then -- Show
-			local sound = _.g('managers.player:player_unit():sound()')
-			if not (sound and sound:say('a01x_any',true,true)) then
+			if not self:say('a01x_any',true) then
 				managers.menu_component:post_event('menu_enter')
 			end
 			local gui = C.PocoMenu:new(self._ws)
@@ -741,10 +745,10 @@ function TPocoHud3:_updatePlayers(t)
 				txts[#txts+1]={os.date(' %X'),Color.white}
 			end
 			txts[#txts+1] = {' ',cl.White}
-
+			local btm = self.hh - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
+			pnl:set_bottom(btm)
 			if alive(lbl) and self['pnl_txt'..i]~=_.l(nil,txts) and self.hh then
 				local txt = _.l(lbl,txts)
-				local btm = self.hh - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
 				self['pnl_txt'..i]=txt
 				self['pnl_lblA'..i]:set_text(txt)
 				self['pnl_lblB'..i]:set_text(txt)
@@ -752,7 +756,6 @@ function TPocoHud3:_updatePlayers(t)
 				lbl:set_size(pnl:w(),tr[4])
 				self['pnl_lblA'..i]:set_size(pnl:w(),tr[4])
 				self['pnl_lblB'..i]:set_size(pnl:w(),tr[4])
-				pnl:set_bottom(btm)
 			end
 		end
 		-- playerFloat
