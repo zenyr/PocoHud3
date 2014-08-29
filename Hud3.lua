@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 166
-local TAG = '0.161'
+local REV = 167
+local TAG = '0.161 hotfix 1 (g4e9a4ae)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1192,8 +1192,9 @@ function TPocoHud3:_hook()
 			local r,err = pcall(function()
 				_tempStanceDisable = tempDisable
 				local crook = O:get('game','cantedSightCrook') or 0
-				if crook>1 and self.state and self.state._stance_entered then
-					self.state:_stance_entered()
+				local state = _.g('managers.groupai:state()')
+				if crook>1 and state and state._stance_entered then
+					state:_stance_entered()
 				end
 				_tempStanceDisable = nil
 			end)
