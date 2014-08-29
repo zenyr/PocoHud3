@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 170
-local TAG = '0.161 hotfix 4 (g004d50f)'
+local REV = 171
+local TAG = '0.161 hotfix 5 (gb61e222)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -440,7 +440,7 @@ function TPocoHud3:Chat(category,text)
 	local canRead = catInd >= 1
 	local isFullGame = not managers.statistics:is_dropin()
 	local canSend = catInd >= (Network:is_server() and 2 or isFullGame and 3 or 4)
-	if catInd >= 3 and not canSend and not O.get('chat','fallbackToMe')then
+	if catInd >= 3 and not canSend and not O:get('chat','fallbackToMe')then
 		canRead = false
 	end
 	local tStr = _.g('managers.hud._hud_heist_timer._timer_text:text()')
