@@ -741,6 +741,9 @@ end
 function PocoUIElem:set_x(x)
 	self.pnl:set_x(x)
 end
+function PocoUIElem:inside(x,y)
+	return alive(self.pnl) and self.pnl:inside(x,y)
+end
 
 function PocoUIElem:_bind(eventVal,cbk)
 	if not self.config[eventVal] then
@@ -1220,6 +1223,11 @@ function PocoUIKeyValue:init(parent,config,inherited)
 			self:sound('prompt_enter')
 			self:setup()
 		end
+	end):_bind(PocoEvent.Click,function(self,x,y)
+		if not self:inside(x,y) then
+			self:sound('menu_error')
+			self:cancel()
+		end
 	end)
 
 	if not inherited then
@@ -1229,6 +1237,7 @@ end
 
 function PocoUIKeyValue:setup()
 	self._waiting = true
+	me._focused = self
 	me._ws:connect_keyboard(Input:keyboard())
 	local onKeyPress = function(o, key)
 		me._stringFocused = now()
@@ -1302,7 +1311,11 @@ function PocoUIStringValue:init(parent,config,inherited)
 			end
 		end
 		self._lastClick = now()
-	end):_bind(PocoEvent.WheelUp,self.next):_bind(PocoEvent.WheelDown,self.prev)
+	end):_bind(PocoEvent.WheelUp,self.next):_bind(PocoEvent.WheelDown,self.prev):_bind(PocoEvent.Click,function(self,x,y)
+		if not self:inside(x,y) then
+			self:endEdit()
+		end
+	end)
 
 	if not inherited then
 		self:postInit(self)
@@ -1328,6 +1341,7 @@ function PocoUIStringValue:startEdit()
 	self._editing = true
 	self.box:set_visible(true)
 	me._ws:connect_keyboard(Input:keyboard())
+	me._focused = self
 	self.pnl:enter_text(callback(self, self, 'enter_text'))
 	self.pnl:key_press(callback(self, self, 'key_press'))
 	self.pnl:key_release(callback(self, self, 'key_release'))
@@ -2040,6 +2054,11 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 		end
 
 		if button == Idstring('0') then
+			local focused = me._focused
+			if focused and not focused:inside(x,y) then
+				focused:fire(PocoEvent.Click,x,y)
+				me._focused = nil
+			end
 			local tabs, tabInd = self.gui:insideTabHeader(x,y)
 			if tabs and self.tabIndex ~= tabInd then
 				if tabInd == 0 then
