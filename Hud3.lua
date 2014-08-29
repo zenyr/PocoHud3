@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 165
-local TAG = '0.16 hotfix 3 (g629279b)'
+local REV = 166
+local TAG = '0.161'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -267,7 +267,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 			end
 		elseif not dismiss and not self._guiFading and not managers.system_menu:is_active() then -- Show
 			local sound = _.g('managers.player:player_unit():sound()')
-			if not sound:say('bar_huge_lance_fix',true,true) then
+			if not (sound and sound:say('bar_huge_lance_fix',true,true)) then
 				managers.menu_component:post_event('menu_enter')
 			end
 			local gui = C.PocoMenu:new(self._ws)
@@ -1215,8 +1215,8 @@ function TPocoHud3:_hook()
 			end
 		end)
 		hook( FPCameraPlayerBase, 'clbk_stance_entered', function( ... )
+			local self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration = unpack{...}
 			local r,err = pcall(function()
-				local self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration = unpack{...}
 				local crook = O:get('game','cantedSightCrook') or 0
 				if crook > 1 and not _tempStanceDisable then
 					local state = managers.player:player_unit():movement():current_state()
