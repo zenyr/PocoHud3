@@ -2102,13 +2102,16 @@ function PocoHud3Class._drawHeistStats (tab)
 	local x, y, tbl = 10, 10, {}
 	tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
 	local addJob = function(host,heist)
-		local job_string =managers.localization:to_upper_text(tweak_data.narrative.jobs[heist].name_id) or heist
-		local pro = tweak_data.narrative.jobs[heist].professional
+		local jobData = tweak_data.narrative.jobs[heist]
+		if jobData.wrapped_to_job then
+			jobData = tweak_data.narrative.jobs[jobData.wrapped_to_job]
+		end
+		local job_string =managers.localization:to_upper_text(jobData.name_id or heist) or heist
+		local pro = jobData.professional
 		if pro then
 			job_string = {job_string, cl.Red}
 		end
 		local rowObj = {host:upper(),job_string}
-
 		for i, name in ipairs( risks ) do
 			local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
 			local f = managers.statistics._global.sessions.jobs[heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'] or 0
@@ -2124,7 +2127,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		tbl[#tbl+1] = rowObj
 	end
 	for host,jobs in pairs(host_list) do
-		for no,heist in pairs(jobs) do
+		for no,heist in _pairs(jobs) do
 			job_list[table.get_key(job_list,heist)] = nil
 			addJob(host,heist)
 		end
@@ -2299,7 +2302,6 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		text={'Color codes reference page', cl.Silver},-- no moar fun tho
 		hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
 	})
-	--managers.groupai:state():teammate_comment(nil, 'f11e_plu', nil, false, nil, true)
 end
 
 function PocoHud3Class._drawOptions(tab)
