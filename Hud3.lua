@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 175
-local TAG = '0.161 hotfix 9 (gd42132e)'
+local REV = 179
+local TAG = '0.17 hotfix 2 (g2c92419)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -218,7 +218,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 			end
 		end
 		if pid == self.pid and not Opt.myDamage then return
-		elseif pid == 0 and not Opt.AIDamage then return
+		elseif pid == 0 and not Opt.AiDamage then return
 		elseif not Opt.crewDamage then
 			if pid > 0 and pid ~= self.pid then
 				return

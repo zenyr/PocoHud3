@@ -803,36 +803,55 @@ function PocoRoseButton:init(parent,config,inherited)
 	spnl:rect{color=cl.Black,alpha=0.5,layer=-1}
 	spnl:set_visible(false)
 	local clShadow = cl.Black:with_alpha(0.8)
-	_.l({
+	local __, lbl = _.l({
 		pnl = self.pnl,x=-1, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = clShadow,
 		align = config.align or 'center', vertical = config.vAlign or 'center'
 	},config.text,config.autoSize)
-	_.l({
+	self.lbl1 = lbl
+	__, lbl = _.l({
 		pnl = self.pnl,x=0, y=1, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = clShadow,
 		align = config.align or 'center', vertical = config.vAlign or 'center'
 	},config.text,config.autoSize)
-	_.l({
+	self.lbl2 = lbl
+	__, lbl = _.l({
 		pnl = self.pnl,x=1, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = clShadow,
 		align = config.align or 'center', vertical = config.vAlign or 'center'
 	},config.text,config.autoSize)
-	_.l({
+	self.lbl3 = lbl
+	__, lbl = _.l({
 		pnl = self.pnl,x=0, y=-1, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = clShadow,
 		align = config.align or 'center', vertical = config.vAlign or 'center'
 	},config.text,config.autoSize)
-	local __, lbl = _.l({
+	self.lbl4 = lbl
+	__, lbl = _.l({
 		pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = config.fontColor or cl.White,
 		align = config.align or 'center', vertical = config.vAlign or 'center'
 	},config.text,config.autoSize)
-	self:_bind(PocoEvent.In, function(self,x,y)
-		spnl:set_visible(true)
-		self:sound('slider_grab')
-		me._say = config.value
-	end):_bind(PocoEvent.Out, function(self,x,y)
-		spnl:set_visible(false)
-		me._say = nil
-	end)
-
 	self.lbl = lbl
+
+	self:_bind(PocoEvent.In, function(self,x,y)
+		if alive(spnl) then
+			local mul = 1.4
+			self.lbl1:set_font_size(config.fontSize*mul)
+			self.lbl2:set_font_size(config.fontSize*mul)
+			self.lbl3:set_font_size(config.fontSize*mul)
+			self.lbl4:set_font_size(config.fontSize*mul)
+			self.lbl:set_font_size(config.fontSize*mul)
+			spnl:set_visible(true)
+			self:sound('slider_grab')
+			me._say = config.value
+		end
+	end):_bind(PocoEvent.Out, function(self,x,y)
+		if alive(spnl) then
+			self.lbl1:set_font_size(config.fontSize)
+			self.lbl2:set_font_size(config.fontSize)
+			self.lbl3:set_font_size(config.fontSize)
+			self.lbl4:set_font_size(config.fontSize)
+			self.lbl:set_font_size(config.fontSize)
+			spnl:set_visible(false)
+			me._say = nil
+		end
+	end)
 	if not inherited then
 		self:postInit(self)
 	end
