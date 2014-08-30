@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 174
-local TAG = '0.161 hotfix 8 (g82cc392)'
+local REV = 175
+local TAG = '0.161 hotfix 9 (gd42132e)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -233,8 +233,6 @@ end
 --- Internal functions ---
 function TPocoHud3:say(line,sync)
 	if line then
-		local sound = _.g('managers.player:player_unit():sound()')
-		if not sound then return end
 		local cs = _.g('managers.player:player_unit():movement()._current_state')
 		if cs then
 			cs._intimidate_t = now()
@@ -245,6 +243,13 @@ function TPocoHud3:say(line,sync)
 				st=now(), et=now()+tweak_data.player.movement_state.interaction_delay
 			}) )
 		end
+		--[[
+		if _.g('managers.groupai:state()') then
+			managers.groupai:state():teammate_comment(_.g('managers.player:player_unit()'), line, nil, false, nil, false)
+			return true
+		end]]
+		local sound = _.g('managers.player:player_unit():sound()')
+		if not sound then return end
 		return sound:say(line,true,sync)
 	end
 end
@@ -252,16 +257,17 @@ end
 function TPocoHud3:toggleRose(show)
 	if self._noRose then return end
 	local C = PocoHud3Class
-	local canOpen = not self._lastSay or now()-self._lastSay > tweak_data.player.movement_state.interaction_delay
+	local canOpen = inGameDeep and (not self._lastSay or now()-self._lastSay > tweak_data.player.movement_state.interaction_delay)
 	local r,err = pcall(function()
 		local menu = self.menuGui
 		if menu and not self._guiFading then -- hide
 			self.menuGui = nil
 			self._guiFading = true
 			if self._say then
-				self:say(self._say,true)
+				if self:say(self._say,true) then
+					self._lastSay = now()
+				end
 				self._say = nil
-				self._lastSay = now()
 			end
 			menu:fadeOut(function()
 				self._guiFading = nil
@@ -273,7 +279,8 @@ function TPocoHud3:toggleRose(show)
 			gui:fadeIn()
 			local tab = gui:add('Rose')
 			C._drawRose(tab)
-
+		elseif not canOpen and show then
+			managers.menu:post_event('menu_error')
 		end
 	end)
 	if not r then
@@ -795,7 +802,9 @@ function TPocoHud3:_updatePlayers(t)
 			end
 			txts[#txts+1] = {' ',cl.White}
 			local btm = self.hh - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
-			pnl:set_bottom(btm)
+			if alive(pnl) then
+				pnl:set_bottom(btm)
+			end
 			if alive(lbl) and self['pnl_txt'..i]~=_.l(nil,txts) and self.hh then
 				local txt = _.l(lbl,txts)
 				self['pnl_txt'..i]=txt
@@ -2130,12 +2139,12 @@ function TPocoHud3:_hook()
 end
 --- Utility functions ---
 function TPocoHud3:toggleVerbose(state)
-	if self.menuGui then return end
 	if state == 'toggle' then
 		self.verbose = not self.verbose
 	else
 		self.verbose = state
 	end
+	if self.menuGui and self.menuGui.alt then return end
 	if not inGameDeep and self.verbose then
 		pcall(function()
 			self:Menu()

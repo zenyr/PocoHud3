@@ -2522,13 +2522,13 @@ end
 function PocoHud3Class._drawRose(tab)
 	local pnl = tab.pnl
 	local layout = {
-		{false,	{'use cableties','g26'},	{'whistling','whistling_attention'},	{'shoot em','g23'},	false,},
-		{false,	{'time to go','g17'},	{'this way','g12'},	{'straight ahead','g19'},	false,},
-		{{'almost there','g28'},	{'get out','g07'},	{'upstairs','g02'},	{'hurry','g09'},	{'alright/thanks','g92'},},
-		{{'dingdong','queue_beep'},	{'Left','g03'},	false,	{'Right','g04'},	{'alarm','metal_detector_alarm'},},
-		{{'halfway done','t02x_sin'},	{'careful','g10'},	{'downstairs','g01'},	{'inside','g08'},	{'ANY second','t03x_sin'},},
-		{false,	{'down here','g20'},	{'wrong way','g11'},	{'keep defended','g16'},	false,},
-		{false,	{'shit','g60'},	{'click','search_lights_on'},	{'oh fuck','g29'},	false,},
+		{	false,	{'use cableties','g26'},	{'need medbag','g80x_plu'},	{'shoot em','g23'},	false,	},
+		{	false,	{'time to go','g17'},	{'this way','g12'},	{'straight ahead','g19'},	false,	},
+		{	{'almost there','g28'},	{'get out','g07'},	{'upstairs','g02'},	{'hurry','g09'},	{'alright','g92'},	},
+		{	{'let\'s go','g13'},	{'Left','g03'},	false,	{'Right','g04'},	{'thanks','s05x_sin'},	},
+		{	{'halfway done','t02x_sin'},	{'careful','g10'},	{'downstairs','g01'},	{'inside','g08'},	{'ANY second','t03x_sin'},	},
+		{	false,	{'down here','g20'},	{'wrong way','g11'},	{'keep defended','g16'},	false,	},
+		{	false,	{'shit','g60'},	{'need ammo','g81x_plu'},	{'oh fuck','g29'},	false,	},
 	}
 	local w,h = 200,70
 	local ox,oy = pnl:w()/2 - 2*w,pnl:h()/2 - 3*h
@@ -2537,9 +2537,15 @@ function PocoHud3Class._drawRose(tab)
 			if obj then
 				local xx = ox + (x-1)*w
 				local yy = oy + (y-1)*h
+				if x == 3 then
+					yy = yy + h*0.5*(y > 4 and 1 or -1)
+				end
+				if y == 4 then
+					xx = xx + w*0.3*(x > 3 and 1 or -1)
+				end
 				PocoRoseButton:new(tab,{
 					x = xx, y = yy, w=w, h=h,
-					fontSize = 30, text=obj[1]:upper(), value=obj[2]
+					fontSize = 20, text=obj[1]:upper(), value=obj[2]
 				})
 			end
 		end
