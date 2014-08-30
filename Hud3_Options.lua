@@ -5,6 +5,7 @@ local scheme = {
 		detailedModeKey = {'key','`',nil,'Keybind for detailed(verbose) mode.\nDefault: ` (tilde key)'},
 		detailedModeToggle = {'bool',FALSE,nil,'Make detailed mode key toggles mode.'},
 		silentKitShortcut = {'bool',TRUE,nil,'Ignore Kit Profiler shortcuts success message'},
+		pocoRoseKey = {'key','b',nil,'Keybind for PocoRose.\nDefault: B'},
 	}, corner = {	'Static text ticker which works as FPS counter / Outgame clock',
 		color  = {'color','White','color','Font color'},
 		opacity = {'num',80,{0,100},'Font opacity',nil,5},

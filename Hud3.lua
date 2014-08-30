@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 172
-local TAG = '0.161 hotfix 6 (g925a52c)'
+local REV = 175
+local TAG = '0.161 hotfix 9 (gd42132e)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -233,10 +233,61 @@ end
 --- Internal functions ---
 function TPocoHud3:say(line,sync)
 	if line then
+		local cs = _.g('managers.player:player_unit():movement()._current_state')
+		if cs then
+			cs._intimidate_t = now()
+			pcall(self.Buff,self,({
+				key='interact', good=false,
+				icon=skillIcon,
+				iconRect = { 2*64, 8*64 ,64,64 },
+				st=now(), et=now()+tweak_data.player.movement_state.interaction_delay
+			}) )
+		end
+		--[[
+		if _.g('managers.groupai:state()') then
+			managers.groupai:state():teammate_comment(_.g('managers.player:player_unit()'), line, nil, false, nil, false)
+			return true
+		end]]
 		local sound = _.g('managers.player:player_unit():sound()')
-		return sound and sound:say(line,true,sync)
+		if not sound then return end
+		return sound:say(line,true,sync)
 	end
 end
+
+function TPocoHud3:toggleRose(show)
+	if self._noRose then return end
+	local C = PocoHud3Class
+	local canOpen = inGameDeep and (not self._lastSay or now()-self._lastSay > tweak_data.player.movement_state.interaction_delay)
+	local r,err = pcall(function()
+		local menu = self.menuGui
+		if menu and not self._guiFading then -- hide
+			self.menuGui = nil
+			self._guiFading = true
+			if self._say then
+				if self:say(self._say,true) then
+					self._lastSay = now()
+				end
+				self._say = nil
+			end
+			menu:fadeOut(function()
+				self._guiFading = nil
+				menu:destroy()
+			end)
+		elseif canOpen and show and not self._guiFading then -- create
+			local gui = C.PocoMenu:new(self._ws,true)
+			self.menuGui = gui
+			gui:fadeIn()
+			local tab = gui:add('Rose')
+			C._drawRose(tab)
+		elseif not canOpen and show then
+			managers.menu:post_event('menu_error')
+		end
+	end)
+	if not r then
+		self:err(_.s('ToggleRose',err))
+	end
+end
+
 function TPocoHud3:Menu(dismiss,skipAnim)
 	local C = PocoHud3Class
 	local _drawUpgrades = C._drawUpgrades
@@ -248,6 +299,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 			self:_updateBind()
 			if not self._stringFocused or (now()-self._stringFocused > 0.1) then
 				self.menuGui = nil
+				self._noRose = nil
 				self._guiFading = true
 				if self.onMenuDismiss then
 					local cbk = self.onMenuDismiss
@@ -274,6 +326,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 			end
 			local gui = C.PocoMenu:new(self._ws)
 			self.menuGui = gui
+			self._noRose = true
 			gui:fadeIn()
 			--- Install tabs Begin --- ===================================
 			local tab = gui:add('Options')
@@ -499,6 +552,9 @@ function TPocoHud3:_updateBind()
 			Poco:Bind(self,verboseKey,callback(self,self,'toggleVerbose',true),callback(self,self,'toggleVerbose',false))
 		end
 	end
+	local pocoRoseKey = O:get('root','pocoRoseKey')
+	Poco:Bind(self,pocoRoseKey,callback(self,self,'toggleRose',true,false),callback(self,self,'toggleRose',false,false))
+
 	Poco:Bind(self,14,function()
 		self:Menu(false,false)
 	end)
@@ -746,7 +802,9 @@ function TPocoHud3:_updatePlayers(t)
 			end
 			txts[#txts+1] = {' ',cl.White}
 			local btm = self.hh - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
-			pnl:set_bottom(btm)
+			if alive(pnl) then
+				pnl:set_bottom(btm)
+			end
 			if alive(lbl) and self['pnl_txt'..i]~=_.l(nil,txts) and self.hh then
 				local txt = _.l(lbl,txts)
 				self['pnl_txt'..i]=txt
@@ -2086,6 +2144,7 @@ function TPocoHud3:toggleVerbose(state)
 	else
 		self.verbose = state
 	end
+	if self.menuGui and self.menuGui.alt then return end
 	if not inGameDeep and self.verbose then
 		pcall(function()
 			self:Menu()

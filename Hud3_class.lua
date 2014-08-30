@@ -741,6 +741,9 @@ end
 function PocoUIElem:set_x(x)
 	self.pnl:set_x(x)
 end
+function PocoUIElem:inside(x,y)
+	return alive(self.pnl) and self.pnl:inside(x,y)
+end
 
 function PocoUIElem:_bind(eventVal,cbk)
 	if not self.config[eventVal] then
@@ -789,6 +792,52 @@ function PocoUIElem:fire(event,x,y)
 		return unpack(result)
 	end
 end
+
+local PocoRoseButton = class(PocoUIElem)
+PocoHud3Class.PocoRoseButton = PocoRoseButton
+function PocoRoseButton:init(parent,config,inherited)
+	self.super.init(self,parent,config,true)
+	self.pnl:set_center(config.x,config.y)
+	local spnl = self.pnl:panel{}
+	BoxGuiObject:new(spnl, {sides = {1,1,1,1}})
+	spnl:rect{color=cl.Black,alpha=0.5,layer=-1}
+	spnl:set_visible(false)
+	local clShadow = cl.Black:with_alpha(0.8)
+	_.l({
+		pnl = self.pnl,x=-1, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = clShadow,
+		align = config.align or 'center', vertical = config.vAlign or 'center'
+	},config.text,config.autoSize)
+	_.l({
+		pnl = self.pnl,x=0, y=1, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = clShadow,
+		align = config.align or 'center', vertical = config.vAlign or 'center'
+	},config.text,config.autoSize)
+	_.l({
+		pnl = self.pnl,x=1, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = clShadow,
+		align = config.align or 'center', vertical = config.vAlign or 'center'
+	},config.text,config.autoSize)
+	_.l({
+		pnl = self.pnl,x=0, y=-1, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = clShadow,
+		align = config.align or 'center', vertical = config.vAlign or 'center'
+	},config.text,config.autoSize)
+	local __, lbl = _.l({
+		pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = config.fontColor or cl.White,
+		align = config.align or 'center', vertical = config.vAlign or 'center'
+	},config.text,config.autoSize)
+	self:_bind(PocoEvent.In, function(self,x,y)
+		spnl:set_visible(true)
+		self:sound('slider_grab')
+		me._say = config.value
+	end):_bind(PocoEvent.Out, function(self,x,y)
+		spnl:set_visible(false)
+		me._say = nil
+	end)
+
+	self.lbl = lbl
+	if not inherited then
+		self:postInit(self)
+	end
+end
+
 
 PocoUIHintLabel = class(PocoUIElem) -- Forward-declared as local
 PocoHud3Class.PocoUIHintLabel = PocoUIHintLabel
@@ -1220,6 +1269,11 @@ function PocoUIKeyValue:init(parent,config,inherited)
 			self:sound('prompt_enter')
 			self:setup()
 		end
+	end):_bind(PocoEvent.Click,function(self,x,y)
+		if not self:inside(x,y) then
+			self:sound('menu_error')
+			self:cancel()
+		end
 	end)
 
 	if not inherited then
@@ -1229,6 +1283,7 @@ end
 
 function PocoUIKeyValue:setup()
 	self._waiting = true
+	me._focused = self
 	me._ws:connect_keyboard(Input:keyboard())
 	local onKeyPress = function(o, key)
 		me._stringFocused = now()
@@ -1261,6 +1316,7 @@ end
 function PocoUIKeyValue:cancel()
 	self._waiting = nil
 	me._ws:disconnect_keyboard()
+	me._focused = nil
 	self.valLbl:key_press(nil)
 	self:val(self:val())
 end
@@ -1302,7 +1358,11 @@ function PocoUIStringValue:init(parent,config,inherited)
 			end
 		end
 		self._lastClick = now()
-	end):_bind(PocoEvent.WheelUp,self.next):_bind(PocoEvent.WheelDown,self.prev)
+	end):_bind(PocoEvent.WheelUp,self.next):_bind(PocoEvent.WheelDown,self.prev):_bind(PocoEvent.Click,function(self,x,y)
+		if not self:inside(x,y) then
+			self:endEdit()
+		end
+	end)
 
 	if not inherited then
 		self:postInit(self)
@@ -1328,6 +1388,7 @@ function PocoUIStringValue:startEdit()
 	self._editing = true
 	self.box:set_visible(true)
 	me._ws:connect_keyboard(Input:keyboard())
+	me._focused = self
 	self.pnl:enter_text(callback(self, self, 'enter_text'))
 	self.pnl:key_press(callback(self, self, 'key_press'))
 	self.pnl:key_release(callback(self, self, 'key_release'))
@@ -1413,6 +1474,7 @@ end
 
 function PocoUIStringValue:endEdit(cancel)
 	self._editing = nil
+	me._focused = nil
 	self.box:set_visible(false)
 	me._ws:disconnect_keyboard()
 	self:_select(0,0)
@@ -1715,7 +1777,7 @@ end
 local PocoTabs = class()
 PocoHud3Class.PocoTabs = PocoTabs
 
-function PocoTabs:init(ws,config) -- name,x,y,w,th, h
+function PocoTabs:init(ws,config) -- name,x,y,w,th,h,alt
 	self._ws = ws
 	config.fontSize = config.fontSize or 20
 	self.config = config
@@ -1723,18 +1785,21 @@ function PocoTabs:init(ws,config) -- name,x,y,w,th, h
 	if self.pTab then
 		self.pTab:children(self)
 	end
+	self.alt = config.alt
 	self.pnl = (self.pTab and self.pTab.pnl or ws:panel()):panel{ name = config.name , x = config.x, y = config.y, w = config.w, h = config.h, layer = self.pTab and 0 or Layers.TabHeader}
 	self.items = {} -- array of PocoTab
 	self._children = {} -- array of PocoTabs
 	self.sPnl = self.pnl:panel{ name = config.name , x = 0, y = config.th, w = config.w, h = config.h-config.th}
-	BoxGuiObject:new(self.sPnl, {
-		sides = {
-			1,
-			1,
-			2,
-			1
-		}
-	})
+	if not self.alt then
+		BoxGuiObject:new(self.sPnl, {
+			sides = {
+				1,
+				1,
+				2,
+				1
+			}
+		})
+	end
 end
 
 function PocoTabs:canScroll(down,x,y)
@@ -1815,29 +1880,31 @@ function PocoTabs:repaint()
 		if itm.hPnl then
 			self.pnl:remove(itm.hPnl)
 		end
-		local bg = hPnl:bitmap({
-			name = 'tab_top',
-			texture = 'guis/textures/pd2/shared_tab_box',
-			w = self.config.w, h = self.config.th + 3,
-			color = cl.White:with_alpha(isSelected and 1 or 0.1)
-		})
-		local lbl = hPnl:text({
-			x = 10, y = 0, w = 200, h = self.config.th,
-			name = 'tab_name', text = itm.name,
-			font = FONT,
-			font_size = self.config.fontSize,
-			color = isSelected and cl.Black or cl.White,
-			layer = 1,
-			align = 'center',
-			vertical = 'center'
-		})
-		local xx,yy,w,h = lbl:text_rect()
+		if not self.alt then
+			local bg = hPnl:bitmap({
+				name = 'tab_top',
+				texture = 'guis/textures/pd2/shared_tab_box',
+				w = self.config.w, h = self.config.th + 3,
+				color = cl.White:with_alpha(isSelected and 1 or 0.1)
+			})
+			local lbl = hPnl:text({
+				x = 10, y = 0, w = 200, h = self.config.th,
+				name = 'tab_name', text = itm.name,
+				font = FONT,
+				font_size = self.config.fontSize,
+				color = isSelected and cl.Black or cl.White,
+				layer = 1,
+				align = 'center',
+				vertical = 'center'
+			})
+			local xx,yy,w,h = lbl:text_rect()
 
-		lbl:set_size(w,self.config.th)
+			lbl:set_size(w,self.config.th)
 
-		bg:set_w(w + 20)
-		x = x + w + 22
-		itm.bg = bg
+			bg:set_w(w + 20)
+			x = x + w + 22
+			itm.bg = bg
+		end
 		itm.hPnl = hPnl
 		if itm.box then
 			itm.box.wrapper:set_visible(isSelected)
@@ -1858,22 +1925,28 @@ end
 ------------
 local PocoMenu = class()
 PocoHud3Class.PocoMenu = PocoMenu
-function PocoMenu:init(ws)
+function PocoMenu:init(ws,alternative)
 	self._ws = ws
+	self.alt = alternative
+	if alternative then
+		self.pnl = ws:panel():panel({ name = 'bg' })
+		self.gui = PocoTabs:new(ws,{name = 'PocoRose',x = 0, y = 0, w = ws:width(), th = 1, h = ws:height(), pTab = nil, alt = true})
 
-	self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = ws:height()-20, pTab = nil})
+	else
+		self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = ws:height()-20, pTab = nil})
 
-	self.pnl = ws:panel():panel({ name = 'bg' })
-	self.pnl:rect{color = cl.Black:with_alpha(0.7),layer = Layers.Bg}
-	self.pnl:bitmap({
-		layer = Layers.Blur,
-		texture = 'guis/textures/test_blur_df',
-		w = self.pnl:w(),h = self.pnl:h(),
-		render_template = 'VertexColorTexturedBlur3D'
-	})
-	local __, lbl = _.l({pnl = self.pnl,x = 1010, y = 20, font = FONT, font_size = 17, layer = Layers.TabHeader},
-		{'Bksp or Dbl-right-click to dismiss',cl.Gray},true)
-	lbl:set_right(1000)
+		self.pnl = ws:panel():panel({ name = 'bg' })
+		self.pnl:rect{color = cl.Black:with_alpha(0.7),layer = Layers.Bg}
+		self.pnl:bitmap({
+			layer = Layers.Blur,
+			texture = 'guis/textures/test_blur_df',
+			w = self.pnl:w(),h = self.pnl:h(),
+			render_template = 'VertexColorTexturedBlur3D'
+		})
+		local __, lbl = _.l({pnl = self.pnl,x = 1010, y = 20, font = FONT, font_size = 17, layer = Layers.TabHeader},
+			{'Bksp or Dbl-right-click to dismiss',cl.Gray},true)
+		lbl:set_right(1000)
+	end
 
 	PocoMenu.m_id = PocoMenu.m_id or managers.mouse_pointer:get_id()
 	managers.mouse_pointer:use_mouse{
@@ -1895,7 +1968,9 @@ function PocoMenu:_fade(pnl, out, done_cb, seconds)
 	pnl:set_visible( true )
 	pnl:set_alpha( out and 1 or 0 )
 	local t = seconds
-	local x,y = managers.mouse_pointer:world_position()
+	if self.alt and not out then
+		managers.mouse_pointer:set_mouse_world_position(pnl:w()/2, pnl:h()/2)
+	end
 	while t > 0 do
 		local dt = coroutine.yield()
 		t = t - dt
@@ -1909,11 +1984,6 @@ function PocoMenu:_fade(pnl, out, done_cb, seconds)
 		if self.gui and self.gui.pnl then
 			self.gui.pnl:set_alpha(out and r or 1-r)
 		end
-		if not out then
-			local tx,ty = 1010,20
-			--managers.mouse_pointer:set_mouse_world_position(math.lerp(tx,x,r),math.lerp(ty,y,r))
-
-		end
 	end
 	if done_cb then
 		done_cb()
@@ -1923,11 +1993,11 @@ end
 
 function PocoMenu:fadeIn()
 	self.pnl:stop()
-	self.pnl:animate( callback( self, self, '_fade' ), false, nil, 0.25 )
+	self.pnl:animate( callback( self, self, '_fade' ), false, nil, self.alt and 0.1 or 0.25 )
 end
 function PocoMenu:fadeOut(cbk)
 	self.pnl:stop()
-	self.pnl:animate( callback( self, self, '_fade' ), true, cbk, 0.25 )
+	self.pnl:animate( callback( self, self, '_fade' ), true, cbk, self.alt and 0.1 or 0.25 )
 end
 
 
@@ -2006,10 +2076,11 @@ function PocoMenu:mouse_moved(alt, panel, x, y)
 	if hotElem then
 		return ret(true, hotElem.cursor or 'link')
 	end
-
-	local tabHdr = {self.gui:insideTabHeader(x,y)}
-	if isNewPos and tabHdr[1] then
-		return ret(true, tabHdr[2]~=0 and 'link' or 'arrow')
+	if self.gui then
+		local tabHdr = {self.gui:insideTabHeader(x,y)}
+		if isNewPos and tabHdr[1] then
+			return ret(true, tabHdr[2]~=0 and 'link' or 'arrow')
+		end
 	end
 	return ret( true, 'arrow' )
 end
@@ -2017,6 +2088,7 @@ end
 function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 	if not me or me.dead then return end
 	if self.dead then return end
+	if self.alt then return end
 	pcall(function()
 		local currentTab = self.gui and self.gui.currentTab
 		if button == Idstring('mouse wheel down') then
@@ -2040,6 +2112,11 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 		end
 
 		if button == Idstring('0') then
+			local focused = me._focused
+			if focused and not focused:inside(x,y) then
+				focused:fire(PocoEvent.Click,x,y)
+				me._focused = nil
+			end
 			local tabs, tabInd = self.gui:insideTabHeader(x,y)
 			if tabs and self.tabIndex ~= tabInd then
 				if tabInd == 0 then
@@ -2060,6 +2137,7 @@ end
 function PocoMenu:mouse_released(alt, panel, button, x, y)
 	if not me or me.dead then return end
 	if self.dead then return end
+	if self.alt then return end
 	local currentTab = self.gui and self.gui.currentTab
 	if button == Idstring('0') then
 		return currentTab and currentTab:isHot(PocoEvent.Released, x,y, true)
@@ -2441,6 +2519,39 @@ function PocoHud3Class._drawOptions(tab)
 	end
 end
 
+function PocoHud3Class._drawRose(tab)
+	local pnl = tab.pnl
+	local layout = {
+		{	false,	{'use cableties','g26'},	{'need medbag','g80x_plu'},	{'shoot em','g23'},	false,	},
+		{	false,	{'time to go','g17'},	{'this way','g12'},	{'straight ahead','g19'},	false,	},
+		{	{'almost there','g28'},	{'get out','g07'},	{'upstairs','g02'},	{'hurry','g09'},	{'alright','g92'},	},
+		{	{'let\'s go','g13'},	{'Left','g03'},	false,	{'Right','g04'},	{'thanks','s05x_sin'},	},
+		{	{'halfway done','t02x_sin'},	{'careful','g10'},	{'downstairs','g01'},	{'inside','g08'},	{'ANY second','t03x_sin'},	},
+		{	false,	{'down here','g20'},	{'wrong way','g11'},	{'keep defended','g16'},	false,	},
+		{	false,	{'shit','g60'},	{'need ammo','g81x_plu'},	{'oh fuck','g29'},	false,	},
+	}
+	local w,h = 200,70
+	local ox,oy = pnl:w()/2 - 2*w,pnl:h()/2 - 3*h
+	for y,row in pairs(layout) do
+		for x, obj in pairs(row) do
+			if obj then
+				local xx = ox + (x-1)*w
+				local yy = oy + (y-1)*h
+				if x == 3 then
+					yy = yy + h*0.5*(y > 4 and 1 or -1)
+				end
+				if y == 4 then
+					xx = xx + w*0.3*(x > 3 and 1 or -1)
+				end
+				PocoRoseButton:new(tab,{
+					x = xx, y = yy, w=w, h=h,
+					fontSize = 20, text=obj[1]:upper(), value=obj[2]
+				})
+			end
+		end
+	end
+end
+
 local _kitPnl,_kitPnlBtn
 function PocoHud3Class._drawKit(tab)
 	if not K then
@@ -2703,3 +2814,4 @@ function PocoHud3Class._drawKit(tab)
 
 	draw()
 end
+
