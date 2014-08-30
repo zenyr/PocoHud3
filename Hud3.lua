@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 179
-local TAG = '0.17 hotfix 2 (g2c92419)'
+local REV = 180
+local TAG = '0.17 hotfix 3 (ga4e4cc4)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -2133,7 +2133,15 @@ function TPocoHud3:_hook()
 			return Run('update**', ...)
 		end
 	end)
-
+	if inGame then
+		hook( FPCameraPlayerBase, '_update_rot', function( ... )
+			if me.menuGui then
+				return true
+			else
+				return Run('_update_rot', ...)
+			end
+		end)
+	end
 --- DEBUG ONLY
 --------------
 end

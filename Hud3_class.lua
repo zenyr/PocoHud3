@@ -798,10 +798,8 @@ PocoHud3Class.PocoRoseButton = PocoRoseButton
 function PocoRoseButton:init(parent,config,inherited)
 	self.super.init(self,parent,config,true)
 	self.pnl:set_center(config.x,config.y)
-	local spnl = self.pnl:panel{}
-	BoxGuiObject:new(spnl, {sides = {1,1,1,1}})
-	spnl:rect{color=cl.Black,alpha=0.5,layer=-1}
-	spnl:set_visible(false)
+
+	local spnl
 	local clShadow = cl.Black:with_alpha(0.8)
 	local __, lbl = _.l({
 		pnl = self.pnl,x=-1, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = clShadow,
@@ -825,30 +823,46 @@ function PocoRoseButton:init(parent,config,inherited)
 	self.lbl4 = lbl
 	__, lbl = _.l({
 		pnl = self.pnl,x=0, y=0, w = config.w, h = config.h, font = config.font or FONT, font_size = config.fontSize or 20, color = config.fontColor or cl.White,
-		align = config.align or 'center', vertical = config.vAlign or 'center'
+		align = config.align or 'center', vertical = config.vAlign or 'center', layer = 1
 	},config.text,config.autoSize)
 	self.lbl = lbl
+	self.mul = 1
+	self.pnl:animate(function(p)
+		while alive(p) do
+			local mul = math.ceil(100*self.mul)/100
+			local t = config.fontSize*mul
+			local r = self._r or 0
+			r = r + (t-r)/10
+			if p:visible() and math.abs(r - (self._r or 0)) > 0.1 then
+				self._r = r
+				self.lbl1:set_font_size(r)
+				self.lbl2:set_font_size(r)
+				self.lbl3:set_font_size(r)
+				self.lbl4:set_font_size(r)
+				self.lbl:set_font_size(r)
+				self.lbl:set_alpha(r/config.fontSize/1.4)
+			end
+			coroutine.yield()
+		end
+	end)
+
 
 	self:_bind(PocoEvent.In, function(self,x,y)
-		if alive(spnl) then
-			local mul = 1.4
-			self.lbl1:set_font_size(config.fontSize*mul)
-			self.lbl2:set_font_size(config.fontSize*mul)
-			self.lbl3:set_font_size(config.fontSize*mul)
-			self.lbl4:set_font_size(config.fontSize*mul)
-			self.lbl:set_font_size(config.fontSize*mul)
-			spnl:set_visible(true)
-			self:sound('slider_grab')
+		if alive(self.pnl) then
+			spnl = self.pnl:panel{}
+			BoxGuiObject:new(spnl, {sides = {1,1,1,1}})
+			spnl:rect{color=cl.Black,alpha=0.2,layer=-1}
 			me._say = config.value
+			self:sound('slider_grab')
+			self.mul = 1.6
 		end
 	end):_bind(PocoEvent.Out, function(self,x,y)
-		if alive(spnl) then
-			self.lbl1:set_font_size(config.fontSize)
-			self.lbl2:set_font_size(config.fontSize)
-			self.lbl3:set_font_size(config.fontSize)
-			self.lbl4:set_font_size(config.fontSize)
-			self.lbl:set_font_size(config.fontSize)
-			spnl:set_visible(false)
+		if alive(self.pnl) then
+			if spnl then
+				self.pnl:remove(spnl)
+				spnl = nil
+			end
+			self.mul = 1
 			me._say = nil
 		end
 	end)
@@ -1949,7 +1963,7 @@ function PocoMenu:init(ws,alternative)
 	self.alt = alternative
 	if alternative then
 		self.pnl = ws:panel():panel({ name = 'bg' })
-		self.gui = PocoTabs:new(ws,{name = 'PocoRose',x = 0, y = 0, w = ws:width(), th = 1, h = ws:height(), pTab = nil, alt = true})
+		self.gui = PocoTabs:new(ws,{name = 'PocoRose',x = 0, y = -1, w = ws:width(), th = 1, h = ws:height()+1, pTab = nil, alt = true})
 
 	else
 		self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = ws:height()-20, pTab = nil})
@@ -1975,10 +1989,6 @@ function PocoMenu:init(ws,alternative)
 		mouse_release = callback(self, self, 'mouse_released',true)
 	}
 
-	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
-	if camBase then
-		camBase:set_limits(15,15)
-	end
 	self._lastMove = 0
 end
 
@@ -2037,10 +2047,7 @@ function PocoMenu:destroy()
 	if PocoMenu.m_id then
 		managers.mouse_pointer:remove_mouse(PocoMenu.m_id)
 	end
-	local camBase = _.g('managers.player:player_unit():camera():camera_unit():base()')
-	if camBase then
-		camBase:remove_limits()
-	end
+
 	if self.gui then
 		self.gui:destroy()
 	end
@@ -2541,12 +2548,12 @@ end
 function PocoHud3Class._drawRose(tab)
 	local pnl = tab.pnl
 	local layout = {
-		{	false,	{'use cableties','g26'},	{'need medbag','g80x_plu'},	{'shoot em','g23'},	false,	},
-		{	false,	{'time to go','g17'},	{'this way','g12'},	{'straight ahead','g19'},	false,	},
+		{	{'whistle','whistling_attention'},	{'use cableties','g26'},	{'need medbag','g80x_plu'},	{'shoot em','g23'},	{'i got the drill','g61'},	},
+		{	{'we\'re overrun','g68'},	{'time to go','g17'},	{'this way','g12'},	{'straight ahead','g19'},	{'can\'t stay here','g69'},	},
 		{	{'almost there','g28'},	{'get out','g07'},	{'upstairs','g02'},	{'hurry','g09'},	{'alright','g92'},	},
 		{	{'let\'s go','g13'},	{'Left','g03'},	false,	{'Right','g04'},	{'thanks','s05x_sin'},	},
 		{	{'halfway done','t02x_sin'},	{'careful','g10'},	{'downstairs','g01'},	{'inside','g08'},	{'ANY second','t03x_sin'},	},
-		{	false,	{'down here','g20'},	{'wrong way','g11'},	{'keep defended','g16'},	false,	},
+		{	{'few more minutes','t01x_sin'},	{'down here','g20'},	{'wrong way','g11'},	{'keep defended','g16'},	{'take cams','g25'},	},
 		{	false,	{'shit','g60'},	{'need ammo','g81x_plu'},	{'oh fuck','g29'},	false,	},
 	}
 	local w,h = 200,70
@@ -2569,6 +2576,54 @@ function PocoHud3Class._drawRose(tab)
 			end
 		end
 	end
+	local sPnl = pnl:panel{alpha = 0.4}
+	sPnl:gradient{
+		layer = -1,
+		gradient_points = {
+			0,
+			cl.Black,
+			1,
+			cl.Black:with_alpha(0)
+		},
+		orientation = "vertical",
+		h = pnl:h() / 3
+	}
+	sPnl:gradient{
+		layer = -1,
+		gradient_points = {
+			0,
+			cl.Black:with_alpha(0),
+			1,
+			cl.Black:with_alpha(1)
+		},
+		orientation = "vertical",
+		y = pnl:h() / 3 * 2,
+		h = pnl:h() / 3
+	}
+	sPnl:gradient{
+		layer = -1,
+		gradient_points = {
+			0,
+			cl.Black:with_alpha(1),
+			1,
+			cl.Black:with_alpha(0)
+		},
+		orientation = 'horizontal',
+		w = pnl:w() / 3
+	}
+	sPnl:gradient{
+		layer = -1,
+		gradient_points = {
+			0,
+			cl.Black:with_alpha(0),
+			1,
+			cl.Black:with_alpha(1)
+		},
+		orientation = 'horizontal',
+		x = pnl:w() / 3 * 2,
+		w = pnl:w() / 3
+	}
+	--pnl:bitmap{ texture='guis/textures/test_blur_df', render_template='VertexColorTexturedBlur3D', layer=-1, w = pnl:w(), h = pnl:h()}
 end
 
 local _kitPnl,_kitPnlBtn
