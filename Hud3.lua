@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 180
-local TAG = '0.17 hotfix 3 (ga4e4cc4)'
+local REV = 181
+local TAG = '0.17 hotfix 4 (g89a11a6)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -510,6 +510,7 @@ function TPocoHud3:Chat(category,text)
 end
 function TPocoHud3:Float(unit,category,temp,tag)
 	local key = unit.key and unit:key()
+	if not O:get('float','enable') then return end
 	if not key then return end
 	local float = self.floats[key]
 	if float then
