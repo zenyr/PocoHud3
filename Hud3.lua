@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 187
-local TAG = '0.17 hotfix 10 (g04ee2de)'
+local REV = 188
+local TAG = '0.17 hotfix 11 (g48b009e)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -457,6 +457,10 @@ function TPocoHud3:_update(t,dt)
 	if self.menuGui then
 		self.menuGui:update(t,dt)
 	end
+
+	local location = PocoHud3Class.PocoLocation
+	location:update(t,dt)
+
 end
 
 function TPocoHud3:HitDirection(col_ray,data)
