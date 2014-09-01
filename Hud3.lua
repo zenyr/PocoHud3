@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 186
-local TAG = '0.17 hotfix 9 (g45f51f2)'
+local REV = 187
+local TAG = '0.17 hotfix 10 (g04ee2de)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -118,12 +118,14 @@ function TPocoHud3:import(data)
 	self.killa = data.killa
 	self.stats = data.stats
 	self._muted = data._muted
+	self.joinT = data.joinT
 end
 function TPocoHud3:export()
 	Poco.save[self.className] = {
 		stats = self.stats,
 		killa = self.killa,
 		_muted = self._muted,
+		joinT = self.joinT,
 	}
 end
 function TPocoHud3:Update(t,dt)
