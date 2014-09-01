@@ -6,6 +6,7 @@ local scheme = {
 		detailedModeToggle = {'bool',FALSE,nil,'Make detailed mode key toggles mode.'},
 		silentKitShortcut = {'bool',TRUE,nil,'Ignore Kit Profiler shortcuts success message'},
 		pocoRoseKey = {'key','b',nil,'Keybind for PocoRose.\nDefault: B'},
+		['24HourClock'] = {'bool',TRUE,nil,'Use 24 hours clock instead of 12 hours clock at the corner and bottom player infobox'},
 	}, corner = {	'Static text ticker which works as FPS counter / Outgame clock',
 		color  = {'color','White','color','Font color'},
 		opacity = {'num',80,{0,100},'Font opacity',nil,5},

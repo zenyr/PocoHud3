@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 184
-local TAG = '0.17 hotfix 7 (ga464577)'
+local REV = 185
+local TAG = '0.17 hotfix 8 (ga839ebc)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -800,7 +800,11 @@ function TPocoHud3:_updatePlayers(t)
 				txts[#txts+1]={' '..Icon.Ghost..downs..(lives>0 and '/4' or ''),downs<3 and clGood or Color.red}
 			end
 			if isMe and _show('Clock') then
-				txts[#txts+1]={os.date(' %X'),Color.white}
+				if O:get('root','24HourClock') then
+					txts[#txts+1]={os.date(' %X'),Color.white}
+				else
+					txts[#txts+1]={os.date(' %p %I:%M:%S'),Color.white}
+				end
 			end
 			txts[#txts+1] = {' ',cl.White}
 			local btm = self.hh - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
@@ -973,7 +977,11 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 		txts[#txts+1] = math.floor(1/dt)
 	end
 	if (inGameDeep and dO.showClockIngame) or (not inGameDeep and dO.showClockOutgame) then
-		txts[#txts+1] = os.date('%X')
+		if O:get('root','24HourClock') then
+			txts[#txts+1] = os.date('%X')
+		else
+			txts[#txts+1] = os.date('%p %I:%M:%S')
+		end
 	end
 	txts[#txts+1] = self._dbgTxt
 	if t-(self._last_upd_dbgLbl or 0) > 0.5 or self._dbgTxt ~= self.__dbgTxt  then
