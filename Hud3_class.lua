@@ -758,13 +758,14 @@ function PocoLocation:update()
 	Poco.room = self
 	local ray = _.r()
 	if ray and ray.position then
-		local pos = Vector3(math.floor(ray.position.x),math.floor(ray.position.y),math.floor(ray.position.z))
+		local g = 20
+		local pos = Vector3(math.floor(ray.position.x/g+0.5)*g,math.floor(ray.position.y/g+0.5)*g,math.floor(ray.position.z/g+0.5)*g)
 		if pos ~= self.pos then
 			self.pos = pos
 			_.d(pos)
-			self.r:sphere(pos,10)
-		else
 			self.b:sphere(pos,10)
+		else
+			self.r:sphere(pos,10)
 		end
 		if now()-(self._lastIn or 0) > 0.5 then
 			if shift() then
