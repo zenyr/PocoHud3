@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 181
-local TAG = '0.17 hotfix 4 (g89a11a6)'
+local REV = 184
+local TAG = '0.17 hotfix 7 (ga464577)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -662,10 +662,11 @@ function TPocoHud3:_updatePlayers(t)
 			return thr >= ind
 		end
 		pnl = pnl ~= 0 and pnl or nil
-		if pnl and not name or (pnl and not btmO.enable) then
+		if pnl and (not name or not btmO.enable or (self:Stat(i,'_refreshBtm') ~= 0)) then
 			-- killPnl
 			self.pnl.stat:remove(pnl)
 			self['pnl_'..i] = nil
+			self:Stat(i,'_refreshBtm',0)
 		elseif not pnl and name and (isMe or nData) then
 			-- makePnl
 			local __,err = pcall(function()
@@ -1770,6 +1771,8 @@ function TPocoHud3:_hook()
 			if percent>= 99.8 and bPercent < percent then
 				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) then
 					self:Chat('replenished',self:_name(pid)..' replenished health by '.._.f(percent-bPercent)..'%'..(down>0 and '(+'..down..' down'..(down>1 and 's' or '')..')' or ''))
+				else
+					self:Stat(pid,'_refreshBtm',1)
 				end
 				self:Stat(pid,'custody',0)
 				self:Stat(pid,'downAll',self:Stat(pid,'down'),true)
