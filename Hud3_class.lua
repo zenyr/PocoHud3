@@ -563,7 +563,7 @@ function TFloat:renew(data)
 	self.dead = false
 end
 function TFloat:destroy(skipAnim)
-	if self.category == 1 and self.isDrill and not self._done then
+	if self.category == 1 and self.isDrill and not self._done and not me._endGameT then
 		local r,err = pcall(function()
 			self._done = true
 			me:Chat('drillDone',_.s(self:_getName(),'is done'))
