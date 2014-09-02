@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 186
-local TAG = '0.17 hotfix 9 (g45f51f2)'
+local REV = 187
+local TAG = '0.17 hotfix 10 (g04ee2de)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -118,12 +118,14 @@ function TPocoHud3:import(data)
 	self.killa = data.killa
 	self.stats = data.stats
 	self._muted = data._muted
+	self._startGameT = data._startGameT
 end
 function TPocoHud3:export()
 	Poco.save[self.className] = {
 		stats = self.stats,
 		killa = self.killa,
 		_muted = self._muted,
+		_startGameT = self._startGameT,
 	}
 end
 function TPocoHud3:Update(t,dt)
@@ -437,7 +439,14 @@ function TPocoHud3:_slowUpdate(t,dt)
 end
 function TPocoHud3:_update(t,dt)
 	inGameDeep = inGame and BaseNetworkHandler._verify_gamestate(BaseNetworkHandler._gamestate_filter.any_ingame_playing)
-	self.inGameDeep = inGameDeep
+	if self.inGameDeep ~= inGameDeep then
+		if inGameDeep then
+			self._startGameT = now()
+		else
+			self._endGameT = now()
+		end
+		self.inGameDeep = inGameDeep
+	end
 	self:_upd_dbgLbl(t,dt)
 	self.cam = managers.viewport:get_current_camera()
 	if not self.cam then return end
@@ -890,7 +899,7 @@ function TPocoHud3:_updateItems(t,dt)
 		if minion and minion ~= 0 then
 			if alive(minion) and minion:character_damage()._health > 0 then
 				self:Float(minion,0,false,{minion = i})
-			else
+			elseif not self._endGameT then
 				local attacker = self:_name(self:Stat(i,'minionHit'))
 				self:Stat(i,'minion',0)
 				self:Chat('minionLost',_.s(self:_name(i),'lost a minion to',attacker,'.'))
@@ -1777,7 +1786,7 @@ function TPocoHud3:_hook()
 			local bPercent = self:Stat(pid,'health') or 0
 			local down = self:Stat(pid,'down') or 0
 			if percent>= 99.8 and bPercent < percent then
-				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) then
+				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) and (now()-(self._startGameT or now()) > 1) then
 					self:Chat('replenished',self:_name(pid)..' replenished health by '.._.f(percent-bPercent)..'%'..(down>0 and '(+'..down..' down'..(down>1 and 's' or '')..')' or ''))
 				elseif bPercent == 0 then
 					self:Stat(pid,'_refreshBtm',1)
