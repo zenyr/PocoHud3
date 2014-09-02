@@ -754,15 +754,42 @@ function PocoLocation:_drawBox(pen,a,b)
 
 end
 
-function PocoLocation:update()
+function PocoLocation:get(pos)
+	local found, foundVol
+	if pos and pos.x then
+		local x,y,z = pos.x,pos.y,pos.z
+		for name,room in pairs(self.currentRooms or {}) do
+			local mi,ma = room[1],room[2]
+			if (mi.x <= x and ma.x >= x) and
+				(mi.y <= y and ma.y >= y) and
+				(mi.z <= z and ma.z >= z) then
+				local vol = math.abs((ma.x-mi.x)*(ma.y-mi.y)*(ma.z-mi.z))
+				if not found or foundVol > vol then
+					found = name
+					foundVol = vol
+				end
+			end
+		end
+	end
+	return found,foundVol
+end
+
+function PocoLocation:update(t,dt)
 	Poco.room = self
-	local ray = _.r()
+	local ff = _.g('setup:freeflight()')
+	if ff then
+		ff:update(t, dt)
+	end
+
+	local fCam = ff and ff:enabled() and ff._camera_object
+	local pos = fCam and fCam:position() or _.g('managers.player:player_unit():position()')
+	_.d('Room',self:get(pos) or 'None',#(self.currentRooms or {}))
+	local ray = fCam and World:raycast("ray", fCam:position(), fCam:position() + fCam:rotation():y() * 10000) or _.r()
 	if ray and ray.position then
 		local g = 20
 		local pos = Vector3(math.floor(ray.position.x/g+0.5)*g,math.floor(ray.position.y/g+0.5)*g,math.floor(ray.position.z/g+0.5)*g)
 		if pos ~= self.pos then
 			self.pos = pos
-			_.d(pos)
 			self.b:sphere(pos,10)
 		else
 			self.r:sphere(pos,10)
