@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 187
-local TAG = '0.17 hotfix 10 (g04ee2de)'
+local REV = 189
+local TAG = '0.17 hotfix 12 (g6767ec8)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1632,7 +1632,13 @@ function TPocoHud3:_hook()
 		end)
 		hook( UnitNetworkHandler, 'damage_explosion', function(...)
 			local self, subject_unit, attacker_unit, damage, i_attack_variant, death, direction, sender = unpack{...}
-			me:AddDmgPopByUnit(attacker_unit,subject_unit,0,damage*-0.1953125,death,false,'explosion')
+
+			local realAttacker = attacker_unit
+			if alive(realAttacker) and realAttacker:base()._thrower_unit then
+				realAttacker = realAttacker:base()._thrower_unit
+			end
+
+			me:AddDmgPopByUnit(realAttacker,subject_unit,0,damage*-0.1953125,death,false,'explosion')
 			return Run('damage_explosion', ... )
 		end)
 		hook( UnitNetworkHandler, 'damage_melee', function(...)
@@ -1653,7 +1659,11 @@ function TPocoHud3:_hook()
 				if info.col_ray.position or info.pos or info.col_ray.hit_position then
 					mvector3.set(hitPos,info.col_ray.position or info.pos or info.col_ray.hit_position)
 					local head = self._unit:character_damage():is_head(info.col_ray.body)
-					me:AddDmgPop(info.attacker_unit,hitPos,self._unit,0,info.damage,self._dead,head,info.variant)
+					local realAttacker = info.attacker_unit
+					if alive(realAttacker) and realAttacker:base()._thrower_unit then
+						realAttacker = realAttacker:base()._thrower_unit
+					end
+					me:AddDmgPop(realAttacker,hitPos,self._unit,0,info.damage,self._dead,head,info.variant)
 				end
 			end
 			return result
