@@ -780,6 +780,7 @@ function PocoLocation:update(t,dt)
 	if ff then
 		ff:update(t, dt)
 	end
+	if not Poco.roomOn then return end
 
 	local fCam = ff and ff:enabled() and ff._camera_object
 	local pos = fCam and fCam:position() or _.g('managers.player:player_unit():position()')
