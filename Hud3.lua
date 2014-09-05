@@ -7,7 +7,7 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 local _ = UNDERSCORE
 local REV = 192
-local TAG = '0.181 hotfix 2 (g19eb33d)'
+local TAG = '0.181 hotfix 2 (gfd3311d)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1270,7 +1270,7 @@ function TPocoHud3:_hook()
 			local r,err = pcall(function()
 				_tempStanceDisable = tempDisable
 				local crook = O:get('game','cantedSightCrook') or 0
-				local state = _.g('managers.groupai:state()')
+				local state = _.g('managers.player:player_unit():movement():current_state():')
 				if crook>1 and state and state._stance_entered then
 					state:_stance_entered()
 				end
@@ -1283,11 +1283,12 @@ function TPocoHud3:_hook()
 			if O:get('game','rememberGadgetState') then
 				local wb = self._equipped_unit:base()
 				if wb and me.gadget and me.gadget[wb._name_id] then
-					wb:set_gadget_on(me.gadget[wb._name_id] )
 					if me.gadget[wb._name_id] > 0 then
-						local on = wb and wb.is_second_sight_on and wb:is_second_sight_on()
+						wb:set_gadget_on(me.gadget[wb._name_id] )
+
+						local on = true or wb and wb.is_second_sight_on and wb:is_second_sight_on()
 						if on then
-							_matchStance()
+							managers.enemy:add_delayed_clbk('gadget', function() _matchStance() end, now(1) + 0.01)
 						end
 					end
 				end
@@ -1301,7 +1302,8 @@ function TPocoHud3:_hook()
 					local state = managers.player:player_unit():movement():current_state()
 					local wb = state._equipped_unit and state._equipped_unit:base()
 					local second_sight_on = wb and wb.is_second_sight_on and wb:is_second_sight_on()
-					if second_sight_on and not state:in_steelsight() then
+					local category = wb:weapon_tweak_data().category
+					if second_sight_on and not (state:_is_meleeing() or state:in_steelsight()) and category == 'snp' then
 						local sMod = wb.stance_mod and wb:stance_mod()
 						if crook == 2 then
 							stance_mod.rotation = Rotation(0,0,-7)
@@ -2096,6 +2098,18 @@ function TPocoHud3:_hook()
 			local self = unpack{...}
 			self._MAX_NR_CORPSES = math.pow(2,O:get('game','corpseLimit') or 3)
 			Run('_upd_corpse_disposal', ...)
+			-- Clean up shields. :p
+			local corpses,cnt = self._enemy_data.corpses, 0
+			for i,corpse in pairs(corpses or {}) do
+				local unit = corpse.unit
+				if alive(unit) and unit:base()._tweak_table == 'shield' then
+					cnt = cnt + 0
+					if cnt > 2 or (now() - corpse.death_t > 10) then
+						unit:base():set_slot(unit, 0)
+					end
+				end
+			end
+			--
 		end)
 
 	end -- End of if inGame
