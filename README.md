@@ -7,7 +7,7 @@ Payday2 Interface enhancer MOD
 
 * This repository is to disclose my source code, for DEVELOPERS.
 
-* For USER-FRINEDLY, working version, join in http://steamcommunity.com/groups/pocomods and download from a 'Download' forum thread.
+* For USER-FRIENDLY, working version, join in http://steamcommunity.com/groups/pocomods and download from a 'Download' forum thread.
 
 License
 
