@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 199
-local TAG = '0.18 hotfix 8 (g5b3e7c0)'
+local REV = 200
+local TAG = '0.18 hotfix 9 (g1f2d994)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -118,14 +118,14 @@ function TPocoHud3:import(data)
 	self.killa = data.killa
 	self.stats = data.stats
 	self._muted = data._muted
-	self.joinT = data.joinT
+	self._startGameT = data._startGameT
 end
 function TPocoHud3:export()
 	Poco.save[self.className] = {
 		stats = self.stats,
 		killa = self.killa,
 		_muted = self._muted,
-		joinT = self.joinT,
+		_startGameT = self._startGameT,
 	}
 end
 function TPocoHud3:Update(t,dt)
@@ -439,7 +439,14 @@ function TPocoHud3:_slowUpdate(t,dt)
 end
 function TPocoHud3:_update(t,dt)
 	inGameDeep = inGame and BaseNetworkHandler._verify_gamestate(BaseNetworkHandler._gamestate_filter.any_ingame_playing)
+	if self.inGameDeep ~= inGameDeep then
+		if inGameDeep then
+			self._startGameT = now()
+		else
+			self._endGameT = now()
+		end
 	self.inGameDeep = inGameDeep
+	end
 	self:_upd_dbgLbl(t,dt)
 	self.cam = managers.viewport:get_current_camera()
 	if not self.cam then return end
@@ -896,7 +903,7 @@ function TPocoHud3:_updateItems(t,dt)
 		if minion and minion ~= 0 then
 			if alive(minion) and minion:character_damage()._health > 0 then
 				self:Float(minion,0,false,{minion = i})
-			else
+			elseif not self._endGameT then
 				local attacker = self:_name(self:Stat(i,'minionHit'))
 				self:Stat(i,'minion',0)
 				self:Chat('minionLost',_.s(self:_name(i),'lost a minion to',attacker,'.'))
@@ -1267,7 +1274,7 @@ function TPocoHud3:_hook()
 			local r,err = pcall(function()
 				_tempStanceDisable = tempDisable
 				local crook = O:get('game','cantedSightCrook') or 0
-				local state = _.g('managers.groupai:state()')
+				local state = _.g('managers.player:player_unit():movement():current_state()')
 				if crook>1 and state and state._stance_entered then
 					state:_stance_entered()
 				end
@@ -1280,11 +1287,12 @@ function TPocoHud3:_hook()
 			if O:get('game','rememberGadgetState') then
 				local wb = self._equipped_unit:base()
 				if wb and me.gadget and me.gadget[wb._name_id] then
-					wb:set_gadget_on(me.gadget[wb._name_id] )
 					if me.gadget[wb._name_id] > 0 then
-						local on = wb and wb.is_second_sight_on and wb:is_second_sight_on()
+					wb:set_gadget_on(me.gadget[wb._name_id] )
+
+						local on = true or wb and wb.is_second_sight_on and wb:is_second_sight_on()
 						if on then
-							_matchStance()
+							managers.enemy:add_delayed_clbk('gadget', function() _matchStance() end, now(1) + 0.01)
 						end
 					end
 				end
@@ -1298,7 +1306,8 @@ function TPocoHud3:_hook()
 					local state = managers.player:player_unit():movement():current_state()
 					local wb = state._equipped_unit and state._equipped_unit:base()
 					local second_sight_on = wb and wb.is_second_sight_on and wb:is_second_sight_on()
-					if second_sight_on and not state:in_steelsight() then
+					local category = wb:weapon_tweak_data().category
+					if second_sight_on and not (state:_is_meleeing() or state:in_steelsight()) and category == 'snp' then
 						local sMod = wb.stance_mod and wb:stance_mod()
 						if crook == 2 then
 							stance_mod.rotation = Rotation(0,0,-7)
@@ -1629,7 +1638,13 @@ function TPocoHud3:_hook()
 		end)
 		hook( UnitNetworkHandler, 'damage_explosion', function(...)
 			local self, subject_unit, attacker_unit, damage, i_attack_variant, death, direction, sender = unpack{...}
-			me:AddDmgPopByUnit(attacker_unit,subject_unit,0,damage*-0.1953125,death,false,'explosion')
+
+			local realAttacker = attacker_unit
+			if alive(realAttacker) and realAttacker:base()._thrower_unit then
+				realAttacker = realAttacker:base()._thrower_unit
+			end
+
+			me:AddDmgPopByUnit(realAttacker,subject_unit,0,damage*-0.1953125,death,false,'explosion')
 			return Run('damage_explosion', ... )
 		end)
 		hook( UnitNetworkHandler, 'damage_melee', function(...)
@@ -1650,8 +1665,12 @@ function TPocoHud3:_hook()
 				if info.col_ray.position or info.pos or info.col_ray.hit_position then
 					mvector3.set(hitPos,info.col_ray.position or info.pos or info.col_ray.hit_position)
 					local head = self._unit:character_damage():is_head(info.col_ray.body)
-					me:AddDmgPop(info.attacker_unit,hitPos,self._unit,0,info.damage,self._dead,head,info.variant)
+					local realAttacker = info.attacker_unit
+					if alive(realAttacker) and realAttacker:base()._thrower_unit then
+						realAttacker = realAttacker:base()._thrower_unit
 				end
+					me:AddDmgPop(realAttacker,hitPos,self._unit,0,info.damage,self._dead,head,info.variant)
+			end
 			end
 			return result
 		end)
@@ -1783,7 +1802,7 @@ function TPocoHud3:_hook()
 			local bPercent = self:Stat(pid,'health') or 0
 			local down = self:Stat(pid,'down') or 0
 			if percent>= 99.8 and bPercent < percent then
-				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) then
+				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) and (now()-(self._startGameT or now()) > 1) then
 					self:Chat('replenished',self:_name(pid)..' replenished health by '.._.f(percent-bPercent)..'%'..(down>0 and '(+'..down..' down'..(down>1 and 's' or '')..')' or ''))
 				elseif bPercent == 0 then
 					self:Stat(pid,'_refreshBtm',1)
@@ -2083,6 +2102,18 @@ function TPocoHud3:_hook()
 			local self = unpack{...}
 			self._MAX_NR_CORPSES = math.pow(2,O:get('game','corpseLimit') or 3)
 			Run('_upd_corpse_disposal', ...)
+			-- Clean up shields. :p
+			local corpses,cnt = self._enemy_data.corpses, 0
+			for i,corpse in pairs(corpses or {}) do
+				local unit = corpse.unit
+				if alive(unit) and unit:base()._tweak_table == 'shield' then
+					cnt = cnt + 0
+					if cnt > 2 or (now() - corpse.death_t > 10) then
+						unit:base():set_slot(unit, 0)
+					end
+				end
+			end
+			--
 		end)
 
 	end -- End of if inGame
