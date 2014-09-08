@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 194
-local TAG = '0.181 hotfix 4 (g065ea11)'
+local REV = 195
+local TAG = '0.181 hotfix 5 (gea3b769)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -235,7 +235,7 @@ end
 --- Internal functions ---
 function TPocoHud3:say(line,sync)
 	if line then
-		local cs = _.g('managers.player:player_unit():movement()._current_state')
+		--[[local cs = _.g('managers.player:player_unit():movement()._current_state')
 		if cs then
 			cs._intimidate_t = now()
 			pcall(self.Buff,self,({
@@ -244,7 +244,7 @@ function TPocoHud3:say(line,sync)
 				iconRect = { 2*64, 8*64 ,64,64 },
 				st=now(), et=now()+tweak_data.player.movement_state.interaction_delay
 			}) )
-		end
+		end]]
 		--[[
 		if _.g('managers.groupai:state()') then
 			managers.groupai:state():teammate_comment(_.g('managers.player:player_unit()'), line, nil, false, nil, false)
@@ -711,6 +711,60 @@ function TPocoHud3:_updatePlayers(t)
 								self['pnl_lblA'..i] = pnl:text{name='lblA',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=0,y=1, layer=1, blend_mode = 'normal'}
 								self['pnl_lblB'..i] = pnl:text{name='lblB',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Black:with_alpha(0.4), x=2,y=1, layer=1, blend_mode = 'normal'}
 								self['pnl_'..i] = pnl
+
+								-- install arrow
+								local hPnl = bPnl._player_panel:child('radial_health_panel')
+								if hPnl:child('arrow') then
+									hPnl:remove(hPnl:child('arrow'))
+								end
+								if O:get('playerBottom','showArrow') then
+									local arrow = hPnl:bitmap{
+										name= 'arrow', texture= 'guis/textures/pd2/scrollbar_arrows',
+										texture_rect = {0,0,12,12},
+										layer= 0,
+										color= self:_color(i),
+										--blend_mode= 'add',
+										x= 0, y=0,
+										w= 20,
+										h= 20,
+										rotation = 360,
+									}
+									local currAngle = 360
+									local tAngle = 360
+									local lastT = 0
+									local unit = isMe and self:Stat(i,'minion') or nData and nData.movement._unit
+									local mcos,msin = math.cos,math.sin
+									local w,h = hPnl:w(),hPnl:h()
+									local r = (isMe and 64 or 48) / 2 -3
+									hPnl:stop()
+									hPnl:animate(function(p,t)
+										while alive(p) and arrow and alive(arrow) do
+											if now() - lastT > 0.1 then
+												if isMe then
+													unit = self:Stat(i,'minion')
+												end
+												lastT = now()
+												tAngle = self:_getAngle(unit)
+											end
+											arrow:set_visible(not not tAngle)
+											if tAngle then
+												if math.abs(tAngle-currAngle) > 180 then
+													currAngle = currAngle + (tAngle>currAngle and 360 or -360)
+												end
+												currAngle = currAngle + (tAngle - currAngle)/5
+												if currAngle == 0 then
+													currAngle = 360
+												end
+												arrow:set_rotation(currAngle)
+												arrow:set_center(w/2 + r*msin(currAngle),h/2 - r*mcos(currAngle))
+											end
+											coroutine.yield()
+										end
+									end)
+
+									self['pnl_arrow'..i] = arrow
+								end
+								-- arrow end
 							end
 						end
 					end
@@ -759,6 +813,9 @@ function TPocoHud3:_updatePlayers(t)
 				local r,rt = t/math.max(0.01,tt), tt-t
 				local c = math.lerp(cl.Aqua,cl.Lime,r)
 				txts[#txts+1]={' '.._.f(rt),c}
+				if rt < 0 then
+					self:Stat(i,'interactET',0)
+				end
 			end
 			if interText and _show('Interaction') then
 				txts[#txts+1]={' '..interText,cl.White}
@@ -2111,7 +2168,6 @@ function TPocoHud3:_hook()
 			end
 			--
 		end)
-
 	end -- End of if inGame
 	-- Kick menu
 	if O:get('game','showRankInKickMenu') then
@@ -2210,6 +2266,17 @@ end
 function TPocoHud3:test()
 -- reserved
 	self:Menu()
+end
+
+function TPocoHud3:_getAngle(unit)
+	if not (unit and type(unit)=='userdata' and alive(unit)) then
+		return
+	end
+	local uPos = unit:position()
+	local vec = self.camPos - uPos
+	local fwd = self.cam:rotation():y()
+	local ang = math.floor( vec:to_polar_with_reference( fwd, math.UP ).spin )
+	return -(ang+180)
 end
 
 function TPocoHud3:_v2p(pos)
