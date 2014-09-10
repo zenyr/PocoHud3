@@ -2195,15 +2195,16 @@ end
 
 function PocoHud3Class._drawHeistStats (tab)
 	local oTabs = PocoTabs:new(me._ws,{name = 'Options',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
-	local oTab = oTabs:add('Heist')
+	local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
+	local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
+	local x, y, tbl = 10, 10, {}
+
+	-- [1] Per Heist
+	local oTab = oTabs:add('Per Heist')
 	local pnl = oTab.pnl
 	local w, h, ww, hh = 0,0, pnl:size()
 	local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size*0.98
 	local _rowCnt = 0
-
-	local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
-	local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
-	local x, y, tbl = 10, 10, {}
 	tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
 	local addJob = function(host,heist)
 		local jobData = tweak_data.narrative.jobs[heist]
@@ -2230,7 +2231,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..managers.job:get_job_heat(heist)..')',color:with_alpha(0.3)}})
 		tbl[#tbl+1] = rowObj
 	end
-	for host,jobs in pairs(host_list) do
+	for host,jobs in _pairs(host_list) do
 		for no,heist in _pairs(jobs) do
 			job_list[table.get_key(job_list,heist)] = nil
 			addJob(host,heist)
@@ -2250,6 +2251,97 @@ function PocoHud3Class._drawHeistStats (tab)
 		y = me:_drawRow(pnl,fontSize,_tbl,x,y,ww-20, _rowCnt % 2 == 0,{1,_rowCnt == 1 and 1 or 0})
 	end
 	oTab:set_h(y)
+
+	-- [2] Per day
+	oTab = oTabs:add('Per Day')
+	pnl = oTab.pnl
+	y = 10
+	local descs = {}
+	tbl = {}
+	tbl[#tbl+1] = {{'Heist',cl.BlanchedAlmond},{'Day',cl.Honeydew},{'Started',cl.LavenderBlush},{'Completed',cl.Wheat},'Time'}
+	local levels = _.g('managers.statistics._global.sessions.levels') or {}
+	-- search JobsChain
+	local addDay = function(val,prefix,suffix)
+		if not level_list[table.get_key(level_list,val)] then return end
+		if table.get_key(level_list,val) then
+			level_list[table.get_key(level_list,val)] = nil
+		end
+		local level = levels[val]
+		if not level then return end
+		local name = managers.localization:to_upper_text(tweak_data.levels[val].name_id)
+		if name == prefix then
+			prefix = {Icon.Ghost,cl.Gray}
+		end
+		local _c = function(n,color)
+			return {n,n and n>0 and (color or cl.Lime) or cl.Gray }
+		end
+		local _s = function(...)
+			local t = {}
+			for i,v in pairs{...} do
+				t[i] = _.s(v)
+			end
+			return table.concat(t)
+		end
+		local t = level.time / 60
+		local avg = t / math.max(1,level.completed)
+		tbl[#tbl+1] = {
+			prefix,
+			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,align='left',text=name,hintText=suffix}),
+			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text=level.started,hintText={
+				'From Beginning: ',_c(level.from_beginning),
+				'\nDropped in: ',_c(level.drop_in),
+			}}),
+			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text=level.completed,hintText={'Quit: ',_c(level.quited,cl.Red)}}),
+			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text={t>0 and ( t > 60 and {_s(math.floor(t/60),'h ',math.floor(t%60),'m')} or {_s(t,'m')} ) or {'-',cl.Gray}},hintText={
+				'Average: ',{_s(math.floor(avg),'m ',math.floor(avg*60%60),'s'),avg>0 and cl.Lime or cl.Gray}
+			}})
+		}
+	end
+	for host,jobs in _pairs(host_list) do
+		for no,heist in _pairs(jobs) do
+			local jobData = tweak_data.narrative.jobs[heist]
+			local jobName
+			if jobData.wrapped_to_job then
+				jobName = tweak_data.narrative.jobs[jobData.wrapped_to_job].name_id
+			else
+				jobName = jobData.name_id
+			end
+			if jobData.chain then
+				for day,level in pairs(jobData.chain) do
+					if level.level_id then
+						addDay(level.level_id,managers.localization:to_upper_text(jobName),_.s('day',day))
+					else -- alt Days
+						for alt,_level in pairs(level) do
+							addDay(_level.level_id,managers.localization:to_upper_text(jobName),_.s('day',day,'alt',alt))
+						end
+					end
+				end
+			else
+				_('no chain?',jobData.name_id)
+			end
+		end
+	end
+	-- the rest
+	tbl[#tbl+1] = {{' -- Not listed heists --',cl.DodgerBlue}}
+	for key,val in _pairs(level_list) do
+		addDay(val,{Icon.Ghost,cl.DodgerBlue})
+	end
+
+	-- draw
+	_rowCnt = 0
+	for row, _tbl in pairs(tbl) do
+		if _lastHost == _tbl[1] then
+			_tbl[1] = ''
+		else
+			_lastHost = _tbl[1]
+			_tbl[1] = type(_tbl[1]) == 'string' and {_tbl[1],cl.BlanchedAlmond} or _tbl[1]
+		end
+		_rowCnt = _rowCnt + 1
+		y = me:_drawRow(pnl,fontSize,_tbl,x,y,ww-20, _rowCnt % 2 == 0,{1,_rowCnt == 1 and 1 or 0})
+	end
+	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=fontSize, pnl = pnl, x = 10, y = y+10},'* Numbers may not match between heists and days.',true)
+
+	oTab:set_h(lbl:bottom())
 end
 
 function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
