@@ -7,7 +7,7 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 local _ = UNDERSCORE
 local REV = 197
-local TAG = '0.182 hotfix 1 (ge63b0ee)'
+local TAG = '0.182 hotfix 1 (ga3ff319)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1213,9 +1213,6 @@ function TPocoHud3:_time(sec)
 	end
 	return table.concat(r,':')
 end
-local pen = Draw:pen( 'no_z', 'red' )
-local pen2 = Draw:pen( 'no_z', 'green' )
-local pen3 = Draw:pen( 'no_z', 'blue' )
 function TPocoHud3:_visibility(uPos)
 	local result = 1-math.min(0.9,managers.environment_controller._current_flashbang)
 	if not uPos then
