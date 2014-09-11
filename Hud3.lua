@@ -1,13 +1,13 @@
 -- PocoHud3 by zenyr@zenyr.com
 if not TPocoBase then return end
-local disclamer = [[
+local disclaimer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 
 
 local _ = UNDERSCORE
 local REV = 224
-local TAG = '0.19 hotfix 4 (gb14bd85)'
+local TAG = '0.19 hotfix 4 (g0e17956)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
