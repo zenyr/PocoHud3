@@ -840,9 +840,11 @@ function PocoLocation:load()
 		if type(o) == 'table' then
 			self.rooms = o
 			self:endRoom()
+			result = true
 		end
 		f:close()
 	end
+	return result
 end
 
 function PocoLocation:save()
