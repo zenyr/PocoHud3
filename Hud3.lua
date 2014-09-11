@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 197
-local TAG = '0.182 hotfix 1 (ga3ff319)'
+local REV = 199
+local TAG = '0.182 hotfix 3 (g7aaaa87)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1056,39 +1056,7 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 		self._last_upd_dbgLbl = t
 	end
 end
-function TPocoHud3:_drawStat(state,pnl)
-	local ppnl = pnl or self.pnl.dbg
-	if state then -- Show Stat
 
-	else -- Hide Stat
-		local fade = function(pnl,cb,seconds, ppnl)
-			pnl:set_visible( true )
-			pnl:set_alpha( 1 )
-			local t = seconds
-			while alive(pnl) and t > 0 do
-				if me.verbose then
-					break
-				end
-				local dt = coroutine.yield()
-				t = t - dt
-				pnl:set_alpha(t/seconds )
-			end
-			if not alive(pnl) then
-				return
-			end
-			if not me.verbose then
-				pnl:set_visible( false )
-				ppnl:remove(pnl)
-				me.dbgStat = nil
-			else
-				pnl:set_alpha(1)
-			end
-		end
-
-		self.dbgStat:animate( fade, callback( self, self, 'destroy' , true), 0.2, ppnl )
-
-	end
-end
 function TPocoHud3:_scanSmoke(t)
 	local smokeDecay = 3
 	local units = World:find_units_quick( 'all', World:make_slot_mask( 14 ))
