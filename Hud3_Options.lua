@@ -6,7 +6,7 @@ local scheme = {
 		detailedModeToggle = {'bool',FALSE,nil,'Make detailed mode key toggles mode.'},
 		silentKitShortcut = {'bool',TRUE,nil,'Ignore Kit Profiler shortcuts success message'},
 		pocoRoseKey = {'key','b',nil,'Keybind for PocoRose.\nDefault: B'},
-		['24HourClock'] = {'bool',TRUE,nil,'Use 24 hours clock instead of 12 hours clock at the corner and bottom player infobox'},
+		['24HourClock'] = {'bool',TRUE,nil,'Use 24 hour clock instead of 12 hours clock at the corner and bottom player infobox'},
 	}, corner = {	'Static text ticker which works as FPS counter / Outgame clock',
 		color  = {'color','White','color','Font color'},
 		opacity = {'num',80,{0,100},'Font opacity',nil,5},
@@ -76,6 +76,7 @@ local scheme = {
 		showDowns = {'num',2,{0,2},'Downs counter','Verbose'},
 		showPing = {'num',2,{0,2},'Latency as miliseconds','Verbose'},
 		showConvertedEnemy = {'num',1,{0,2},'Minion health as percent if one has any','Verbose'},
+		showArrow = {'bool',TRUE,nil,'Arrow pointing at players\' position'},
 	}, popup = {	'Shows damages in 3D space',
 		enable = {'bool',TRUE},
 		size  = {'num',22,{10,30},'Text size',nil,nil,1},
@@ -129,8 +130,8 @@ local scheme = {
 		opacity  = {'num',90,{10,100},'Max opacity',nil,5,1},
 		showTargets = {'bool',TRUE,nil,'Show pointed mobs',nil,nil,3},
 		showDrills = {'bool',TRUE,nil,'Show active drills'},
-		showHighlighted = {'bool',TRUE,nil,'Configuration not implemented'},
-		showConvertedEnemy = {'bool',TRUE,nil,'Configuration not implemented'},
+		showHighlighted = {'bool',TRUE,nil,'Show floating infobox while highlighted.\nPager answering timer also depends on this.'},
+		showConvertedEnemy = {'bool',TRUE,nil,'Try to color-code them to the master.'},
 		showBags = {'bool',TRUE,nil,'Show pointed bags.\n* Requires \'Show Targets\' enabled'},
 	}, game = {	'Game specific enhancements',
 		fasterDesyncResolve = {'num',2,{1,3},'In-game Player husks will catch up severe desync faster and represent more accurate position.','DesyncResolve',nil,1},
@@ -142,6 +143,8 @@ local scheme = {
 		subtitleFontSize = {'num',20,{10,30},'Subtitle font size',nil,nil,3},
 		subtitleFontColor = {'color','White',nil,'Subtitle font color',nil,nil,3},
 		subtitleOpacity = {'num',100,{10,100},'Subtitle opacity',nil,10,3},
+		truncateNames = {'num',1,{1,8},{'Truncate Player names by length, if required.\ne.g)',{'Professor PoopyPants',cl.Tan},' > ', {'Professor '..PocoHud3Class.Icon.Dot,cl.Tan}},'truncateNames',nil,4},
+		truncateTags = {'bool',TRUE,nil,{'Truncate Player tags with square brakets.\ne.g)',{'[Poco]Hud',cl.Tan},' > ', {PocoHud3Class.Icon.Dot..'Hud',cl.Tan}},'truncateNames',nil,4},
 	}
 }
 local _vanity = {
@@ -154,6 +157,7 @@ local _vanity = {
 	DesyncResolve = 'N/A,Off,Faster,Aggressive',
 	corpse = 'N/A,Minimum,Less,Default,More,a Lot,Considerable,Massive,Mammoth,Colossal,Ridiculous',
 	cantedSight = 'N/A,Off,Subtle,Obvious,Maximum',
+	truncateNames = 'N/A,Off,3,6,9,12,15,18,21',
 }
 ----------------------------------------------------
 local JSONFileName = 'poco\\hud3_config.json'
