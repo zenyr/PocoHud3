@@ -935,9 +935,23 @@ function PocoUIElem:sound(sound)
 	managers.menu_component:post_event(sound)
 end
 
+function PocoUIElem:hide()
+	self._hide = true
+	self.pnl:set_visible(false)
+end
+
+function PocoUIElem:setLabel(text)
+	if alive(self.lbl) then
+		self.lbl:set_text(text)
+	end
+end
+
+function PocoUIElem:disable()
+	self._disabled = true
+end
 
 function PocoUIElem:isHot(event,x,y)
-	return alive(self.pnl) and self.pnl:inside(x,y)
+	return not self._disabled and not self._hide and alive(self.pnl) and self.pnl:inside(x,y)
 end
 
 function PocoUIElem:fire(event,x,y)
@@ -2574,15 +2588,167 @@ function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
 	return y
 end
 
-function PocoHud3Class._drawPlayer(pnl, pid, member, offsetY)
-	offsetY = offsetY or 0
-	pnl:text{
-		x = 10, y = offsetY+10, w = 600, h = 30,
-		name = 'tab_desc', text = me:_name(pid),
-		font = FONTLARGE, font_size = 25, color = me:_color(pid)
-	}
-	local y,fontSize,w = offsetY+35, 19, 970
+function PocoHud3Class._drawPlayer(tab)
+	local y
+	local oTabs = PocoTabs:new(me._ws,{name = 'Players',x = 10, y = 10, w = tab.pnl:width()-20, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
+
+	for i = 1,4 do
+		local member = me:_member(i)
+		local peer = member and member:peer()
+		if peer then
+			local uid, __ = peer._user_id
+			local oTab = oTabs:add(_.s('Player',i,':',peer._name))
+
+			local objs = {} -- stores UIelems & cbks
+			local _cbk = function(key)
+				return function(self,...)
+					if me._busy then
+						self:sound('menu_error')
+						return
+					else
+						objs[key](self,...)
+					end
+				end
+			end
+
+			local ooTabs = PocoTabs:new(me._ws,{name = 'Player'..i,x = 10, y = 10, w = oTab.pnl:width()-20, th = 30, fontSize = 18, h = oTab.pnl:height()-20, pTab = oTab})
+
+			-- Inner - Basic
+			local ooTab = ooTabs:add('Basic')
+			local tbl = {{'Key','Value'}}
+			y = 10
+			objs.btnProfile = PocoUIButton:new(ooTab,{
+				onClick = function()
+					Steam:overlay_activate('url', 'http://steamcommunity.com/profiles/'..uid)
+				end,
+				x = 10, y = 10, w = 200,h=26, text=_.s(uid)
+			})
+
+			objs.btnSteam = PocoUIButton:new(ooTab,{
+				onClick = _cbk('btnSteamCbk'),
+				x = 10, y = 10, w = 370,h=26,
+				text='Fetch Recent Games'
+			})
+			__, objs.lblGame1 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'Game1')
+			__, objs.lblGame2 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'Game2')
+			__, objs.lblGame3 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'Game3')
+			__, objs.lblGameTime1 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
+			__, objs.lblGameTime2 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
+			__, objs.lblGameTime3 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
+			objs.btnSteamCbk = function(self)
+				me._busy = true
+				self:setLabel('Loading...')
+				Steam:http_request('http://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key=BE48819D3E15C1FC4E5FDCD5AC1360BA&steamid='..uid, function(success, body)
+					me._busy = false
+					if success then
+						local r, result = pcall(JSON.decode,JSON,body)
+						if r then
+							result = result.response
+							if result and result.games then
+								for i,obj in pairs(result.games or {}) do
+									local lbl = objs['lblGame'..i]
+									local lbl2 = objs['lblGameTime'..i]
+									if lbl and alive(lbl) then
+										lbl:set_text(_.s(obj.name))
+										lbl2:set_text(_.s('Total',obj.playtime_forever/60,'h,',obj.playtime_2weeks/60,'h lately'))
+									end
+								end
+								self:setLabel(_.s('Successfully received',#result.games,'games from Steam profile.'))
+							else
+								self:setLabel('Denied: Private/Member-only profile?')
+							end
+							self:disable()
+						else
+							me:err(result)
+						end
+					end
+				end)
+			end
+			objs.btnPD2Stats = PocoUIButton:new(ooTab,{
+				onClick = _cbk('btnPD2StatsCbk'),
+				x = 10, y = 10, w = 370,h=26,
+				text='Fetch PD2Stats.com data'
+			})
+			objs.btnPD2Cheater = PocoUIButton:new(ooTab,{
+				onClick = function()
+					Steam:overlay_activate('url', 'http://pd2stats.com/profiles/'..uid)
+				end,
+				x = 10, y = 10, w = 200,h=26,
+				text='Unknown'
+			})
+
+			objs.btnPD2StatsCbk = function(self)
+				me._busy = true
+				self:setLabel('Loading...')
+				Steam:http_request('http://api.pd2stats.com/cheater/v1/?id='..uid, function(success, body)
+					me._busy = false
+					if success then
+						body = body:gsub('\t([%w_]-):','\t"%1":')
+						local r, result = pcall(JSON.decode,JSON,body)
+						if r then
+							if result.error_code == 0 then
+								self:disable()
+								self:setLabel('Successfully received fro PD2Stats.com')
+								objs.btnPD2Cheater:setLabel(result.cheater and 'Suspicious.' or 'Seems legit.')
+							else
+								self:setLabel(result.error_string or 'Failed.')
+							end
+						else
+							me:err(result)
+						end
+					end
+				end)
+			end
+			local isMe = i==me.pid
+
+			tbl[#tbl+1] = {'Level',_.s(isMe and managers.experience:current_rank() or peer:rank() or 0,Icon.Dot,isMe and managers.experience:current_level() or peer:level())}
+			tbl[#tbl+1] = {'UID',objs.btnProfile}
+			tbl[#tbl+1] = {objs.btnSteam}
+			tbl[#tbl+1] = {objs.lblGame1,objs.lblGameTime1}
+			tbl[#tbl+1] = {objs.lblGame2,objs.lblGameTime2}
+			tbl[#tbl+1] = {objs.lblGame3,objs.lblGameTime3}
+			tbl[#tbl+1] = {objs.btnPD2Stats}
+			tbl[#tbl+1] = {'PD2Stats Verdict',objs.btnPD2Cheater}
+			for k,row in pairs(tbl) do
+				y = me:_drawRow(ooTab.pnl,20,row,20,y,600,k % 2 ~= 0,true,1.3)
+			end
+
+			ooTab:set_h(y)
+			----
+
+
+			-- Inner - Raw (for DBG)
+			if peer._synced and false then
+				local ooTab = ooTabs:add('Raw')
+				local __,lbl = _.l({pnl=ooTab.pnl,
+					x = 10, y = 10, w = 800, h = 30,
+					name = 'tab_desc', font = FONTLARGE, font_size = 20, color = cl.White
+				},_.s(zinspect(peer,{depth=5})),true)
+				ooTab:set_h(lbl:bottom())
+			end
+			----
+		end
+	end
 	return y
+	--[[offsetY = offsetY or 0
+	pnl:text{
+		x = 10, y = y, w = 600, h = 30,
+		name = 'tab_desc', text = me:_name(i),
+		font = FONTLARGE, font_size = 25, color = me:_color(i)
+	}
+
+	local a = ''
+	for k in _pairs(getmetatable(member)) do
+		a = a..tostring(k)..'\n'
+	end
+		a = a..'---\n'
+	a = zinspect(member:peer(),{depth=2})
+	local __,lbl = _.l({pnl=pnl,
+		x = 210, y = offsetY+10, w = 600, h = 30,
+		name = 'tab_desc', font = FONTLARGE, font_size = 20, color = cl.White
+	},_.s(a),true)
+
+	local y,fontSize,w = lbl:bottom(), 19, 970]]
 end
 
 function PocoHud3Class._drawAbout(tab,REV,TAG)
@@ -2591,10 +2757,19 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		onClick = function(self)
 			Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
 		end,
-		x = 10, y = 10, w = 200,h=100,
+		x = 10, y = 10, w = 170,h=100,
 		text={{'PocoHud3 r'},{REV,cl.Gray},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\n'..TAG,cl.Silver}},
 		hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
 	})
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+			os.execute('start http://steamcommunity.com/groups/pocomods')
+		end,
+		x = 180, y = 10, w = 30, h=100,
+		text = Icon.RC,
+		hintText='Open in System web-browser'
+	})
+
 	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = tab.pnl, x = 220, y = 10},'Loading RSS...',true)
 	local _strip = function(s)
 		return s:gsub('&lt;','<'):gsub('&gt;','>'):gsub('<br>','\n'):gsub(string.char(13),''):gsub('<.->',''):gsub('&amp;','&'):gsub('&amp;','&')
@@ -2637,6 +2812,15 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 					text={'   ',{obj[1],cl.CornFlowerBlue}},
 					hintText = {obj[2]:sub(1,200)..'...'}
 				})
+				PocoUIButton:new(tab,{
+					onClick = function(self)
+						os.execute('start '..obj[4])
+					end,
+					x = 620, y = y, w = 30, h=50,
+					fontSize = 22,
+					text={Icon.RC,cl.Gray},
+					hintText={{'Open in system web-browser...\n',cl.Tan},{obj[2]:sub(1,200)..'...'}}
+				})
 				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = tab.pnl, x = 240, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
 
 				y = y + 60
@@ -2650,22 +2834,40 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 	else
 		Steam:http_request('http://steamcommunity.com/groups/pocomods/rss', _onRSS)
 	end
+
 	PocoUIButton:new(tab,{
 		onClick = function(self)
-			Steam:overlay_activate('url', 'http://twitter.com/zenyr')
+			Steam:overlay_activate('url', 'https://twitter.com/zenyr')
 		end,
-		x = 10, y = 120, w = 200,h=40,
+		x = 10, y = 120, w = 170,h=40,
 		text={'@zenyr',cl.OrangeRed},
 		hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki}}
 	})
 
 	PocoUIButton:new(tab,{
 		onClick = function(self)
+			os.execute('start https://twitter.com/zenyr')
+		end,
+		x = 180, y = 120, w = 30, h=40,
+		text = Icon.RC,
+		hintText='Open in system web-browser'	})
+
+	PocoUIButton:new(tab,{
+		onClick = function(self)
 			Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 		end,
-		x = 10, y = 170, w = 200,h=40,
+		x = 10, y = 170, w = 170,h=40,
 		text={'Color codes reference page', cl.Silver},-- no moar fun tho
 		hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
+	})
+
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+			os.execute('start http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
+		end,
+		x = 180, y = 170, w = 30, h=40,
+		text = Icon.RC,
+		hintText='Open in system web-browser'
 	})
 end
 

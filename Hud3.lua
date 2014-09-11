@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 218
-local TAG = '0.182 hotfix 22 (g533215f)'
+local REV = 219
+local TAG = '0.182 hotfix 23 (gb44297e)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -332,11 +332,11 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 			self._noRose = true
 			gui:fadeIn()
 			--- Install tabs Begin --- ===================================
-			local tab = gui:add('Options')
-			C._drawOptions(tab)
-
 			local tab = gui:add('About')
 			C._drawAbout(tab,REV,TAG)
+
+			local tab = gui:add('Options')
+			C._drawOptions(tab)
 
 			local y = 0
 			tab = gui:add('Statistics')
@@ -368,13 +368,8 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 				PocoHud3Class._drawKit(oTab)
 
 				local oTab = oTabs:add('Inspect')
-				y = 0
-				for i=1,4 do
-					local member= self:_member(i)
-					if member and member._unit then
-						y = _drawPlayer(oTab.pnl, i, member, y)
-					end
-				end
+				y = _drawPlayer(oTab, 0)
+				oTab:set_h(y)
 			end
 		end
 	end)
@@ -726,12 +721,12 @@ function TPocoHud3:_updatePlayers(t)
 									local arrow = hPnl:bitmap{
 										name= 'arrow', texture= 'guis/textures/pd2/scrollbar_arrows',
 										texture_rect = {0,0,12,12},
-										layer= 0,
-										color= self:_color(i),
-										--blend_mode= 'add',
+										layer= 10,
+										color= self:_color(i):with_alpha(0.7),
+										blend_mode= 'add',
 										x= 0, y=0,
 										w= 20,
-										h= 20,
+										h= 10,
 										rotation = 360,
 									}
 									local currAngle = 360
@@ -740,7 +735,7 @@ function TPocoHud3:_updatePlayers(t)
 									local unit = isMe and self:Stat(i,'minion') or nData and nData.movement._unit
 									local mcos,msin = math.cos,math.sin
 									local w,h = hPnl:w(),hPnl:h()
-									local r = (isMe and 64 or 48) / 2 -3
+									local r = (isMe and 64 or 48) / 2 +4
 									hPnl:stop()
 									hPnl:animate(function(p,t)
 										while alive(p) and arrow and alive(arrow) do
@@ -2387,7 +2382,7 @@ function TPocoHud3:_drawRow(pnl, fontSize, texts, _x, _y, _w, bg, align, lineHei
 	end
 	for i,text in pairs(texts) do
 		if text and text ~= '' then
-			if type(text)=='table' and text.set_y then
+			if (type(text)=='table' or type(text)=='userdata') and text.set_y then
 				text:set_y(_y)
 				if isCenter(i) then
 					text:set_center_x(math.round(_x + iw*(i-0.5)))
