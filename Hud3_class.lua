@@ -1869,7 +1869,7 @@ function PocoScrollBox:init(parent,config,inherited)
 end
 
 function PocoScrollBox:set_h(_h)
-	self.pnl:set_h(math.max(self.wrapper:h(),_h))
+	self.pnl:set_h(math.max(self.wrapper:h(),_h or 0))
 	if self.pnl:h() > self.wrapper:h() then
 		self.sPnl:set_visible(true)
 	else
@@ -2378,6 +2378,14 @@ local titlecase = function (str)
 		return table.concat(buf, ' ')
 end
 
+function PocoHud3Class._open (url)
+	if shift() then
+		os.execute('start '..url)
+	else
+		Steam:overlay_activate('url', url)
+	end
+end
+
 function PocoHud3Class._drawHeistStats (tab)
 	local oTabs = PocoTabs:new(me._ws,{name = 'Options',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 	local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
@@ -2621,11 +2629,7 @@ function PocoHud3Class._drawPlayer(tab)
 			y = 10
 			objs.btnProfile = PocoUIButton:new(ooTab,{
 				onClick = function()
-					if shift() then
-						os.execute('start http://steamcommunity.com/profiles/'..uid)
-					else
-						Steam:overlay_activate('url', 'http://steamcommunity.com/profiles/'..uid)
-					end
+					PocoHud3Class._open('http://steamcommunity.com/profiles/'..uid)
 				end,
 				x = 10, y = 10, w = 200,h=26, text=_.s(uid), hintText='Hold Shift to open in out-game browser.'
 			})
@@ -2677,11 +2681,7 @@ function PocoHud3Class._drawPlayer(tab)
 			})
 			objs.btnPD2Cheater = PocoUIButton:new(ooTab,{
 				onClick = function()
-					if shift() then
-						os.execute('start http://pd2stats.com/profiles/'..uid)
-					else
-						Steam:overlay_activate('url', 'http://pd2stats.com/profiles/'..uid)
-					end
+					PocoHud3Class._open('http://pd2stats.com/profiles/'..uid)
 				end,
 				x = 10, y = 10, w = 200,h=26, text='Unknown', hintText='Hold Shift to open in out-game browser.'
 			})
@@ -2738,6 +2738,10 @@ function PocoHud3Class._drawPlayer(tab)
 			----
 		end
 	end
+	if not y then
+		oTabs:add('N/A')
+		y = 0
+	end
 	return y
 	--[[offsetY = offsetY or 0
 	pnl:text{
@@ -2764,19 +2768,11 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 	local self = PocoHud3Class,me
 	PocoUIButton:new(tab,{
 		onClick = function(self)
-			Steam:overlay_activate('url', 'http://steamcommunity.com/groups/pocomods')
+			PocoHud3Class._open('http://steamcommunity.com/groups/pocomods')
 		end,
-		x = 10, y = 10, w = 170,h=100,
+		x = 10, y = 10, w = 200,h=100,
 		text={{'PocoHud3 r'},{REV,cl.Gray},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\n'..TAG,cl.Silver}},
-		hintText = {'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue}
-	})
-	PocoUIButton:new(tab,{
-		onClick = function(self)
-			os.execute('start http://steamcommunity.com/groups/pocomods')
-		end,
-		x = 180, y = 10, w = 30, h=100,
-		text = Icon.RC,
-		hintText='Open in System web-browser'
+		hintText = {{'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
 	})
 
 	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = tab.pnl, x = 220, y = 10},'Loading RSS...',true)
@@ -2814,21 +2810,12 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 			for ind,obj in pairs(rss) do
 				PocoUIButton:new(tab,{
 					onClick = function(self)
-						Steam:overlay_activate('url', obj[4])
+						PocoHud3Class._open(obj[4])
 					end,
 					x = 220, y = y, w = 400, h=50,
 					fontSize = 22,align = 'left',
 					text={'   ',{obj[1],cl.CornFlowerBlue}},
-					hintText = {obj[2]:sub(1,200)..'...'}
-				})
-				PocoUIButton:new(tab,{
-					onClick = function(self)
-						os.execute('start '..obj[4])
-					end,
-					x = 620, y = y, w = 30, h=50,
-					fontSize = 22,
-					text={Icon.RC,cl.Gray},
-					hintText={{'Open in system web-browser...\n',cl.Tan},{obj[2]:sub(1,200)..'...'}}
+					hintText = {{obj[2]:sub(1,200)..'...'},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
 				})
 				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = tab.pnl, x = 240, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
 
@@ -2846,38 +2833,22 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 
 	PocoUIButton:new(tab,{
 		onClick = function(self)
-			Steam:overlay_activate('url', 'https://twitter.com/zenyr')
+			PocoHud3Class._open('https://twitter.com/zenyr')
 		end,
-		x = 10, y = 120, w = 170,h=40,
+		x = 10, y = 120, w = 200,h=40,
 		text={'@zenyr',cl.OrangeRed},
-		hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki}}
+		hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
 	})
 
 	PocoUIButton:new(tab,{
 		onClick = function(self)
-			os.execute('start https://twitter.com/zenyr')
+			PocoHud3Class._open('http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 		end,
-		x = 180, y = 120, w = 30, h=40,
-		text = Icon.RC,
-		hintText='Open in system web-browser'	})
-
-	PocoUIButton:new(tab,{
-		onClick = function(self)
-			Steam:overlay_activate('url', 'http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
-		end,
-		x = 10, y = 170, w = 170,h=40,
+		x = 10, y = 170, w = 200,h=40,
 		text={'Color codes reference page', cl.Silver},-- no moar fun tho
-		hintText = 'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset'
+		hintText = {'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
 	})
 
-	PocoUIButton:new(tab,{
-		onClick = function(self)
-			os.execute('start http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
-		end,
-		x = 180, y = 170, w = 30, h=40,
-		text = Icon.RC,
-		hintText='Open in system web-browser'
-	})
 end
 
 function PocoHud3Class._drawOptions(tab)
