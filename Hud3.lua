@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 200
-local TAG = '0.182 hotfix 4 (gc182a7a)'
+local REV = 218
+local TAG = '0.182 hotfix 22 (g533215f)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -2017,7 +2017,7 @@ function TPocoHud3:_hook()
 			end
 			if minionClr then
 				for __, material in ipairs( self._materials or {}) do
-						material:set_variable( idstr_contour_color, Vector3(minionClr.r/2,minionClr.g/2,minionClr.b/2))
+						material:set_variable( idstr_contour_color, Vector3(minionClr.r,minionClr.g,minionClr.b)/4)
 				end
 			end
 			end
@@ -2035,6 +2035,17 @@ function TPocoHud3:_hook()
 					self._unit:interaction()._pager = now()
 				end
 			end
+		end)
+		-- Ragdoll length
+		hook( EnemyManager, 'add_delayed_clbk', function( ... )
+			local self, id, clbk, execute_t = unpack{...}
+			local isWhisper = managers.groupai:state():whisper_mode()
+
+			if id:find('freeze_rag') and not isWhisper then
+				local t = (O:get('game','corpseRagdollTimeout') or 3) - 3
+				execute_t = execute_t + t
+			end
+			return Run('add_delayed_clbk', self, id, clbk, execute_t )
 		end)
 		-- AmmoUsage
 		hook( HUDTeammate, 'set_ammo_amount_by_type', function( ... )
