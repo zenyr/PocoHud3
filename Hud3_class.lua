@@ -2621,9 +2621,13 @@ function PocoHud3Class._drawPlayer(tab)
 			y = 10
 			objs.btnProfile = PocoUIButton:new(ooTab,{
 				onClick = function()
-					Steam:overlay_activate('url', 'http://steamcommunity.com/profiles/'..uid)
+					if shift() then
+						os.execute('start http://steamcommunity.com/profiles/'..uid)
+					else
+						Steam:overlay_activate('url', 'http://steamcommunity.com/profiles/'..uid)
+					end
 				end,
-				x = 10, y = 10, w = 200,h=26, text=_.s(uid)
+				x = 10, y = 10, w = 200,h=26, text=_.s(uid), hintText='Hold Shift to open in out-game browser.'
 			})
 
 			objs.btnSteam = PocoUIButton:new(ooTab,{
@@ -2673,10 +2677,13 @@ function PocoHud3Class._drawPlayer(tab)
 			})
 			objs.btnPD2Cheater = PocoUIButton:new(ooTab,{
 				onClick = function()
-					Steam:overlay_activate('url', 'http://pd2stats.com/profiles/'..uid)
+					if shift() then
+						os.execute('start http://pd2stats.com/profiles/'..uid)
+					else
+						Steam:overlay_activate('url', 'http://pd2stats.com/profiles/'..uid)
+					end
 				end,
-				x = 10, y = 10, w = 200,h=26,
-				text='Unknown'
+				x = 10, y = 10, w = 200,h=26, text='Unknown', hintText='Hold Shift to open in out-game browser.'
 			})
 
 			objs.btnPD2StatsCbk = function(self)
@@ -2690,7 +2697,7 @@ function PocoHud3Class._drawPlayer(tab)
 						if r then
 							if result.error_code == 0 then
 								self:disable()
-								self:setLabel('Successfully received fro PD2Stats.com')
+								self:setLabel('Successfully received from PD2Stats.com')
 								objs.btnPD2Cheater:setLabel(result.cheater and 'Suspicious.' or 'Seems legit.')
 							else
 								self:setLabel(result.error_string or 'Failed.')
