@@ -683,6 +683,175 @@ function THitDirection:destroy()
 	self.ppnl:remove(self.pnl)
 	self = nil
 end
+--- Location start ---
+local PocoLocation = {
+	rooms = {},
+	r = Draw:pen( 'no_z', cl.Red:with_alpha(0.5) )   ,
+	g = Draw:pen( 'no_z', cl.Green:with_alpha(0.5) ),
+	b = Draw:pen( 'no_z', cl.Blue:with_alpha(0.5) ) ,
+}
+PocoHud3Class.PocoLocation = PocoLocation
+function PocoLocation:newRoom(name)
+	local currentRoom = {}
+	self.currentName = name
+	self.currentRoom = currentRoom
+	_.c('NewRoom',name)
+end
+function PocoLocation:endRoom()
+	local lvl = managers.job:current_level_id() or ''
+	local currentRooms = self.rooms[lvl] or {}
+	self.rooms[lvl] = currentRooms
+	self.currentRooms = currentRooms
+	local parsedRoom -- {x,y,z,x,y,z}
+	if self.currentRoom then
+		local mi,ma = {}, {}
+		for i,point in pairs(self.currentRoom) do
+			mi.x = mi.x and math.min(point.x,mi.x) or point.x
+			mi.y = mi.y and math.min(point.y,mi.y) or point.y
+			mi.z = mi.z and math.min(point.z,mi.z) or point.z
+			ma.x = ma.x and math.max(point.x,ma.x) or point.x
+			ma.y = ma.y and math.max(point.y,ma.y) or point.y
+			ma.z = ma.z and math.max(point.z,ma.z) or point.z
+		end
+		parsedRoom = {mi,ma}
+	end
+
+	if parsedRoom then
+		currentRooms[self.currentName] = parsedRoom
+		_.c('EndRoom',self.currentName)
+	end
+end
+function PocoLocation:addPoint(pos)
+	if self.currentRoom then
+		table.insert(self.currentRoom,pos)
+		_.c('AddPoint',tostring(pos))
+	else
+		_.c('AddPoint','NoRoom')
+	end
+end
+
+function PocoLocation:_drawBox(pen,a,b)
+	if not (pen and a and a.x) then
+		return
+	end
+	pen:sphere(Vector3(a.x,a.y,a.z),3)
+	pen:sphere(Vector3(b.x,b.y,b.z),3)
+
+	pen:line(Vector3(a.x,a.y,a.z),Vector3(a.x,b.y,a.z))
+	pen:line(Vector3(a.x,a.y,a.z),Vector3(b.x,a.y,a.z))
+	pen:line(Vector3(a.x,b.y,a.z),Vector3(b.x,b.y,a.z))
+	pen:line(Vector3(b.x,a.y,a.z),Vector3(b.x,b.y,a.z))
+
+	pen:line(Vector3(a.x,a.y,b.z),Vector3(a.x,b.y,b.z))
+	pen:line(Vector3(a.x,a.y,b.z),Vector3(b.x,a.y,b.z))
+	pen:line(Vector3(a.x,b.y,b.z),Vector3(b.x,b.y,b.z))
+	pen:line(Vector3(b.x,a.y,b.z),Vector3(b.x,b.y,b.z))
+
+	pen:line(Vector3(a.x,a.y,a.z),Vector3(a.x,a.y,b.z))
+	pen:line(Vector3(a.x,b.y,a.z),Vector3(a.x,b.y,b.z))
+	pen:line(Vector3(b.x,a.y,a.z),Vector3(b.x,a.y,b.z))
+	pen:line(Vector3(b.x,b.y,a.z),Vector3(b.x,b.y,b.z))
+
+end
+
+function PocoLocation:get(pos)
+	local found, foundVol
+	if pos and pos.x then
+		local x,y,z = pos.x,pos.y,pos.z
+		for name,room in pairs(self.currentRooms or {}) do
+			local mi,ma = room[1],room[2]
+			if (mi.x <= x and ma.x >= x) and
+				(mi.y <= y and ma.y >= y) and
+				(mi.z <= z and ma.z >= z) then
+				local vol = math.abs((ma.x-mi.x)*(ma.y-mi.y)*(ma.z-mi.z))
+				if not found or foundVol > vol then
+					found = name
+					foundVol = vol
+				end
+			end
+		end
+	end
+	return found,foundVol
+end
+
+function PocoLocation:update(t,dt)
+	Poco.room = self
+	local ff = _.g('setup:freeflight()')
+	if ff then
+		ff:update(t, dt)
+	end
+	if not Poco.roomOn then return end
+
+	local fCam = ff and ff:enabled() and ff._camera_object
+	local pos = fCam and fCam:position() or _.g('managers.player:player_unit():position()')
+	_.d('Room',self:get(pos) or 'None',#(self.currentRooms or {}))
+	local ray = fCam and World:raycast("ray", fCam:position(), fCam:position() + fCam:rotation():y() * 10000) or _.r()
+	if ray and ray.position then
+		local g = 20
+		local pos = Vector3(math.floor(ray.position.x/g+0.5)*g,math.floor(ray.position.y/g+0.5)*g,math.floor(ray.position.z/g+0.5)*g)
+		if pos ~= self.pos then
+			self.pos = pos
+			self.b:sphere(pos,10)
+		else
+			self.r:sphere(pos,10)
+		end
+		if now()-(self._lastIn or 0) > 0.5 then
+			if shift() then
+				if ctrl() then
+					self:endRoom()
+					self._lastIn = now()
+				else
+					self:addPoint(pos)
+					self._lastIn = now()
+				end
+			end
+		end
+	end
+	if self.currentRoom then
+		local mi,ma = {}, {}
+		for i,point in pairs(self.currentRoom) do
+			mi.x = mi.x and math.min(point.x,mi.x) or point.x
+			mi.y = mi.y and math.min(point.y,mi.y) or point.y
+			mi.z = mi.z and math.min(point.z,mi.z) or point.z
+			ma.x = ma.x and math.max(point.x,ma.x) or point.x
+			ma.y = ma.y and math.max(point.y,ma.y) or point.y
+			ma.z = ma.z and math.max(point.z,ma.z) or point.z
+		end
+		if mi.x then
+			self:_drawBox(self.g,mi,ma)
+		end
+	end
+	for k,room in pairs(self.currentRooms or {}) do
+		local mi,ma = room[1],room[2]
+		if mi.x then
+			self:_drawBox(self.b,mi,ma)
+		end
+
+	end
+end
+
+local LocationJSONFilename = 'poco\\hud3_rooms.json';
+function PocoLocation:load()
+	local f,err = io.open(LocationJSONFilename, 'r')
+	local result = false
+	if f then
+		local t = f:read('*all')
+		local o = JSON:decode(t)
+		if type(o) == 'table' then
+			self.rooms = o
+			self:endRoom()
+		end
+		f:close()
+	end
+end
+
+function PocoLocation:save()
+	local f = io.open(LocationJSONFilename, 'w')
+	if f then
+		f:write(JSON:encode_pretty(self.rooms))
+		f:close()
+	end
+end
 
 --- GUI start ---
 local Layers = {

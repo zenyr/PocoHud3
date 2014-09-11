@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 199
-local TAG = '0.182 hotfix 3 (g7aaaa87)'
+local REV = 200
+local TAG = '0.182 hotfix 4 (gc182a7a)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -40,10 +40,11 @@ local clBad= PocoHud3Class.clBad
 local Icon= PocoHud3Class.Icon
 local PocoEvent= PocoHud3Class.PocoEvent
 
-local _BAGS = {}
-_BAGS['8f59e19e1e45a05e']='Ammo'
-_BAGS['43ed278b1faf89b3']='Med'
-_BAGS['a163786a6ddb0291']='Body'
+local _BAGS = {
+	['8f59e19e1e45a05e']='Ammo',
+	['43ed278b1faf89b3']='Med',
+	['a163786a6ddb0291']='Body',
+}
 
 local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = Icon.Div,Icon.Ghost
 local skillIcon = 'guis/textures/pd2/skilltree/icons_atlas'
@@ -464,6 +465,10 @@ function TPocoHud3:_update(t,dt)
 	if self.menuGui then
 		self.menuGui:update(t,dt)
 	end
+
+	local location = PocoHud3Class.PocoLocation
+	location:update(t,dt)
+
 end
 
 function TPocoHud3:HitDirection(col_ray,data)
@@ -498,7 +503,7 @@ function TPocoHud3:Minion(pid,unit)
 		self:Stat(pid,'minion',0)
 	end
 end
-function TPocoHud3:Chat(category,text)
+function TPocoHud3:Chat(category,text,system)
 	local catInd = O:get('chat',category) or -1
 	local forceSend = catInd >= 5
 	if not O:get('chat','enable') then return end
@@ -513,7 +518,7 @@ function TPocoHud3:Chat(category,text)
 	if canRead or canSend then
 		_.c(tStr..(canSend and '' or _BROADCASTHDR_HIDDEN), text , canSend and self:_color(self.pid) or nil)
 		if canSend then
-			managers.network:session():send_to_peers_ip_verified( 'send_chat_message', 1, tStr.._BROADCASTHDR..text )
+			managers.network:session():send_to_peers_ip_verified( 'send_chat_message', system and 8 or 1, tStr.._BROADCASTHDR..text )
 		end
 	end
 end
@@ -920,6 +925,15 @@ function TPocoHud3:_updatePlayers(t)
 		end
 	end
 end
+function TPocoHud3:_processMsg(channel,name,message)
+	-- ToDo : better priority balancing, transmit more info etc
+	local isMine = name == self:_name(self.pid)
+	local isPoco = channel == 8
+	if not self._muted and (not isMine) and not Network:is_server() and message and message:find(_BROADCASTHDR) then
+		_.c(_BROADCASTHDR_HIDDEN,'PocoHud broadcast Muted.')
+		self._muted = true
+	end
+end
 function TPocoHud3:_isSimple(key)
 	return O:get('buff','simpleBusyIndicator') and (key == 'transition' or key == 'charge')
 end
@@ -1137,6 +1151,7 @@ function TPocoHud3:_color(something,fbk)
 		return fallback
 	end
 end
+
 function TPocoHud3:_name(something)
 	local str = type_name(something)
 	if str == 'Vector3' then
@@ -1166,7 +1181,21 @@ function TPocoHud3:_name(something)
 	end
 	local member = self:_member(something)
 	member = something==0 and 'AI' or (member and member:peer():name() or 'Someone')
-	return member
+
+	local hDot,fDot
+	if O:get('game','truncateTags') and member ~= member:gsub('%b[]','') then
+		member = member:gsub('%b[]','')
+		hDot = true
+end
+	local tLen = O:get('game','truncateNames')
+	if tLen > 1 then
+		tLen = (tLen - 1) * 3
+		if tLen < utf8.len(member) then
+			member = utf8.sub(member,1,tLen)
+			fDot = true
+		end
+	end
+	return (hDot and Icon.Dot or '')..member..(fDot and Icon.Dot or '')
 end
 function TPocoHud3:_time(sec)
 	local r = {}
@@ -1780,10 +1809,7 @@ function TPocoHud3:_hook()
 		end)
 		hook( ChatManager, '_receive_message', function( self, ... )
 			local channel_id, name, message, color, icon = unpack{...}
-			if not me._muted and (name ~= me:_name(me.pid)) and (name ~= _BROADCASTHDR) and message and not Network:is_server() and message:find(_BROADCASTHDR) then
-				_.c(_BROADCASTHDR_HIDDEN,'PocoHud broadcast Muted.')
-				me._muted = true
-			end
+			me:_processMsg(channel_id,name,message)
 			return Run('_receive_message', self,  ...)
 		end)
 		-- CriminalDown
@@ -1970,10 +1996,12 @@ function TPocoHud3:_hook()
 		hook( ContourExt, 'add', function( ... )
 			local self, type, sync, multiplier = unpack{...}
 			local result = Run('add', ...)
+			if O:get('float','showHighlighted') then
 			local unit = self._unit -- TODO: compare this to filter Floats as Config
 			local tweak = unit and unit:interaction() and unit:interaction().tweak_data
 			local isPager = tweak == 'corpse_alarm_pager'
 			me:Float(unit,0,result.fadeout_t or now()+(isPager and 12 or 4))
+			end
 			return result
 		end)
 		hook( ContourExt, '_upd_color', function( ... )
@@ -1981,6 +2009,7 @@ function TPocoHud3:_hook()
 			local idstr_contour_color = Idstring( 'contour_color' )
 			local minionClr = false
 			Run('_upd_color', ...)
+			if O:get('float','showConvertedEnemy') then
 			for i = 1, 4 do
 				if not minionClr and me:Stat(i,'minion')==self._unit then
 					minionClr = me:_color(i)
@@ -1988,8 +2017,9 @@ function TPocoHud3:_hook()
 			end
 			if minionClr then
 				for __, material in ipairs( self._materials or {}) do
-					material:set_variable( idstr_contour_color, Vector3(minionClr.r/1.5,minionClr.g/1.5,minionClr.b/1.5))
+						material:set_variable( idstr_contour_color, Vector3(minionClr.r/2,minionClr.g/2,minionClr.b/2))
 				end
+			end
 			end
 		end)
 		-- Pager
