@@ -2384,6 +2384,40 @@ function PocoHud3Class._open (url)
 	else
 		Steam:overlay_activate('url', url)
 	end
+	managers.menu:post_event(not shift() and 'camera_monitor_engage' or 'trip_mine_sensor_alarm')
+end
+
+function PocoHud3Class._get (obj,url, cbk)
+	if me._busy then
+		if obj then
+			obj:sound('menu_error')
+		end
+		return false
+	else
+		me._busy = true
+		local _cbk = function(success,body)
+			if obj then
+				obj:sound(success and 'turret_alert' or 'trip_mine_sensor_alarm')
+			end
+			if success then
+				Poco._getCache[url] = body
+			end
+			me._busy = false
+			cbk(success,body)
+		end
+
+		if obj then
+			obj:setLabel('Loading...')
+			obj:sound('camera_monitor_engage')
+		end
+		Poco._getCache = Poco._getCache or {}
+		if Poco._getCache[url] and not shift() then
+			_cbk(true,Poco._getCache[url])
+		else
+			Steam:http_request(url, _cbk)
+		end
+		return true
+	end
 end
 
 function PocoHud3Class._drawHeistStats (tab)
@@ -2608,18 +2642,9 @@ function PocoHud3Class._drawPlayer(tab)
 		if peer then
 			local uid, __ = peer._user_id
 			local oTab = oTabs:add(_.s('Player',i,':',peer._name))
+			local isMe = i==me.pid
 
 			local objs = {} -- stores UIelems & cbks
-			local _cbk = function(key)
-				return function(self,...)
-					if me._busy then
-						self:sound('menu_error')
-						return
-					else
-						objs[key](self,...)
-					end
-				end
-			end
 
 			local ooTabs = PocoTabs:new(me._ws,{name = 'Player'..i,x = 10, y = 10, w = oTab.pnl:width()-20, th = 30, fontSize = 18, h = oTab.pnl:height()-20, pTab = oTab})
 
@@ -2635,7 +2660,32 @@ function PocoHud3Class._drawPlayer(tab)
 			})
 
 			objs.btnSteam = PocoUIButton:new(ooTab,{
-				onClick = _cbk('btnSteamCbk'),
+				onClick = function(self)
+					PocoHud3Class._get(self,'http://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key=BE48819D3E15C1FC4E5FDCD5AC1360BA&steamid='..uid, function(success, body)
+						if success then
+							local r, result = pcall(JSON.decode,JSON,body)
+							if r then
+								result = result.response
+								if result and result.games then
+									for i,obj in pairs(result.games or {}) do
+										local lbl = objs['lblGame'..i]
+										local lbl2 = objs['lblGameTime'..i]
+										if lbl and alive(lbl) then
+											lbl:set_text(_.s(obj.name))
+											lbl2:set_text(_.s('Total',obj.playtime_forever/60,'h,',obj.playtime_2weeks/60,'h lately'))
+										end
+									end
+									self:setLabel(_.s('Successfully received',#result.games,'games from Steam profile.'))
+								else
+									self:setLabel('Denied: Private/Member-only profile?')
+								end
+								self:disable()
+							else
+								me:err(result)
+							end
+						end
+					end)
+				end,
 				x = 10, y = 10, w = 370,h=26,
 				text='Fetch Recent Games'
 			})
@@ -2645,37 +2695,27 @@ function PocoHud3Class._drawPlayer(tab)
 			__, objs.lblGameTime1 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
 			__, objs.lblGameTime2 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
 			__, objs.lblGameTime3 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
-			objs.btnSteamCbk = function(self)
-				me._busy = true
-				self:setLabel('Loading...')
-				Steam:http_request('http://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key=BE48819D3E15C1FC4E5FDCD5AC1360BA&steamid='..uid, function(success, body)
-					me._busy = false
-					if success then
-						local r, result = pcall(JSON.decode,JSON,body)
-						if r then
-							result = result.response
-							if result and result.games then
-								for i,obj in pairs(result.games or {}) do
-									local lbl = objs['lblGame'..i]
-									local lbl2 = objs['lblGameTime'..i]
-									if lbl and alive(lbl) then
-										lbl:set_text(_.s(obj.name))
-										lbl2:set_text(_.s('Total',obj.playtime_forever/60,'h,',obj.playtime_2weeks/60,'h lately'))
-									end
-								end
-								self:setLabel(_.s('Successfully received',#result.games,'games from Steam profile.'))
-							else
-								self:setLabel('Denied: Private/Member-only profile?')
-							end
-							self:disable()
-						else
-							me:err(result)
-						end
-					end
-				end)
-			end
+
 			objs.btnPD2Stats = PocoUIButton:new(ooTab,{
-				onClick = _cbk('btnPD2StatsCbk'),
+				onClick = function(self)
+					PocoHud3Class._get(self,'http://api.pd2stats.com/cheater/v1/?id='..uid, function(success, body)
+						if success then
+							body = body:gsub('\t([%w_]-):','\t"%1":')
+							local r, result = pcall(JSON.decode,JSON,body)
+							if r then
+								if result.error_code == 0 then
+									self:disable()
+									self:setLabel('Successfully received from PD2Stats.com')
+									objs.btnPD2Cheater:setLabel(result.cheater and 'Suspicious.' or 'Seems legit.')
+								else
+									self:setLabel(result.error_string or 'Failed.')
+								end
+							else
+								me:err(result)
+							end
+						end
+					end)
+				end,
 				x = 10, y = 10, w = 370,h=26,
 				text='Fetch PD2Stats.com data'
 			})
@@ -2686,45 +2726,72 @@ function PocoHud3Class._drawPlayer(tab)
 				x = 10, y = 10, w = 200,h=26, text='Unknown', hintText='Hold Shift to open in out-game browser.'
 			})
 
-			objs.btnPD2StatsCbk = function(self)
-				me._busy = true
-				self:setLabel('Loading...')
-				Steam:http_request('http://api.pd2stats.com/cheater/v1/?id='..uid, function(success, body)
-					me._busy = false
-					if success then
-						body = body:gsub('\t([%w_]-):','\t"%1":')
-						local r, result = pcall(JSON.decode,JSON,body)
-						if r then
-							if result.error_code == 0 then
-								self:disable()
-								self:setLabel('Successfully received from PD2Stats.com')
-								objs.btnPD2Cheater:setLabel(result.cheater and 'Suspicious.' or 'Seems legit.')
-							else
-								self:setLabel(result.error_string or 'Failed.')
-							end
-						else
-							me:err(result)
-						end
-					end
-				end)
-			end
-			local isMe = i==me.pid
+--[[ Check Skills
 
-			tbl[#tbl+1] = {'Level',_.s(isMe and managers.experience:current_rank() or peer:rank() or 0,Icon.Dot,isMe and managers.experience:current_level() or peer:level())}
-			tbl[#tbl+1] = {'UID',objs.btnProfile}
+			local upg = _.g('Global.player_manager.synced_team_upgrades')
+			upg = upg and
+--]]
+			tbl[#tbl+1] = {{'Level',cl.Tan},_.s(isMe and managers.experience:current_rank() or peer:rank() or 0,Icon.Dot,isMe and managers.experience:current_level() or peer:level())}
+			tbl[#tbl+1] = {{'Sync',cl.Tan},peer._synced and 'Completed' or 'Not completed'}
+			tbl[#tbl+1] = {{'UID',cl.Tan},objs.btnProfile}
 			tbl[#tbl+1] = {objs.btnSteam}
 			tbl[#tbl+1] = {objs.lblGame1,objs.lblGameTime1}
 			tbl[#tbl+1] = {objs.lblGame2,objs.lblGameTime2}
 			tbl[#tbl+1] = {objs.lblGame3,objs.lblGameTime3}
+			tbl[#tbl+1] = {objs.btnAchievement}
 			tbl[#tbl+1] = {objs.btnPD2Stats}
-			tbl[#tbl+1] = {'PD2Stats Verdict',objs.btnPD2Cheater}
+			tbl[#tbl+1] = {{'PD2Stats Verdict',cl.Tan},objs.btnPD2Cheater}
 			for k,row in pairs(tbl) do
-				y = me:_drawRow(ooTab.pnl,20,row,20,y,600,k % 2 ~= 0,true,1.3)
+				y = me:_drawRow(ooTab.pnl,20,row,10,y,600,k % 2 ~= 0,true,1.3)
 			end
 
 			ooTab:set_h(y)
 			----
 
+			-- CheckAchievement
+			local ooTab = ooTabs:add('Achievements')
+			PocoUIButton:new(ooTab,{
+				onClick = function(self)
+					PocoHud3Class._get(self,'http://steamcommunity.com/profiles/'..uid..'/stats/PAYDAY2', function(success, body)
+						if success then
+							me._busy = false
+							self:hide()
+							tbl = {{
+								PocoUIButton:new(ooTab,{
+									onClick=function() PocoHud3Class._open('http://steamcommunity.com/profiles/'..uid..'/stats/PAYDAY2') end,
+									x=0,y=0,w=450,h=26,font_size=20,align='center',text={'Achievements',cl.Moccasin},hintText='Hold SHIFT to open in out-game browser'}),
+								{'Date',cl.Moccasin}
+							}}
+							y = 10
+							local _aids = '6cbdd,d20fb,deb36,ec3d5,33e42,83299,fa65a,f8702,c0613,1027c,44a32,db879,04a22,95eaf,82152,2a3af,e4c2d,4d059,e0d94,3bc9b,de5e1'
+							_aids = _aids:split(',')
+							local cnt = 0
+							for aid,datetime,title,desc in body:gmatch('218620/(.-)%..-class="achieveUnlockTime".-Unlocked: (.-)%s*<.-<h3>(.-)</h3>.-<h5>(.-)</h5>') do
+								if table.index_of(_aids,aid:sub(1,5)) > 0 then
+									tbl[#tbl+1] = {
+										PocoUIHintLabel:new(ooTab,{x=0,y=0,w=500,h=26,font_size=20,align='center',text=desc,hintText=title}),
+										datetime
+									}
+								end
+								cnt = cnt + 1
+							end
+							if cnt == 0 then
+									tbl[#tbl+1] = {'Not found.'}
+							end
+							for k,row in pairs(tbl) do
+								y = me:_drawRow(ooTab.pnl,20,row,10,y,ooTab.pnl:width()-20,k % 2 ~= 0,true,1.3)
+							end
+
+							ooTab:set_h(y)
+							--_.o(body)
+						end
+					end)
+				end,
+				x = 10, y = 10, w = 400,h=50,
+				text='Fetch Achievements data'
+			})
+
+--
 
 			-- Inner - Raw (for DBG)
 			if peer._synced and false then
@@ -2828,7 +2895,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 	if Poco._rss then
 		_onRSS(true,nil,Poco._rss)
 	else
-		Steam:http_request('http://steamcommunity.com/groups/pocomods/rss', _onRSS)
+		PocoHud3Class._get(nil,'http://steamcommunity.com/groups/pocomods/rss', _onRSS)
 	end
 
 	PocoUIButton:new(tab,{
