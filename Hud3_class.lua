@@ -2793,7 +2793,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 					local d = os.time({day=day,month=month,year=year,hour=hour,min=min,sec=sec})+diffH*3600
 					local diffS = - _.t(false,d)
 					if diffS < 3600*24 then
-						local h = math.floor(diffS/3600)
+						local h = math.max(0,math.floor(diffS/3600))
 						date = _.s( h==1 and 'an' or h,h>1 and 'hrs' or 'hr','ago')
 					else
 						local d = math.floor(diffS/3600/24)
@@ -2899,7 +2899,7 @@ function PocoHud3Class._drawOptions(tab)
 		hintText = 'Revert to the default setting.'
 	})
 
-	local oTabs = PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = 960, th = 30, fontSize = 18, h = tab.pnl:height()-90, pTab = tab})
+	local oTabs = PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = tab.pnl:width()-20, th = 30, fontSize = 18, h = tab.pnl:height()-80, pTab = tab})
 	for category, objects in _pairs(O.scheme) do
 		local _y, m, half = 10, 5
 		local x,y = function()

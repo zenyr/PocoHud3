@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 224
-local TAG = '0.19 hotfix 4 (g0e17956)'
+local REV = 225
+local TAG = '0.19 hotfix 5 (g31e6244)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1178,8 +1178,9 @@ function TPocoHud3:_name(something)
 	member = something==0 and 'AI' or (member and member:peer():name() or 'Someone')
 
 	local hDot,fDot
-	if O:get('game','truncateTags') and member ~= member:gsub('%b[]','') then
-		member = member:gsub('%b[]','')
+	local truncated = member:gsub('^%b[]',''):gsub('^%b==',''):gsub('^%s*(.-)%s*$','%1')
+	if O:get('game','truncateTags') and utf8.len(truncated) > 0 and member ~= truncated then
+		member = truncated
 		hDot = true
 end
 	local tLen = O:get('game','truncateNames')
