@@ -1,6 +1,6 @@
 -------- External functions: SimpleMenuV2, JSON, Inspect, table.deepcopy --
 Poco = Poco or {}
-
+pcall(function()
 do -- SimpleMenu By Harfatus
 	local SimpleMenuV2 = class()
 	Poco.SimpleMenuV2 = SimpleMenuV2
@@ -1318,9 +1318,8 @@ do -- Inspect
 
 		return table.concat(buffer)
 	end
-	setmetatable(inspect, { __call = function(_, ...) return inspect.inspect(...) end })
-
 	Poco.inspect = inspect
+	setmetatable(inspect, { __call = function(_, ...) return Poco.inspect.inspect(...) end })
 end
 
 do --[[ deepcopy.lua
@@ -1414,10 +1413,10 @@ do --[[ deepcopy.lua
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
     DEALINGS IN THE SOFTWARE.
 ]]
-    local type = rawtype or type
+    local type = type
     local rawget = rawget
     local rawset = rawset
-    local next = rawnext or next
+    local next = next
     local getmetatable = debug and debug.getmetatable or getmetatable
     local setmetatable = debug and debug.setmetatable or setmetatable
     local debug_getupvalue = debug and debug.getupvalue or nil
@@ -1747,3 +1746,5 @@ do --[[ deepcopy.lua
         end
     end
 end
+
+end) -- pcall

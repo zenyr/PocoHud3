@@ -6,26 +6,15 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 228
-local TAG = '0.19 hotfix 8 (gd8b4db5)'
+local REV = 229
+local TAG = '0.19 hotfix 9 (gf833a1b)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
-local function _req(name)
-	local __req = function(name)
-		local f=io.open(name,'r')
-		if f~=nil then
-			io.close(f)
-			require(name)
-			return true
-		end
-	end
-	return __req(name) or __req(name..'c')
-end
 PocoHud3Class = nil
-_req ('poco/Hud3_class.lua')
+Poco._req ('poco/Hud3_class.lua')
 if not PocoHud3Class then return end
-_req ('poco/Hud3_Options.lua')
+Poco._req ('poco/Hud3_Options.lua')
 if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
 local K = PocoHud3Class.Kits:new()
@@ -869,7 +858,7 @@ function TPocoHud3:_updatePlayers(t)
 				if O:get('root','24HourClock') then
 					txts[#txts+1]={os.date(' %X'),Color.white}
 				else
-					txts[#txts+1]={os.date(' %p %I:%M:%S'),Color.white}
+					txts[#txts+1]={os.date(' %I:%M:%S%p'),Color.white}
 				end
 			end
 			txts[#txts+1] = {' ',cl.White}
@@ -1055,7 +1044,7 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 		if O:get('root','24HourClock') then
 			txts[#txts+1] = os.date('%X')
 		else
-			txts[#txts+1] = os.date('%p %I:%M:%S')
+			txts[#txts+1] = os.date('%I:%M:%S%p')
 		end
 	end
 	txts[#txts+1] = self._dbgTxt

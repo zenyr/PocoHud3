@@ -2855,13 +2855,21 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 			_.l(lbl,'Recent PocoMod Updates',true)
 			local y = 35
 			for ind,obj in pairs(rss) do
+				local title = '   '..obj[1]
+				local bef,name,rev,rest=title:match('^(.-)(PocoHud3 r)(%d-)( .-)$')
+				_(ind,':',bef,name,'[',rev,']',rest)
+				if rev then
+					title = {{bef,cl.CornFlowerBlue},{name..rev,tonumber(rev) > REV and cl.PapayaWhip or cl.DodgerBlue},{rest,cl.CornFlowerBlue}}
+				else
+					title = {title,cl.DeepSkyBlue}
+				end
 				PocoUIButton:new(tab,{
 					onClick = function(self)
 						PocoHud3Class._open(obj[4])
 					end,
 					x = 220, y = y, w = 400, h=50,
 					fontSize = 22,align = 'left',
-					text={'   ',{obj[1],cl.CornFlowerBlue}},
+					text=title,
 					hintText = {{obj[2]:sub(1,200)..'...'},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
 				})
 				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = tab.pnl, x = 240, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
