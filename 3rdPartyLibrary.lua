@@ -106,7 +106,7 @@ if not SimpleMenuV2 then
 	end
 end
 
-if not JSONParser then
+if not JSON then
     local VERSION = 20140116.10  -- version history at end of file
     local OBJDEF = { VERSION = VERSION }
     local author = "-[ JSON.lua package by Jeffrey Friedl (http://regex.info/blog/lua/json), version " .. tostring(VERSION) .. " ]-"
