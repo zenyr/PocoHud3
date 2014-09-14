@@ -340,7 +340,7 @@ local __n = {}
 function TFloat:_getName()
 	local name = self._name or 'Drill'
 	local host = self._host
-	local a = not name:find('The ') and 'A'
+	local a = not name:find('The ') and 'A' or ''
 	if a then
 		local n = name:sub(1,1):lower()
 		if n == 'a' or n == 'e' or n == 'i' or n == 'o' or n == 'u' then
@@ -2458,8 +2458,8 @@ function PocoHud3Class._drawHeistStats (tab)
 		table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..managers.job:get_job_heat(heist)..')',color:with_alpha(0.3)}})
 		tbl[#tbl+1] = rowObj
 	end
-	for host,jobs in _pairs(host_list) do
-		for no,heist in _pairs(jobs) do
+	for host,jobs in _.p(host_list) do
+		for no,heist in _.p(jobs) do
 			job_list[table.get_key(job_list,heist)] = nil
 			addJob(host,heist)
 		end
@@ -2524,8 +2524,8 @@ function PocoHud3Class._drawHeistStats (tab)
 			}})
 		}
 	end
-	for host,jobs in _pairs(host_list) do
-		for no,heist in _pairs(jobs) do
+	for host,jobs in _.p(host_list) do
+		for no,heist in _.p(jobs) do
 			local jobData = tweak_data.narrative.jobs[heist]
 			local jobName
 			if jobData.wrapped_to_job then
@@ -2550,7 +2550,7 @@ function PocoHud3Class._drawHeistStats (tab)
 	end
 	-- the rest
 	tbl[#tbl+1] = {{' -- Not listed heists --',cl.DodgerBlue}}
-	for key,val in _pairs(level_list) do
+	for key,val in _.p(level_list) do
 		addDay(val,{Icon.Ghost,cl.DodgerBlue})
 	end
 
@@ -2584,10 +2584,10 @@ function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
 	local y,fontSize,w = offsetY+35, 19, pnl:w()
 	if data then
 		local merged = table.deepcopy(data)
-		for category, upgrades in _pairs(merged) do
+		for category, upgrades in _.p(merged) do
 			local row,cnt = {},0
 			y = me:_drawRow(pnl,fontSize*1.1,{{titlecase(category:gsub('_',' ')),cl.Peru},''},5,y,w)
-			for name,value in _pairs(upgrades) do
+			for name,value in _.p(upgrades) do
 				local isMulti = name:find('multiplier') or name:find('_chance') or name:find('_mul')
 				local val = isTeam and managers.player:team_upgrade_value(category, name, 1) or managers.player:upgrade_value(category, name, 1)
 				if not (isMulti and val == 1) then
@@ -2792,14 +2792,13 @@ function PocoHud3Class._drawPlayer(tab)
 			})
 
 --
-
 			-- Inner - Raw (for DBG)
 			if peer._synced and false then
 				local ooTab = ooTabs:add('Raw')
 				local __,lbl = _.l({pnl=ooTab.pnl,
 					x = 10, y = 10, w = 800, h = 30,
 					name = 'tab_desc', font = FONTLARGE, font_size = 20, color = cl.White
-				},_.s(zinspect(peer,{depth=5})),true)
+				},_.s(_.i(peer,{depth=5})),true)
 				ooTab:set_h(lbl:bottom())
 			end
 			----
@@ -2810,25 +2809,6 @@ function PocoHud3Class._drawPlayer(tab)
 		y = 0
 	end
 	return y
-	--[[offsetY = offsetY or 0
-	pnl:text{
-		x = 10, y = y, w = 600, h = 30,
-		name = 'tab_desc', text = me:_name(i),
-		font = FONTLARGE, font_size = 25, color = me:_color(i)
-	}
-
-	local a = ''
-	for k in _pairs(getmetatable(member)) do
-		a = a..tostring(k)..'\n'
-	end
-		a = a..'---\n'
-	a = zinspect(member:peer(),{depth=2})
-	local __,lbl = _.l({pnl=pnl,
-		x = 210, y = offsetY+10, w = 600, h = 30,
-		name = 'tab_desc', font = FONTLARGE, font_size = 20, color = cl.White
-	},_.s(a),true)
-
-	local y,fontSize,w = lbl:bottom(), 19, 970]]
 end
 
 function PocoHud3Class._drawAbout(tab,REV,TAG)
@@ -2967,7 +2947,7 @@ function PocoHud3Class._drawOptions(tab)
 	})
 
 	local oTabs = PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = tab.pnl:width()-20, th = 30, fontSize = 18, h = tab.pnl:height()-80, pTab = tab})
-	for category, objects in _pairs(O.scheme) do
+	for category, objects in _.p(O.scheme) do
 		local _y, m, half = 10, 5
 		local x,y = function()
 			return half and 440 or 10
@@ -2987,7 +2967,7 @@ function PocoHud3Class._drawOptions(tab)
 
 		local c = 0
 		local _sy,_ty = _y
-		for name,values in _pairs(objects,function(a,b)
+		for name,values in _.p(objects,function(a,b)
 			local t1, t2 = O:_type(category,a),O:_type(category,b)
 			local s1, s2 = O:_sort(category,a) or 99,O:_sort(category,b) or 99
 			if a == 'enable' then
@@ -3260,7 +3240,7 @@ function PocoHud3Class._drawKit(tab)
 		y(lH,true)
 		-- Kit Edt
 
-		for ind,obj in _pairs(K.items,function(a,b)return tostring(a)<tostring(b) end) do
+		for ind,obj in _.p(K.items,function(a,b)return tostring(a)<tostring(b) end) do
 			row = {}
 			cnt = cnt + 1
 			for col,category in pairs(categories) do
@@ -3321,7 +3301,7 @@ function PocoHud3Class._drawKit(tab)
 		if table.size(K.items) == 0 then
 			_.l({font=FONT, color=cl.Silver, font_size=25, pnl = pnl, x = m, y=m*2+lbl:h()},'No Kit profiles available',true)
 		end
-		for ind,obj in _pairs(K.items,function(a,b)return tostring(a)<tostring(b) end) do
+		for ind,obj in _.p(K.items,function(a,b)return tostring(a)<tostring(b) end) do
 			x = m+(c % 3) * (w+m)
 			y = 15+lbl:h()+ m+math.floor(c / 3) * (h+m)
 			c = c + 1

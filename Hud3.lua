@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 227
-local TAG = '0.191'
+local REV = 228
+local TAG = '0.19 hotfix 8 (gd8b4db5)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1003,7 +1003,7 @@ function TPocoHud3:_updateItems(t,dt)
 		else
 			move = -size
 		end
-		for key,buff in _pairs(self.buffs) do
+		for key,buff in _.p(self.buffs) do
 			if not (buff.dead or buff.dying) then
 				if self:_isSimple(key) then
 					-- do not move
