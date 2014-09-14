@@ -1,6 +1,6 @@
 -------- External functions: SimpleMenuV2, JSON, Inspect, table.deepcopy --
 Poco = Poco or {}
-pcall(function()
+local r,err = pcall(function()
 do -- SimpleMenu By Harfatus
 	local SimpleMenuV2 = class()
 	Poco.SimpleMenuV2 = SimpleMenuV2
@@ -62,7 +62,7 @@ do -- SimpleMenu By Harfatus
 			end
 	end
 
-	patched_update_input = patched_update_input or function (self, t, dt )
+	Poco.patched_update_input = Poco.patched_update_input or function (self, t, dt )
 			if self._data.no_buttons then
 					return
 			end
@@ -104,8 +104,8 @@ do -- SimpleMenu By Harfatus
 			end
 	end
 	if managers then
-		managers.system_menu.DIALOG_CLASS.update_input = patched_update_input
-		managers.system_menu.GENERIC_DIALOG_CLASS.update_input = patched_update_input
+		managers.system_menu.DIALOG_CLASS.update_input = Poco.patched_update_input
+		managers.system_menu.GENERIC_DIALOG_CLASS.update_input = Poco.patched_update_input
 	end
 end
 
@@ -1748,3 +1748,7 @@ do --[[ deepcopy.lua
 end
 
 end) -- pcall
+
+if not r then
+	io.stderr:write(err)
+end

@@ -2857,7 +2857,6 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 			for ind,obj in pairs(rss) do
 				local title = '   '..obj[1]
 				local bef,name,rev,rest=title:match('^(.-)(PocoHud3 r)(%d-)( .-)$')
-				_(ind,':',bef,name,'[',rev,']',rest)
 				if rev then
 					title = {{bef,cl.CornFlowerBlue},{name..rev,tonumber(rev) > REV and cl.PapayaWhip or cl.DodgerBlue},{rest,cl.CornFlowerBlue}}
 				else
