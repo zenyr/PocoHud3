@@ -7,7 +7,7 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 local _ = UNDERSCORE
 local REV = 232
-local TAG = '0.192 hotfix 2 (g33668f3)'
+local TAG = '0.192 hotfix 2 (gc258b48)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -162,7 +162,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 			if unit == minion then
 				local apid = self:_pid(senderTweak)
 				self:Stat(i,'minionHit',senderTweak)
-				if apid and apid > 0 and (apid ~= _lastAttkpid or now()-_lastAttk > 5) then
+				if (rDamage or 0) > 0 and apid and apid > 0 and (apid ~= _lastAttkpid or now()-_lastAttk > 5) then
 					_lastAttk = now()
 					_lastAttkpid = apid
 					self:Chat('minionShot',_.s(self:_name(senderTweak),'damaged',(i==apid and 'own' or self:_name(i)..'\'s'),'minion for',_.f(rDamage*10)))
