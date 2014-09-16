@@ -1017,8 +1017,8 @@ do -- JSON
 	--   20100731.1    initial public release
 	--
 	Poco.JSON = OBJDEF:new()
-	JSON = JSON or Poco.JSON
 end
+
 
 do -- Inspect
 	local inspect ={
@@ -1748,7 +1748,7 @@ do --[[ deepcopy.lua
 end
 
 end) -- pcall
-
+JSON = JSON or Poco.JSON
 if not r then
 	io.stderr:write(err)
 end

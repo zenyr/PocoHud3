@@ -2062,10 +2062,8 @@ end
 
 function PocoTabs:goTo(index)
 	local cnt = #self.items
-	if index < 1 then
-		index = cnt
-	elseif index > cnt then
-		index = 1
+	if index < 1 or index > cnt then
+		return
 	end
 	if index ~= self.tabIndex then
 		managers.menu:post_event('slider_release' or 'Play_star_hit')
@@ -2300,6 +2298,7 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 	if not me or me.dead then return end
 	if self.dead then return end
 	if self.alt then return end
+	local tabT = 0.02
 	pcall(function()
 		local currentTab = self.gui and self.gui.currentTab
 		if button == Idstring('mouse wheel down') then
@@ -2307,7 +2306,7 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 				return true
 			end
 			local tabHdr = {self.gui:insideTabHeader(x,y)}
-			if tabHdr[1] and now() - self._lastMove > 0.05 then
+			if tabHdr[1] and now() - self._lastMove > tabT then
 				self._lastMove = now()
 				tabHdr[1]:move(1)
 			end
@@ -2316,7 +2315,7 @@ function PocoMenu:mouse_pressed(alt, panel, button, x, y)
 				return true
 			end
 			local tabHdr = {self.gui:insideTabHeader(x,y)}
-			if tabHdr[1] and now() - self._lastMove > 0.05 then
+			if tabHdr[1] and now() - self._lastMove > tabT then
 				self._lastMove = now()
 				tabHdr[1]:move(-1)
 			end
