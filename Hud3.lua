@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 241
-local TAG = '0.20'
+local REV = 242
+local TAG = '0.20 hotfix 1 (g9838a00)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1181,11 +1181,12 @@ function TPocoHud3:_pos(something,head)
 	local t, unit = type(something)
 	if t == 'number' then
 		unit = managers.network:game():unit_from_peer_id(something)
-	elseif t == 'userdata' and something:movement() then
+	else
 		unit = something
 	end
 	if not (unit and alive(unit)) then return Vector3() end
-	local pos = unit:position()
+	local pos = Vector3()
+	mvector3.set(pos,unit:position())
 	if head and unit.movement and unit:movement() and unit:movement():m_head_pos() then
 		mvector3.set_z(pos,unit:movement():m_head_pos().z+(type(head)=='number' and head or 0))
 	end
@@ -1222,10 +1223,13 @@ end
 function TPocoHud3:_name(something,asRoom)
 	local str = type_name(something)
 	if asRoom and str == 'number' and something > 0 then
-		return self:_name(self:_pos(something))
+		return self:_name(self:_pos(something),asRoom)
 	elseif str == 'Vector3' then
 		if Poco.room and Poco.room:get(something) then
 			return Poco.room:get(something,true)
+		end
+		if asRoom then
+			return -- requested room, nothing found
 		end
 		local members = _.g('managers.network:game()._members',{})
 		local pid, closest = nil, 999999999
