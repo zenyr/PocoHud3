@@ -69,6 +69,7 @@ local scheme = {
 		showInteraction = {'num',2,{0,2},'Interaction label if one is busy','Verbose'},
 		showInteractionTime = {'num',2,{0,2},'How much time left','Verbose'},
 		showKill = {'num',2,{0,2},'Kill counter','Verbose'},
+		showPosition = {'num',2,{0,2},'Show player\'s position.\n* BETA','Verbose'},
 		showSpecial = {'num',2,{0,2},'Special kill counter','Verbose'},
 		showInspire = {'num',2,{0,2},'Inspire boost status (if casted by local player)','Verbose'},
 		showAverageDamage = {'num',1,{0,2},'Average Damage per bullet','Verbose'},

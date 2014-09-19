@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 238
-local TAG = '0.192 hotfix 8 (g70eedeb)'
+local REV = 239
+local TAG = '0.192 hotfix 9 (g09e56dd)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -453,6 +453,16 @@ function TPocoHud3:_update(t,dt)
 	local location = PocoHud3Class.PocoLocation
 	location:update(t,dt)
 
+	if inGameDeep and now() - (self._lastRoom or 0) > 1 then
+		self._lastRoom = now()
+		local room = _.g('Poco.room')
+		for pid=1,4 do
+			local unit = room and managers.network:game():unit_from_peer_id(pid)
+			if unit and alive(unit) then
+				self:Stat(pid,'room',room:get(unit:movement():m_pos(),true))
+			end
+		end
+	end
 end
 
 function TPocoHud3:HitDirection(col_ray,data)
@@ -482,7 +492,7 @@ end
 function TPocoHud3:Minion(pid,unit)
 	if alive(unit) then
 		self:Stat(pid,'minion',unit)
-		self:Chat('converted',_.s(self:_name(pid),'converted',self:_name(unit)))
+		self:Chat('converted',_.s(self:_name(pid),'converted',self:_name(unit),self:_name(pid,true)))
 	else
 		self:Stat(pid,'minion',0)
 	end
@@ -793,6 +803,7 @@ function TPocoHud3:_updatePlayers(t)
 			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
 			local lives =	isMe and managers.player:upgrade_value( 'player', 'additional_lives', 0) or 0
 			local interT = self:Stat(i,'interactET')
+			local room = self:Stat(i,'room')
 			if btmO.underneath then
 				txts[#txts+1]={'\n'}
 			end
@@ -808,6 +819,9 @@ function TPocoHud3:_updatePlayers(t)
 			end
 			if interText and _show('Interaction') then
 				txts[#txts+1]={' '..interText,cl.White}
+			end
+			if room and room ~= 0 and _show('Position') then
+				txts[#txts+1]={' '..utf8.to_upper(room),cl.White:with_alpha(0.5)}
 			end
 			if not btmO.underneath then
 				txts[#txts+1]={'\n'}
@@ -957,7 +971,7 @@ function TPocoHud3:_updateItems(t,dt)
 			elseif not self._endGameT then
 				local attacker = self:_name(self:Stat(i,'minionHit'))
 				self:Stat(i,'minion',0)
-				self:Chat('minionLost',_.s(self:_name(i),'lost a minion to',attacker,'.'))
+				self:Chat('minionLost',_.s(self:_name(i),'lost a minion to',attacker,self:_name(i,true),'.'))
 			end
 		end
 	end
@@ -1100,8 +1114,14 @@ function TPocoHud3:Stat(pid,key,data,add)
 		return stat[key] or 0
 	end
 end
-function TPocoHud3:_pos(unit,head)
-	if not alive(unit) then return Vector3() end
+function TPocoHud3:_pos(something,head)
+	local t, unit = type(something)
+	if t == 'number' then
+		unit = managers.network:game():unit_from_peer_id(something)
+	elseif t == 'userdata' and something:movement() then
+		unit = something
+	end
+	if not (unit and alive(unit)) then return Vector3() end
 	local pos = unit:position()
 	if head and unit.movement and unit:movement() and unit:movement():m_head_pos() then
 		mvector3.set_z(pos,unit:movement():m_head_pos().z+(type(head)=='number' and head or 0))
@@ -1136,9 +1156,14 @@ function TPocoHud3:_color(something,fbk)
 	end
 end
 
-function TPocoHud3:_name(something)
+function TPocoHud3:_name(something,asRoom)
 	local str = type_name(something)
-	if str == 'Vector3' then
+	if asRoom and str == 'number' and something > 0 then
+		return self:_name(self:_pos(something))
+	elseif str == 'Vector3' then
+		if Poco.room and Poco.room:get(something) then
+			return Poco.room:get(something,true)
+		end
 		local members = _.g('managers.network:game()._members',{})
 		local pid, closest = nil, 999999999
 		for __, member in pairs( members ) do
@@ -1151,7 +1176,7 @@ function TPocoHud3:_name(something)
 				end
 			end
 		end
-		something = pid or self.pid
+		return _.s('around',self:_name(pid or self.pid))
 	elseif str == 'Unit' then
 			return self:_name(something:base()._tweak_table)
 	elseif str == 'string' then -- tweak_table name
@@ -1715,7 +1740,7 @@ function TPocoHud3:_hook()
 			elseif action_desc.variant == 'tied' and O:get('popup','dominated') then
 				if not managers.enemy:is_civilian( self._unit ) then
 					me:Popup({pos=me:_pos(self._unit),text={{'Intimidated',cl.White}},stay=false,et=now()+dmgTime})
-					me:Chat('dominated',me:_name(self._unit)..' around '..me:_name(me:_pos(self._unit))..' has been captured.'..(me._hostageTxt or ''))
+					me:Chat('dominated',_.s(me:_name(self._unit),'has been captured',me:_name(me:_pos(self._unit)),me._hostageTxt or ''))
 				end
 			end
 			if action_desc.type=='act' and action_desc.variant then
@@ -1862,9 +1887,9 @@ function TPocoHud3:_hook()
 		local OnCriminalDowned = function(pid)
 			self:Stat(pid,'down',1,true)
 			if (self:Stat(pid,'down') or 0) >= 3 then
-				self:Chat('downedWarning','Warning:'..me:_name(pid)..' has been downed '..me:Stat(pid,'down')..' times.')
+				self:Chat('downedWarning',_.s('Warning:'..me:_name(pid),'has been downed',me:Stat(pid,'down'),'times',me:_name(pid,true)))
 			else
-				self:Chat('downed',me:_name(pid)..' was downed.')
+				self:Chat('downed',_.s(me:_name(pid),'was downed',me:_name(pid,true)))
 			end
 		end
 		hook( PlayerBleedOut, '_enter', function( self, ... )

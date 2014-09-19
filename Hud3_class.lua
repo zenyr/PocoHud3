@@ -754,7 +754,7 @@ function PocoLocation:_drawBox(pen,a,b)
 
 end
 
-function PocoLocation:get(pos)
+function PocoLocation:get(pos,translate)
 	local found, foundVol
 	if pos and pos.x then
 		local x,y,z = pos.x,pos.y,pos.z
@@ -771,11 +771,19 @@ function PocoLocation:get(pos)
 			end
 		end
 	end
-	return found,foundVol
+	if found and translate then
+		return 'at/in '..found -- TODO
+	else
+		return found,foundVol
+	end
 end
 
 function PocoLocation:update(t,dt)
 	Poco.room = self
+	if not self._loaded then
+		self._loaded = true
+		self:load()
+	end
 	local ff = _.g('setup:freeflight()')
 	if ff then
 		ff:update(t, dt)
@@ -784,7 +792,7 @@ function PocoLocation:update(t,dt)
 
 	local fCam = ff and ff:enabled() and ff._camera_object
 	local pos = fCam and fCam:position() or _.g('managers.player:player_unit():position()')
-	_.d('Room',self:get(pos) or 'None',#(self.currentRooms or {}))
+--	_.d('Room',self:get(pos) or 'None',#(self.currentRooms or {}))
 	local ray = fCam and World:raycast("ray", fCam:position(), fCam:position() + fCam:rotation():y() * 10000) or _.r()
 	if ray and ray.position then
 		local g = 20
