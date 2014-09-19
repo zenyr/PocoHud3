@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 237
-local TAG = '0.192 hotfix 7 (g886ac19)'
+local REV = 238
+local TAG = '0.192 hotfix 8 (g70eedeb)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -919,7 +919,7 @@ function TPocoHud3:_processMsg(channel,name,message)
 	end
 end
 function TPocoHud3:_isSimple(key)
-	return O:get('buff','simpleBusyIndicator') and (key == 'transition' or key == 'charge')
+	return O:get('buff','simpleBusyIndicator') and (key == 'transition' or key == 'reload' or key == 'charge')
 end
 local _mask = World:make_slot_mask(1, 8, 11, 12, 14, 16, 18, 21, 22, 24, 25, 26, 33, 34, 35 )
 function TPocoHud3:_updateItems(t,dt)
@@ -1482,7 +1482,7 @@ function TPocoHud3:_hook()
 			local et = O:get('buff','showReload') and self._state_data.reload_expire_t
 			if et then
 				pcall(me.Buff,me,({
-					key='transition', good=false,
+					key='reload', good=false,
 					icon=skillIcon,
 					iconRect = { 0, 9*64,64,64 },
 					text='',
@@ -1508,8 +1508,8 @@ function TPocoHud3:_hook()
 		hook( PlayerStandard, '_update_reload_timers', function( self, t,... )
 			Run('_update_reload_timers', self, t,...)
 			local et = self._state_data.reload_exit_expire_t
-			if et and et > 0 and me.buffs['transition'] then
-				me:RemoveBuff('transition')
+			if et and et > 0 and me.buffs['reload'] then
+				me:RemoveBuff('reload')
 			end
 		end)
 
@@ -1538,7 +1538,7 @@ function TPocoHud3:_hook()
 		end)
 		hook( PlayerStandard, '_interupt_action_reload', function( self,t  )
 			if self:_is_reloading() then
-				me:RemoveBuff('transition')
+				me:RemoveBuff('reload')
 				_matchStance()
 			end
 			Run('_interupt_action_reload', self, t )
