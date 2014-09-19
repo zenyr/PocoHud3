@@ -3041,6 +3041,12 @@ function PocoHud3Class._drawOptions(tab)
 						fontSize = 20, text=tName, value = value, min = range[1], max = range[2], vanity = vanity,
 						hintText = hint
 					}),category,name}
+				elseif type == 'string' then
+					objs[#objs+1] = {PocoUIStringValue:new(oTab,{
+						x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
+						fontSize = 20, text=tName, value = value,
+						hintText = hint
+					}),category,name}
 				else
 					PocoUIButton:new(oTab,{
 						hintText = 'Not implemented for now.',

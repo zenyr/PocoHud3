@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 239
-local TAG = '0.192 hotfix 9 (g09e56dd)'
+local REV = 241
+local TAG = '0.20'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -86,6 +86,7 @@ function TPocoHud3:onInit() -- ★설정
 	self.pops = {}
 	self.buffs = {}
 	self.floats = {}
+	self.sFloats = {}
 	self.smokes = {}
 	self.hits = {} -- to prevent HitDirection markers gc
 	self.gadget = self.gadget or {}
@@ -463,6 +464,16 @@ function TPocoHud3:_update(t,dt)
 			end
 		end
 	end
+
+	if self._music_started then
+		if O:get('root','showMusicTitle') then
+			me:SimpleFloat{key='showMusicTitle',x=10,y=10,time=5,anim=1,offset={200,0},
+				text={{_.s(O:get('root','showMusicTitlePrefix')),cl.White:with_alpha(0.6)},{self._music_started,cl.Tan}},
+				size=24, icon = {tweak_data.hud_icons:get_icon_data('jukebox_playing_icon')}
+			}
+		end
+		self._music_started = nil
+	end
 end
 
 function TPocoHud3:HitDirection(col_ray,data)
@@ -545,6 +556,58 @@ function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
 	else
 		buff:set(data)
 	end
+end
+
+function TPocoHud3:SimpleFloat(data) -- {key,x,y,time,text,size,val,anim,offset,icon}
+	local key = data.key
+	if key and self.sFloats[key] then
+		self.sFloats[key]:hide()
+		self.sFloats[key] = nil
+	end
+	local pnl = self.pnl.dbg:panel{x = data.x, y = data.y, w=500, h=100}
+	if key then
+		self.sFloats[key] = pnl
+	end
+	pnl:rect{color=cl.Black,layer=-1,alpha=0.9}
+	local offset = data.offset or {0,0}
+	local anim = data.anim
+	local __, lbl = _.l({pnl=pnl,x=5,y=5, font=FONT, color=cl.White, font_size=data.size},data.text,true)
+	if data.icon then
+		local icon,rect = unpack(data.icon)
+		local bmp = pnl:bitmap{
+			name = 'icon',
+			texture = icon,
+			texture_rect = rect,
+			x = 5, y = 5
+		}
+		bmp:set_center_y(5 + data.size/2)
+
+		lbl:set_x(bmp:width()+10)
+	end
+	pnl:set_size(lbl:right()+5,lbl:bottom()+5)
+	pnl:stop()
+	local t = now()
+	pnl:animate(function(p)
+		while alive(p) and p:visible() do
+			local dt = now() - t
+			local r = dt / data.time
+			if r > 1 then break end
+			if anim == 1 then
+				r = math.pow(r,0.5)
+				local rr = math.min(r,1-r)
+				p:set_alpha(math.pow(rr,0.4))
+			end
+			local dx,dy = offset[1] * r, offset[2] * r
+			p:set_position(math.floor(data.x + dx),math.floor(data.y + dy))
+			coroutine.yield()
+		end
+		if alive(p) then
+			if p:visible() then
+				self.sFloats[key] = nil
+			end
+			p:parent():remove(p)
+		end
+	end)
 end
 
 function TPocoHud3:Popup(data) -- {pos=pos,text={{},{}},stay=true,st,et}
@@ -2257,6 +2320,17 @@ function TPocoHud3:_hook()
 			else
 				return Run('_update_rot', ...)
 			end
+		end)
+	end
+	-- Music hook
+	local ms = _.g('Global.music_manager.source')
+	if ms then
+		hook( getmetatable(ms), 'set_switch', function( ... )
+			local self, type, val = unpack{...}
+			if type == 'music_randomizer' then
+				me._music_started = managers.localization:text('menu_jukebox_'..val)
+			end
+			return Run('set_switch', ...)
 		end)
 	end
 --- DEBUG ONLY
