@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 243
-local TAG = '0.20 hotfix 2 (g037c16f)'
+local REV = 244
+local TAG = '0.20 hotfix 3 (ge473fd4)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -458,7 +458,7 @@ function TPocoHud3:_update(t,dt)
 		self._lastRoom = now()
 		local room = _.g('Poco.room')
 		for pid=1,4 do
-			local unit = self:Stat(i,'custody') == 0 and room and managers.network:game():unit_from_peer_id(pid)
+			local unit = self:Stat(pid,'custody') == 0 and room and managers.network:game():unit_from_peer_id(pid)
 			if unit and alive(unit) then
 				self:Stat(pid,'room',room:get(unit:movement():m_pos(),true))
 			end
