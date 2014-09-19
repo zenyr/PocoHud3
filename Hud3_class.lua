@@ -2942,9 +2942,14 @@ function PocoHud3Class._drawOptions(tab)
 	})
 	PocoUIButton:new(tab,{
 		onClick = function()
-			for __,obj in pairs(objs) do
-				obj[1]:val(O:_default(obj[2],obj[3]))
-			end
+			managers.menu:show_default_option_dialog({
+				text = 'Revert all PocoHud3 options to the default setting?',
+				callback = function()
+					for __,obj in pairs(objs) do
+						obj[1]:val(O:_default(obj[2],obj[3]))
+					end
+				end
+			})
 		end,
 		x = 710, y = 10, w = 200, h=50,
 		fontSize = 25,font = FONTLARGE,

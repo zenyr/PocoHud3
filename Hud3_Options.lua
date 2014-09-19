@@ -178,8 +178,12 @@ function Option:reset()
 	os.remove(JSONFileName)
 end
 
-function Option:default()
-	self.items = {}
+function Option:default(category)
+	if category then
+		self.items[category] = nil
+	else
+		self.items = {}
+	end
 end
 
 function Option:load()

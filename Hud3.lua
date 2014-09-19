@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 236
-local TAG = '0.192 hotfix 6 (gc635b47)'
+local REV = 237
+local TAG = '0.192 hotfix 7 (g886ac19)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1981,11 +1981,11 @@ function TPocoHud3:_hook()
 		hook( ContourExt, 'add', function( ... )
 			local self, type, sync, multiplier = unpack{...}
 			local result = Run('add', ...)
-			if O:get('float','showHighlighted') then
-			local unit = self._unit -- TODO: compare this to filter Floats as Config
-			local tweak = unit and unit:interaction() and unit:interaction().tweak_data
-			local isPager = tweak == 'corpse_alarm_pager'
-			me:Float(unit,0,result.fadeout_t or now()+(isPager and 12 or 4))
+			if O:get('float','showHighlighted') and not (type == 'teammate') then
+				local unit = self._unit -- TODO: compare this to filter Floats as Config
+				local tweak = unit and unit:interaction() and unit:interaction().tweak_data
+				local isPager = tweak == 'corpse_alarm_pager'
+				me:Float(unit,0,result.fadeout_t or now()+(isPager and 12 or 4))
 			end
 			return result
 		end)
