@@ -6,6 +6,7 @@ local clGood =  cl.YellowGreen
 local clBad =  cl.Gold
 local isNil = function(a) return a == nil end
 local inGame = CopDamage ~= nil
+local KitsJSONFileName = 'poco\\hud3_kits.json'
 
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
@@ -3404,3 +3405,282 @@ function PocoHud3Class._drawKit(tab)
 	draw()
 end
 
+
+----------------------------------
+-- Kits : Kit profiler
+----------------------------------
+local Kits = class()
+PocoHud3Class.Kits = Kits
+
+function Kits:init()
+	self.items = {}
+	self:load()
+end
+
+function Kits:load()
+	local f,err = io.open(KitsJSONFileName, 'r')
+	local result = false
+	if f then
+		local t = f:read('*all')
+		local o = JSON:decode(t)
+		if type(o) == 'table' then
+			self.items = o
+		end
+		f:close()
+	end
+end
+
+function Kits:save()
+	local f = io.open(KitsJSONFileName, 'w')
+	if f then
+		f:write(JSON:encode_pretty(self.items))
+		f:close()
+	end
+end
+
+function Kits:locked(index,category)
+	local val = self:get(index,category)
+	local funcs = {
+		primaries = function()
+			local weapon_data = Global.blackmarket_manager.weapons
+			local obj = val and managers.blackmarket:get_crafted_category_slot(category, val)
+			if not obj then
+				return 'invalid value'
+			end
+			local w_id = obj and obj.weapon_id
+			local w_data = w_id and weapon_data[w_id]
+			if not w_data then
+				return _.s('Slot',val,'is empty')
+			end
+			local unlocked = w_data.unlocked
+			return not unlocked and 'Locked'
+		end,
+		gadget = function()
+			return not table.contains(managers.player:availible_equipment(1), val) and 'Locked'
+		end,
+		armor = function()
+			local obj = val and Global.blackmarket_manager.armors[val]
+			if not obj then
+				return 'invalid value'
+			end
+			local unlocked = obj and obj.unlocked
+			return not unlocked and 'Locked'
+		end,
+		melee = function()
+			local obj = val and Global.blackmarket_manager.melee_weapons[val]
+			if not obj then
+				return 'invalid value'
+			end
+			local unlocked = obj and obj.unlocked
+			return not unlocked and 'Locked'
+		end,
+		color = function() return end
+	}
+	funcs.key = funcs.color
+	funcs.secondaries = funcs.primaries
+	if funcs[category] then
+		local r,err = pcall(funcs[category])
+		if r then
+			return err
+		else
+			PocoHud3:err(err)
+		end
+	else
+		return 'Unknown Cat'..category
+	end
+end
+
+function Kits:keys()
+	local r = {}
+	for index,obj in pairs(self.items) do
+		local nKey = obj.key and obj.key~='' and Poco:sanitizeKey(obj.key)
+		if nKey then
+			r[nKey] = index
+		end
+	end
+	return r
+end
+
+function Kits:equip(index,showMessage)
+	local _uoi = MenuCallbackHandler._update_outfit_information
+	MenuCallbackHandler._update_outfit_information = function() end -- Avoid repeated submit
+	local msg,gMsg = {},{}
+
+	local r,err = pcall(function()
+		local obj = self.items[index]
+		if not obj then return false end
+		for cat, slot in pairs(obj) do
+			if self:locked(index,cat) then
+				msg[#msg+1] = _.s('Ignored',cat:upper(),':',self:locked(index,cat),'.\n')
+			else
+				if cat == 'primaries' or cat == 'secondaries' then
+					managers.blackmarket:equip_weapon(cat,slot)
+				elseif cat == 'color' or cat == 'key' then
+					-- ignore
+				elseif cat == 'armor' then
+					managers.blackmarket:equip_armor(slot)
+				elseif cat == 'gadget' then
+					managers.blackmarket:equip_deployable(slot)
+				elseif cat == 'melee' then
+					managers.blackmarket:equip_melee_weapon(slot)
+				else
+					_('KitsEquip:',cat,'?')
+				end
+				if cat == 'color' or cat == 'key' then
+					-- ignore gMsg
+				else
+					gMsg[#gMsg+1] = self:get(index,cat,true)
+				end
+			end
+		end
+	end)
+	if not r then msg = {err} end
+	local mcm = _.g('managers.menu_component._mission_briefing_gui:reload()')
+
+	MenuCallbackHandler._update_outfit_information = _uoi -- restore
+	MenuCallbackHandler:_update_outfit_information()
+
+	if showMessage then
+		msg[#msg+1] = 'Successfully equipped:\n'
+		for __,o in ipairs(gMsg) do
+			msg[#msg+1] = o .. (__<#gMsg and ', ' or '')
+		end
+	end
+	if #msg > 0 then
+		managers.system_menu:show{
+			button_list = { {
+					cancel_button = true,
+					text = 'OK'
+				} },
+			text = table.concat(msg),
+			title = 'Kits Profiler'..(index and ' : '..index or '')
+		}
+	end
+end
+
+function Kits:get(index,category,asText)
+	if not index then return end
+	local obj
+	if not self.items[index] then
+		self.items[index] = {}
+	end
+	obj = self.items[index]
+	if category == nil then
+		return obj
+	end
+	local _asText = {
+		primaries = function(val)
+			local obj = val and managers.blackmarket:get_crafted_category_slot(category, val) --Global.blackmarket_manager.crafted_items[category][val]
+			if obj then
+				local s = managers.weapon_factory:has_perk( 'silencer', obj.factory_id, obj.blueprint ) and PocoHud3Class.Icon.Ghost or ''
+				return s..managers.blackmarket:get_weapon_name_by_category_slot(category,val)
+			elseif val then
+				return 'N/A'
+			end
+		end,
+		armor = function(val)
+			local tweak = val and tweak_data.blackmarket.armors[val]
+			local name = tweak and managers.localization:text(tweak.name_id) or '?'
+			if val == 'level_7' or val == 'level_6' then
+				name = name:gsub('%U','')
+			end
+			return tweak and name
+		end,
+		gadget = function(val)
+			return val and managers.localization:text(tweak_data.blackmarket.deployables[val].name_id)
+		end,
+		melee = function (val)
+			local tweak = val and tweak_data.blackmarket.melee_weapons[val]
+			return tweak and managers.localization:text(tweak.name_id)
+		end,
+		color = function(a) return a end
+	}
+	_asText.secondaries = _asText.primaries
+	return asText and _asText[category] and _asText[category](obj[category]) or obj[category]
+end
+
+--[[function Kits:set(index,category,slot)
+	if not slot then
+		if category == 'primaries' then
+			local obj = Global.blackmarket_manager.crafted_items or {}
+			for _slot, obj in pairs(obj) do
+				if obj.equipped then
+					slot = _slot
+				end
+			end
+		end
+	end
+	if not slot then
+		return
+	end
+	if self:get(index,category) ~= slot then
+		self.items[index][category] = slot
+		return slot
+	end
+end]]
+
+function Kits:current(category,raw)
+	local result
+	local obj
+	local a,b = {
+		primaries = function()
+			obj = Global.blackmarket_manager.crafted_items[category]
+		end,
+		armor = function()
+			obj = Global.blackmarket_manager.armors
+		end,
+		gadget = function()
+			obj = Global.player_manager.kit.equipment_slots
+		end,
+		melee = function()
+			obj = Global.blackmarket_manager.melee_weapons
+		end
+	},{
+		primaries = function(_slot,obj)
+			if obj.equipped then
+				if raw then
+					return _slot
+				else
+					local s = managers.weapon_factory:has_perk( 'silencer', obj.factory_id, obj.blueprint ) and PocoHud3Class.Icon.Ghost or ''
+					return s..managers.blackmarket:get_weapon_name_by_category_slot(category,_slot)
+				end
+			end
+		end,
+		armor = function(aID,obj)
+			local armor = Global.blackmarket_manager.armors[aID]
+			if armor.equipped and armor.unlocked and armor.owned then
+				if raw then
+					return aID
+				else
+					local tweak = tweak_data.blackmarket.armors[aID]
+					return managers.localization:text(tweak.name_id)
+				end
+			end
+		end,
+		gadget = function(__,obj)
+			return raw and obj or managers.localization:text(tweak_data.blackmarket.deployables[obj].name_id)
+		end,
+		melee = function (_slot,obj)
+			if obj.equipped then
+				if raw then
+					return _slot
+				else
+					local tweak = tweak_data.blackmarket.melee_weapons[_slot]
+					return managers.localization:text(tweak.name_id)
+				end
+			end
+		end
+	}
+	a.secondaries = a.primaries
+	b.secondaries = b.primaries
+	if a[category] and b[category] then
+		a[category]()
+	else
+		return category..'?'
+	end
+	for _slot, obj in pairs(obj) do
+		local r = b[category](_slot, obj)
+		if r then return r end
+	end
+	return '??'
+end
