@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 249
-local TAG = '0.20 hotfix 6 (fa152b5)'
+local REV = 251
+local TAG = '0.20 hotfix 8 (804062d)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -19,6 +19,7 @@ if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
 local K = PocoHud3Class.Kits:new()
 local L = PocoHud3Class.Localizer:new()
+
 PocoHud3Class.O = O
 PocoHud3Class.K = K
 PocoHud3Class.L = L
@@ -41,22 +42,22 @@ local _BAGS = {
 local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = Icon.Div,Icon.Ghost
 local skillIcon = 'guis/textures/pd2/skilltree/icons_atlas'
 local now = function (type) return type and TimerManager:game():time() or managers.player:player_timer():time() end
-local _conv = {	-- === 미니언 사망 원인 표현용, 변경할 필요 없음 ===
-	city_swat = 'a Gensec Elite',
-	cop = 'a cop',
-	fbi = 'an FBI agent',
-	fbi_heavy_swat = 'an FBI heavy SWAT',
-	fbi_swat = 'an FBI SWAT',
-	gangster = 'a gangster',
-	gensec = 'a Gensec guard',
-	heavy_swat = 'a heavy SWAT',
-	security = 'a guard',
-	shield = 'a shield',
-	sniper = 'a sniper',
-	spooc = 'a cloaker',
-	swat = 'a SWAT',
-	tank = 'a bulldozer',
-	taser = 'a taser',
+local _conv = {
+	city_swat	=	L('_city_swat'),
+	cop	=	L('_cop'),
+	fbi	=	L('_fbi'),
+	fbi_heavy_swat	=	L('_fbi_heavy_swat'),
+	fbi_swat	=	L('_fbi_swat'),
+	gangster	=	L('_gangster'),
+	gensec	=	L('_gensec'),
+	heavy_swat	=	L('_heavy_swat'),
+	security	=	L('_security'),
+	shield	=	L('_shield'),
+	sniper	=	L('_sniper'),
+	spooc	=	L('_spooc'),
+	swat	=	L('_swat'),
+	tank	=	L('_tank'),
+	taser	=	L('_taser'),
 }
 --- Class Start ---
 local TPocoHud3 = class(TPocoBase)
@@ -169,7 +170,7 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 				if (rDamage or 0) > 0 and apid and apid > 0 and (apid ~= _lastAttkpid or now()-_lastAttk > 5) then
 					_lastAttk = now()
 					_lastAttkpid = apid
-					self:Chat('minionShot',_.s(self:_name(senderTweak),'damaged',(i==apid and 'own' or self:_name(i)..'\'s'),'minion for',_.f(rDamage*10)))
+					self:Chat('minionShot',L('_msg_minionShot',{self:_name(senderTweak),i==apid and 'own' or self:_name(i)..'\'s',_.f(rDamage*10)}))
 				end
 			end
 		end
@@ -325,39 +326,35 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 			self._noRose = true
 			gui:fadeIn()
 			--- Install tabs Begin --- ===================================
-			local tab = gui:add('About')
+			local tab = gui:add(L('_tab_about'))
 			C._drawAbout(tab,REV,TAG)
 
-			local tab = gui:add('Options')
+			local tab = gui:add(L('_tab_options'))
 			C._drawOptions(tab)
 
 			local y = 0
-			tab = gui:add('Statistics')
+			tab = gui:add(L('_tab_statistics'))
 			do
 				local oTabs = C.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
-				local oTab = oTabs:add('Heist Status')
+				local oTab = oTabs:add(L('_tab_heistStatus'))
 				C._drawHeistStats(oTab)
 
-				oTab = oTabs:add('Upgrade Skills')
+				oTab = oTabs:add(L('_tab_upgradeSkills'))
 				if inGame then
 					for pid,upg in pairs(_.g('Global.player_manager.synced_team_upgrades',{})) do
 						if upg then
-							y = _drawUpgrades(oTab,upg,true,'Crew bonus from '..self:_name(pid),y)
+							y = _drawUpgrades(oTab,upg,true,L('_upgr_crewBonusFrom',{self:_name(pid)}) ,y)
 						end
 					end
 				end
-				y = _drawUpgrades(oTab,_.g('Global.player_manager.team_upgrades'),true,'Perks that you and your crew will benefit from',y)
-				y = _drawUpgrades(oTab,_.g('Global.player_manager.upgrades'),false,'Perks that you have acquired',y)
+				y = _drawUpgrades(oTab,_.g('Global.player_manager.team_upgrades'),true,L('_youAndCrewsPerks'),y)
+				y = _drawUpgrades(oTab,_.g('Global.player_manager.upgrades'),false,L('_yourPerks'),y)
 			end
 
-			tab = gui:add('Tools')
+			tab = gui:add(L('_tab_tools'))
 			do
-				_.l({
-					pnl = tab.pnl,
-					x = 20, y = 10, w = tab.pnl:w()-20,h=20, font = FONT, font_size = 20, color = cl.Crimson,
-					align = 'right'},'* Tools section is currently Work in progress. Stay tuned :D')
 				local oTabs = C.PocoTabs:new(self._ws,{name = 'tools',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
-				local oTab = oTabs:add('Kit Profiler')
+				local oTab = oTabs:add(L('_tab_kitProfiler'))
 				PocoHud3Class._drawKit(oTab)
 
 				local oTab = oTabs:add('Inspect')
@@ -1355,9 +1352,7 @@ function TPocoHud3:_hook()
 		end
 	end
 	--
-	if not inGame then
-		-- Moved Heist stat to DbgLbl
-	else
+	if inGame then
 		--PlayerStandard
 		hook( PlayerStandard, '_get_input', function( self ,...)
 			return me.menuGui and {} or Run('_get_input', self,... )

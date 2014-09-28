@@ -44,7 +44,309 @@ PocoHud3Class.loadVar = function(_O,_me,_L)
 	L = _L
 	me = _me
 end
+local _defaultLocaleData = {
+	_opt_root = 'Root',
+	_enable = 'ENABLE',
+	_detailedModeKey = 'DETAILED MODE KEY',
+	_detailedModeToggle = 'DETAILED MODE TOGGLE',
+	_showMusicTitlePrefix = 'SHOW MUSIC TITLE PREFIX',
+	_showMusicTitle = 'SHOW MUSIC TITLE',
+	_silentKitShortcut = 'SILENT KIT SHORTCUT',
+	_pocoRoseKey = 'POCO ROSE KEY',
+	_language = 'LANGUAGE',
+	_24HourClock = '24HOUR CLOCK',
+	_opt_corner = 'Corner',
+	_color = 'COLOR',
+	_opacity = 'OPACITY',
+	_size = 'SIZE',
+	_defaultFont = 'DEFAULT FONT',
+	_detailedOnly = 'DETAILED ONLY',
+	_showFPS = 'SHOW FPS',
+	_showClockIngame = 'SHOW CLOCK INGAME',
+	_showClockOutgame = 'SHOW CLOCK OUTGAME',
+	_opt_buff = 'Buff',
+	_xPosition = 'X POSITION',
+	_yPosition = 'Y POSITION',
+	_maxFPS = 'MAX FPS',
+	_buffSize = 'BUFF SIZE',
+	_gap = 'GAP',
+	_justify = 'JUSTIFY',
+	_style = 'STYLE',
+	_showBerserker = 'SHOW BERSERKER',
+	_showStamina = 'SHOW STAMINA',
+	_showCharge = 'SHOW CHARGE',
+	_showTransition = 'SHOW TRANSITION',
+	_showCarryDrop = 'SHOW CARRY DROP',
+	_showInteract = 'SHOW INTERACT',
+	_showInteraction = 'SHOW INTERACTION',
+	_showInspire = 'SHOW INSPIRE',
+	_showBoost = 'SHOW BOOST',
+	_showShield = 'SHOW SHIELD',
+	_showECM = 'SHOW ECM',
+	_showFeedback = 'SHOW FEEDBACK',
+	_showTapeLoop = 'SHOW TAPE LOOP',
+	_showOverkill = 'SHOW OVERKILL',
+	_showCombatMedic = 'SHOW COMBAT MEDIC',
+	_showUnderdog = 'SHOW UNDERDOG',
+	_showBulletstorm = 'SHOW BULLETSTORM',
+	_showSuppressed = 'SHOW SUPPRESSED',
+	_showReload = 'SHOW RELOAD',
+	_noSprintDelay = 'NO SPRINT DELAY',
+	_hideInteractionCircle = 'HIDE INTERACTION CIRCLE',
+	_simpleBusyIndicator = 'SIMPLE BUSY INDICATOR',
+	_simpleBusySize = 'SIMPLE BUSY SIZE',
+	_opt_playerFloat = '',
+	_uppercaseNames = 'UPPERCASE NAMES',
+	_showIcon = 'SHOW ICON',
+	_showRank = 'SHOW RANK',
+	_showDistance = 'SHOW DISTANCE',
+	_opt_playerBottom = '',
+	_offset = 'OFFSET',
+	_underneath = 'UNDERNEATH',
+	_showClock = 'SHOW CLOCK',
+	_showInteractionTime = 'SHOW INTERACTION TIME',
+	_showKill = 'SHOW KILL',
+	_showPosition = 'SHOW POSITION',
+	_showSpecial = 'SHOW SPECIAL',
+	_showAverageDamage = 'SHOW AVERAGE DAMAGE',
+	_showDowns = 'SHOW DOWNS',
+	_showPing = 'SHOW PING',
+	_showConvertedEnemy = 'SHOW CONVERTED ENEMY',
+	_showArrow = 'SHOW ARROW',
+	_opt_popup = '',
+	_damageDecay = 'DAMAGE DECAY',
+	_myDamage = 'MY DAMAGE',
+	_crewDamage = 'CREW DAMAGE',
+	_AiDamage = 'AI DAMAGE',
+	_handsUp = 'HANDS UP',
+	_dominated = 'DOMINATED',
+	_opt_chat = '',
+	_fallbackToMe = 'FALLBACK TO ME',
+	_includeLocation = 'INCLUDE LOCATION',
+	_midstatAnnounce = 'MIDSTAT ANNOUNCE',
+	_midStat = 'MID STAT',
+	_endStat = 'END STAT',
+	_endStatCredit = 'END STAT CREDIT',
+	_converted = 'CONVERTED',
+	_minionLost = 'MINION LOST',
+	_minionShot = 'MINION SHOT',
+	_hostageChanged = 'HOSTAGE CHANGED',
+	_custody = 'CUSTODY',
+	_downed = 'DOWNED',
+	_downedWarning = 'DOWNED WARNING',
+	_replenished = 'REPLENISHED',
+	_messiah = 'MESSIAH',
+	_drillDone = 'DRILL DONE',
+	_drillAlmostDone = 'DRILL ALMOST DONE',
+	_opt_hit = '',
+	_duration = 'DURATION',
+	_number = 'NUMBER',
+	_numberSize = 'NUMBER SIZE',
+	_numberDefaultFont = 'NUMBER DEFAULT FONT',
+	_sizeStart = 'SIZE START',
+	_sizeEnd = 'SIZE END',
+	_shieldColor = 'SHIELD COLOR',
+	_healthColor = 'HEALTH COLOR',
+	_shieldColorDepleted = 'SHIELD COLOR DEPLETED',
+	_healthColorDepleted = 'HEALTH COLOR DEPLETED',
+	_opt_float = '',
+	_frame = 'FRAME',
+	_margin = 'MARGIN',
+	_keepOnScreen = 'KEEP ON SCREEN',
+	_keepOnScreenMarginX = 'KEEP ON SCREEN MARGIN X',
+	_keepOnScreenMarginY = 'KEEP ON SCREEN MARGIN Y',
+	_showTargets = 'SHOW TARGETS',
+	_showDrills = 'SHOW DRILLS',
+	_showHighlighted = 'SHOW HIGHLIGHTED',
+	_showBags = 'SHOW BAGS',
+	_opt_game = '',
+	_fasterDesyncResolve = 'FASTER DESYNC RESOLVE',
+	_ingameJoinRemaining = 'INGAME JOIN REMAINING',
+	_showRankInKickMenu = 'SHOW RANK IN KICK MENU',
+	_corpseLimit = 'CORPSE LIMIT',
+	_corpseRagdollTimeout = 'CORPSE RAGDOLL TIMEOUT',
+	_cantedSightCrook = 'CANTED SIGHT CROOK',
+	_rememberGadgetState = 'REMEMBER GADGET STATE',
+	_subtitleFontSize = 'SUBTITLE FONT SIZE',
+	_subtitleFontColor = 'SUBTITLE FONT COLOR',
+	_subtitleOpacity = 'SUBTITLE OPACITY',
+	_truncateNames = 'TRUNCATE NAMES',
+	_truncateTags = 'TRUNCATE TAGS',
+	_opt_root_desc = 'PocoHud3 Main configuration',
+	_enable_desc = 'Not implemented.',
+	_detailedModeKey_desc = 'Keybind for detailed(verbose) mode.\nDefault: ` (tilde key)',
+	_detailedModeToggle_desc = 'Make detailed mode key toggles mode.',
+	_showMusicTitlePrefix_desc = 'Prefix for music titles',
+	_showMusicTitle_desc = 'Show title of the music when it is being set',
+	_silentKitShortcut_desc = 'Ignore Kit Profiler shortcuts success message',
+	_pocoRoseKey_desc = 'Keybind for PocoRose.\nDefault: B',
+	_language_desc = 'PocoHud3 Language\n* Not implemented',
+	_24HourClock_desc = 'Use 24 hour clock instead of 12 hours clock at the corner and bottom player infobox',
+	_opt_corner_desc = 'Static text ticker which works as FPS counter / Outgame clock',
+	_color_desc = 'Font color',
+	_opacity_desc = 'Font opacity',
+	_size_desc = 'Font size',
+	_defaultFont_desc = 'Use sans-serif font',
+	_detailedOnly_desc = 'Hide corner text while \'Detailed\' mode is not activated',
+	_showFPS_desc = 'Show FPS',
+	_showClockIngame_desc = 'Show in-game clock',
+	_showClockOutgame_desc = 'Show out-game clock',
+	_opt_buff_desc = 'Shows realtime buff status',
+	_xPosition_desc = 'Origin point X (% from left of screen)',
+	_yPosition_desc = 'Origin point Y (% from top of screen)',
+	_maxFPS_desc = 'FPS cap to reduce performance hit',
+	_buffSize_desc = 'Icon size (ignored with Vanilla style)',
+	_gap_desc = 'Icon gap',
+	_justify_desc = 'Icon alignment (vertical for Vanilla style)',
+	_style_desc = 'Buff icon style',
+	_showBerserker_desc = 'Berserker indicator',
+	_showStamina_desc = 'Stamina indicator',
+	_showCharge_desc = 'Melee charge indicator',
+	_showTransition_desc = 'Transitions like weapon swap, melee cooldown',
+	_showCarryDrop_desc = 'Bag interaction cooldown',
+	_showInteract_desc = 'Shout cooldown',
+	_showInteraction_desc = 'Interaction timer that involves holding USE key',
+	_showInspire_desc = 'Inspire cooldown (giving end)',
+	_showBoost_desc = 'Inspire duration (receiving end)',
+	_showShield_desc = 'Shield recovery cooldown',
+	_showECM_desc = 'ECM duration',
+	_showFeedback_desc = 'ECM Feedback duration',
+	_showTapeLoop_desc = 'Tapeloop duration',
+	_showOverkill_desc = 'Overkill duration',
+	_showCombatMedic_desc = 'Combat medic duration',
+	_showUnderdog_desc = 'Underdog duration',
+	_showBulletstorm_desc = 'Bulletstorm duration',
+	_showSuppressed_desc = 'Suppression that prevents shield recovery and increases bullet deviation.\n(Bullet deviation not in effect)',
+	_showReload_desc = 'Show Reload indicator',
+	_noSprintDelay_desc = 'Ignore after-sprint delay',
+	_hideInteractionCircle_desc = 'Hide vanilla game\'s interaction circle',
+	_simpleBusyIndicator_desc = 'Replace \'busy\' icons with simple red circle at the crosshair\nSuch as: Reloading, Weapon-swap, melee',
+	_simpleBusySize_desc = 'Set size of SimpleBusy indicator if simpleBusy is used',
+	_opt_playerFloat_desc = 'Floating info panel above crew members\' head',
+	_uppercaseNames_desc = 'Name as uppercase',
+	_showIcon_desc = 'Infamy Spade icon',
+	_showRank_desc = 'e.g) V-100',
+	_showDistance_desc = 'e.g) 25m',
+	_showInspire_desc2 = 'Inspire speed-boost',
+	_opt_playerBottom_desc = 'Info text at the bottom of the HUD',
+	_offset_desc = 'Vertical offset if you REALLY want to move it around',
+	_underneath_desc = 'Put PlayerBottom infobox at the very bottom of the screen',
+	_showClock_desc = 'Put a clock after local player info',
+	_showInteractionTime_desc = 'How much time left',
+	_showKill_desc = 'Kill counter',
+	_showPosition_desc = 'Show player\'s position.\n* BETA',
+	_showSpecial_desc = 'Special kill counter',
+	_showAverageDamage_desc = 'Average Damage per bullet',
+	_showDowns_desc = 'Downs counter',
+	_showPing_desc = 'Latency as miliseconds',
+	_showConvertedEnemy_desc = 'Minion health as percent if one has any',
+	_showArrow_desc = 'Arrow pointing at players\' position',
+	_opt_popup_desc = 'Shows damages in 3D space',
+	_damageDecay_desc = 'Decay time',
+	_myDamage_desc = 'Show local player\'s damage',
+	_crewDamage_desc = 'Show other player\'s damage',
+	_AiDamage_desc = 'Show AI\'s damage',
+	_handsUp_desc = 'Show when an AI is going to surrender',
+	_dominated_desc = 'Show when an AI has cuffed himself',
+	_opt_chat_desc = {'_opt_chat_desc_1',{'_opt_chat_desc_2',cl.White:with_alpha(0.5)},{'_opt_chat_desc_3',cl.White:with_alpha(0.6)},{'_opt_chat_desc_4',cl.White:with_alpha(0.7)},{'_opt_chat_desc_5',cl.White:with_alpha(0.8)},{'_opt_chat_desc_6',cl.White:with_alpha(0.9)},{'_opt_chat_desc_7',cl.White:with_alpha(1)}},
+	_fallbackToMe_desc = 'If an event is set to be sent to everyone but the condition is not fulfilled, show it to myself instead.',
+	_includeLocation_desc = 'If location data is available, include it in chat message.',
+	_midstatAnnounce_desc = 'Announce stats on every X kills. Considered as \'Midgame stat\'',
+	_midStat_desc = 'Midgame stat. (limited to ServerSend)',
+	_endStat_desc = 'Endgame stat',
+	_endStatCredit_desc = 'PocoMods group plug after endgame stat ;)',
+	_converted_desc = 'Someone converted a police enforcer',
+	_minionLost_desc = 'Someone lost a minion',
+	_minionShot_desc = 'Someone shot a minion',
+	_hostageChanged_desc = 'Hostage count has been changed\n* Not implemented',
+	_custody_desc = 'Someone is in custody',
+	_downed_desc = 'Someone is downed',
+	_downedWarning_desc = 'Someone is downed more than twice in a row',
+	_replenished_desc = 'Someone replenished health(usually by Med kit)',
+	_messiah_desc = 'You consumed a pistol messiah shot',
+	_drillDone_desc = 'A drill is done.\n* Requires Float-ShowDrills option enabled',
+	_drillAlmostDone_desc = 'A drill has less than 10 seconds left.\n* Requires Float-ShowDrills option enabled',
+	_opt_hit_desc = 'Hit indicator that shows where you\'ve been shot from',
+	_duration_desc = 'Seconds. 0 means auto (follows shield recovery time)',
+	_number_desc = 'Show the exact amount you lost',
+	_numberSize_desc = 'Number size',
+	_numberDefaultFont_desc = 'Number uses default font',
+	_sizeStart_desc = 'Size at the beginning',
+	_sizeEnd_desc = 'Size at the end',
+	_shieldColor_desc = 'Shield lost color, full amount',
+	_healthColor_desc = 'Health lost color, full amount',
+	_shieldColorDepleted_desc = 'Shield lost color, depleted',
+	_healthColorDepleted_desc = 'Health lost color, depleted',
+	_opt_float_desc = 'Floating infobox in 3D position',
+	_frame_desc = 'Alternative box frame',
+	_margin_desc = 'Box inner padding',
+	_keepOnScreen_desc = 'Keep floating boxes on screen',
+	_keepOnScreenMarginX_desc = 'Margin for Left and Right',
+	_keepOnScreenMarginY_desc = 'Margin for Top and Bottom',
+	_showTargets_desc = 'Show pointed mobs',
+	_showDrills_desc = 'Show active drills',
+	_showHighlighted_desc = 'Show floating infobox while highlighted.\nPager answering timer also depends on this.',
+	_showConvertedEnemy_desc2 = 'Try to color-code them to the master.',
+	_showBags_desc = 'Show pointed bags.\n* Requires \'Show Targets\' enabled',
+	_opt_game_desc = 'Game specific enhancements',
+	_fasterDesyncResolve_desc = 'In-game Player husks will catch up severe desync faster and represent more accurate position.',
+	_ingameJoinRemaining_desc = 'In-game SOMEONE IS JOINING dialog will show you how many seconds left',
+	_showRankInKickMenu_desc = 'In-game Kick menu will display player levels with their name',
+	_corpseLimit_desc = 'In-game corpse limit\nDefault is 8.\nEach step multiplies/divides result by 2.',
+	_corpseRagdollTimeout_desc = 'Corpse ragdoll timeout in loud game.\nDefault is 3 seconds. Each step increase/decrease the time by 1 second.',
+	_cantedSightCrook_desc = 'In-game canted sight(as gadget) indicator',
+	_rememberGadgetState_desc = 'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps',
+	_subtitleFontSize_desc = 'Subtitle font size',
+	_subtitleFontColor_desc = 'Subtitle font color',
+	_subtitleOpacity_desc = 'Subtitle opacity',
+	_truncateNames_desc = 'Truncate Player names by length, if required.',
+	_truncateTags_desc = {'_truncateTags_desc_1',{'[Poco]Hud',cl.Tan},' > ', {PocoHud3Class.Icon.Dot..'Hud',cl.Tan}},
+	_truncateTags_desc_1 = 'Truncate Player tags with square brakets.\ne.g)',
+	_opt_chat_desc_1 = 'If an event listed below happens and fulfill set condition, PocoHud will tell others via chat. Possible targets are:\n',
+	_opt_chat_desc_2 = '* No one: No One\n',
+	_opt_chat_desc_3 = '* Only me: Only me\n',
+	_opt_chat_desc_4 = '* Everyone-Host: Everyone if I am host\n',
+	_opt_chat_desc_5 = '* Everyone-EM: Everyone if I have attended the entire match\n',
+	_opt_chat_desc_6 = '* Everyone-Alone: Everyone if I am the only one who has PocoHud\n',
+	_opt_chat_desc_7 = '* Everyone-Always: Everyone, regardless of someone else already broadcasted with PocoHud or not',
+	_city_swat = 'a Gensec Elite',
+	_cop = 'a cop',
+	_fbi = 'an FBI agent',
+	_fbi_heavy_swat = 'an FBI heavy SWAT',
+	_fbi_swat = 'an FBI SWAT',
+	_gangster = 'a gangster',
+	_gensec = 'a Gensec guard',
+	_heavy_swat = 'a heavy SWAT',
+	_security = 'a guard',
+	_shield = 'a shield',
+	_sniper = 'a sniper',
+	_spooc = 'a cloaker',
+	_swat = 'a SWAT',
+	_tank = 'a bulldozer',
+	_taser = 'a taser',
+	_msg_minionShot = '[1] damaged [2] minion for [3]',
+	_vanity_chatsend = 'No one,Only me,Everyone-Host,Everyone-EM,Everyone-Alone,Everyone-Always',
+	_vanity_verbose = 'Never,Detailed mode only,Always',
+	_vanity_midstat = 'Never,50,100',
+	_vanity_align = 'none,Start,Middle,End',
+	_vanity_style = 'N/A,PocoHud,Vanilla',
+	_vanity_auto = 'Auto',
+	_vanity_desyncresolve = 'N/A,Off,Faster,Aggressive',
+	_vanity_corpse = 'N/A,Minimum,Less,Default,More,a Lot,Considerable,Massive,Mammoth,Colossal,Ridiculous',
+	_vanity_cantedsight = 'N/A,Off,Subtle,Obvious,Maximum',
+	_vanity_truncatenames = 'N/A,Off,3,6,9,12,15,18,21',
+	_tab_about = 'About',
+	_tab_options = 'Options',
+	_tab_statistics = 'Statistics',
+	_tab_heistStatus = 'Heist Status',
+	_tab_upgradeSkills = 'Upgrade Skills',
+	_upgr_crewBonusFrom = 'Crew bonus from [1]',
+	_yourPerks = 'Perks that you have acquired',
+	_youAndCrewsPerks = 'Perks that you and your crew will benefit from',
+	_tab_tools = 'Tools',
+	_tab_kitProfiler = 'Kit Profiler',
 
+}
 --- miniClass start ---
 local TBuff = class()
 PocoHud3Class.TBuff = TBuff
@@ -774,7 +1076,7 @@ function PocoLocation:get(pos,translate)
 		end
 	end
 	if found and translate then
-		return 'at/in '..found -- TODO
+		return found -- TODO
 	else
 		return found,foundVol
 	end
@@ -2976,9 +3278,10 @@ function PocoHud3Class._drawOptions(tab)
 			_y = _y + h + m
 			return _y - h - m
 		end
+
 		local oTab = oTabs:add(category:gsub('(%U)(%u)','%1 %2'):upper())
 		if objects[1] then
-			local txts = objects[1]
+			local txts = L:parse(objects[1])
 			local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=20, pnl = oTab.pnl, x = x(), y = y(0)},txts,true)
 			y(lbl:h())
 			--[[oTab.pnl:bitmap({
@@ -3014,6 +3317,7 @@ function PocoHud3Class._drawOptions(tab)
 				local type = O:_type(category,name)
 				local value = O:get(category,name,true)
 				local hint = O:_hint(category,name)
+				hint = hint and L:parse(hint)
 				local tName = name:gsub('(%U)(%u)','%1 %2'):upper()
 				if type == 'bool' then
 					objs[#objs+1] = {PocoUIBoolean:new(oTab,{
@@ -3036,6 +3340,9 @@ function PocoHud3Class._drawOptions(tab)
 				elseif type == 'num' then
 					local range = O:_range(category,name) or {}
 					local vanity = O:_vanity(category,name)
+					if vanity then
+						vanity = PocoHud3Class.L(vanity):split(',')
+					end
 					local step = O:_step(category,name)
 
 					objs[#objs+1] = {PocoUINumValue:new(oTab,{
@@ -3693,5 +4000,40 @@ local Localizer = class()
 PocoHud3Class.Localizer = Localizer
 
 function Localizer:init()
+	-- Shorthand L(o,c)
+	local mt = getmetatable(self)
+	mt.__call = function(__,...)
+		return self:parse(...)
+	end
+	setmetatable(self,mt)
 
+	self.parser = {
+		string = function(str,context)
+			return str:find('^[_!]') and self:parse(self:get(str,context),context) or str
+		end,
+		table = function(tbl,context)
+			local r = {}
+			for k,v in pairs(tbl) do
+				r[k] = self:parse(v,context)
+			end
+			return r
+		end
+	}
+	self.data = _defaultLocaleData
+end
+
+function Localizer:get(key,context)
+	local val = self.data[key]
+
+	if val and type(context)=='table' then
+		for k,v in pairs(context) do
+			val = val:gsub('%['..k..'%]',v)
+		end
+	end
+	return val or _.s('?:',key)
+end
+
+function Localizer:parse(object,context)
+	local t = type(object)
+	return self.parser[t] and self.parser[t](object,context) or object
 end
