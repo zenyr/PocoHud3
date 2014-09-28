@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 251
-local TAG = '0.20 hotfix 8 (0896489)'
+local REV = 252
+local TAG = '0.20 hotfix 9 (1790b2b)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -2334,6 +2334,15 @@ function TPocoHud3:_hook()
 			return Run('set_switch', ...)
 		end)
 	end
+	--MusicManager:jukebox_menu_track(name)
+	hook( MusicManager, 'jukebox_menu_track', function( ... )
+		local result = Run('jukebox_menu_track', ...)
+		if result then
+			me._music_started = managers.localization:text('menu_jukebox_screen_'..result)
+		end
+		return result
+	end)
+
 --- DEBUG ONLY
 --------------
 end
