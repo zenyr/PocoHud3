@@ -173,7 +173,7 @@ local _defaultLocaleData = {
 	_truncateNames = 'TRUNCATE NAMES',
 	_truncateTags = 'TRUNCATE TAGS',
 	_opt_root_desc = 'PocoHud3 Main configuration',
-	_enable_desc = 'Not implemented.',
+	_enable_desc = 'Enable this feature',
 	_detailedModeKey_desc = 'Keybind for detailed(verbose) mode.\nDefault: ` (tilde key)',
 	_detailedModeToggle_desc = 'Make detailed mode key toggles mode.',
 	_showMusicTitlePrefix_desc = 'Prefix for music titles',
@@ -345,6 +345,23 @@ local _defaultLocaleData = {
 	_youAndCrewsPerks = 'Perks that you and your crew will benefit from',
 	_tab_tools = 'Tools',
 	_tab_kitProfiler = 'Kit Profiler',
+	_tab_Inspect = 'Inspect Players',
+	_stat_crewKills = '[1]Crew: [2]',
+	_msg_converted = '[1] converted [2] [3]',
+	_buff_exhausted = 'Exhausted',
+	_msg_minionLost = '[1] lost a minion to [2] [3].',
+	_msg_around = 'around [1]',
+	_buff_combatMedicDamageShort = 'CD Dmg+',
+	_buff_bulletStormShort = 'BS',
+	_buff_underdogShort = 'UD Dmg+',
+	_buff_overkillShort = 'OVK Dmg+',
+	_msg_usedPistolMessiah = 'Used pistol messiah, [1] left.',
+	_msg_usedPistolMessiahCharges = '[1] charge',
+	_msg_usedPistolMessiahChargesPlu = '[1] charges',
+	_msg_captured = '[1] has been captured [2]',
+	_msg_repenished = '[1] replenished health by [2]% [3]',
+	_msg_replenishedDown = '(+[1] down)',
+	_msg_replenishedDownPlu = '(+[1] downs)',
 
 }
 --- miniClass start ---
@@ -1141,6 +1158,14 @@ function PocoLocation:update(t,dt)
 
 	end
 end
+--- End of Location1
+--[[
+1. _.g('managers.player:player_unit():movement():nav_tracker():nav_segment()')
+2. managers.navigation:get_nav_seg_metadata(_1_)
+3.
+]]
+
+--- End of Location2
 
 local LocationJSONFilename = 'poco\\hud3_rooms.json';
 function PocoLocation:load()

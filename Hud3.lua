@@ -7,7 +7,7 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 local _ = UNDERSCORE
 local REV = 251
-local TAG = '0.20 hotfix 8 (804062d)'
+local TAG = '0.20 hotfix 8 (0896489)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -357,7 +357,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 				local oTab = oTabs:add(L('_tab_kitProfiler'))
 				PocoHud3Class._drawKit(oTab)
 
-				local oTab = oTabs:add('Inspect')
+				local oTab = oTabs:add(L('_tab_Inspect'))
 				y = _drawPlayer(oTab, 0)
 				oTab:set_h(y)
 			end
@@ -367,7 +367,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 end
 function TPocoHud3:AnnounceStat(midgame)
 	local txt = {}
-	table.insert(txt,Icon.LC..'PocoHud³ r'..REV.. ' '.. Icon.RC..' '..' Crew Kills:'..self.killa..Icon.Skull)
+	table.insert(txt,Icon.LC..'PocoHud³ r'..REV.. ' '.. Icon.RC..' '..L('_stat_crewKills',{Icon.Skull,self.killa}))
 	for pid = 0,4 do
 		local kill = self:Stat(pid,'kill')
 		local killS = self:Stat(pid,'killS')
@@ -387,7 +387,6 @@ function TPocoHud3:AnnounceStat(midgame)
 					)
 				)
 			else
-
 				table.insert(txt,
 					_.s(Icon.LC..self:_name(pid)..Icon.RC,
 						kill..Icon.Skull..(killS>0 and '('..killS..' Sp)' or ''),'|',
@@ -496,14 +495,13 @@ function TPocoHud3:HitDirection(col_ray,data)
 		mobPos = managers.player:player_unit():position()
 	end
 	if mobPos then
-		-- TODO: Change intensity according to dmg?
 		table.insert(self.hits,PocoHud3Class.THitDirection:new(self,{mobPos=mobPos,shield=data.shield,dmg=data.dmg,time=data.time,rate=data.rate}))
 	end
 end
 function TPocoHud3:Minion(pid,unit)
 	if alive(unit) then
 		self:Stat(pid,'minion',unit)
-		self:Chat('converted',_.s(self:_name(pid),'converted',self:_name(unit),self:_name(pid,true)))
+		self:Chat('converted',L('_msg_converted',{self:_name(pid),self:_name(unit),O:get('chat','includeLocation') and self:_name(pid,true) or ''}))
 	else
 		self:Stat(pid,'minion',0)
 	end
@@ -676,7 +674,7 @@ function TPocoHud3:_checkBuff(t)
 				key= 'stamina', good=false,
 				icon=skillIcon,
 				iconRect = { 7*64, 3*64,64,64 },
-				text=thrSt and '' or 'Exhausted',
+				text=thrSt and '' or L('_buff_exhausted'),
 				st=(currSt/maxSt), et=1
 			})
 		else
@@ -1034,7 +1032,7 @@ function TPocoHud3:_updateItems(t,dt)
 			elseif not self._endGameT then
 				local attacker = self:_name(self:Stat(i,'minionHit'))
 				self:Stat(i,'minion',0)
-				self:Chat('minionLost',_.s(self:_name(i),'lost a minion to',attacker,self:_name(i,true),'.'))
+				self:Chat('minionLost',L('_msg_minionLost',{self:_name(i),attacker,O:get('chat','includeLocation') and self:_name(i,true) or ''}))
 			end
 		end
 	end
@@ -1243,7 +1241,7 @@ function TPocoHud3:_name(something,asRoom)
 				end
 			end
 		end
-		return _.s('around',self:_name(pid or self.pid))
+		return L('_msg_around',{self:_name(pid or self.pid)})
 	elseif str == 'Unit' then
 			return self:_name(something:base()._tweak_table)
 	elseif str == 'string' then -- tweak_table name
@@ -1463,11 +1461,11 @@ function TPocoHud3:_hook()
 			}) )
 		end)
 		local rectDict = {}
-		rectDict.combat_medic_damage_multiplier = {'Dmg+', { 5, 7 }}
-		rectDict.no_ammo_cost = {'BS',{ 4, 5 }}
-		rectDict.dmg_multiplier_outnumbered = {'Dmg+',{2,1}}
-		rectDict.dmg_dampener_outnumbered = ''-- {'Def+',{2,1}} -- Double item
-		rectDict.overkill_damage_multiplier = {'Dmg+',{3,2}}
+		rectDict.combat_medic_damage_multiplier = {L('_buff_combatMedicShort'), { 5, 7 }}
+		rectDict.no_ammo_cost = {L('_buff_bulletStormShort'),{ 4, 5 }}
+		rectDict.dmg_multiplier_outnumbered = {L('_buff_underdogShort'),{2,1}}
+		rectDict.dmg_dampener_outnumbered = ''-- {'Def+',{2,1}} -- Dupe
+		rectDict.overkill_damage_multiplier = {L('_buff_overkillShort'),{3,2}}
 		hook( PlayerManager, 'activate_temporary_upgrade', function( self, category, upgrade )
 			Run('activate_temporary_upgrade',  self, category, upgrade )
 			local et = _.g('managers.player._temporary_upgrades.'..category ..'.'..upgrade..'.expire_time')
@@ -1727,7 +1725,7 @@ function TPocoHud3:_hook()
 		hook( PlayerDamage, 'consume_messiah_charge', function( self)
 			local result = Run('consume_messiah_charge', self)
 			if result then
-				me:Chat('messiah',_.s('Used pistol messiah.', self._messiah_charges ,'charge'..(self._messiah_charges>1 and 's' or '')..' left'))
+				me:Chat('messiah',L('_msg_usedPistolMessiah',{L('_msg_usedPistolMessiahCharges'..(self._messiah_charges>1 and 'Plu' or ''),{self._messiah_charges})}))
 			end
 			return result
 		end)
@@ -1805,7 +1803,7 @@ function TPocoHud3:_hook()
 			elseif action_desc.variant == 'tied' and O:get('popup','dominated') then
 				if not managers.enemy:is_civilian( self._unit ) then
 					me:Popup({pos=me:_pos(self._unit),text={{'Intimidated',cl.White}},stay=false,et=now()+dmgTime})
-					me:Chat('dominated',_.s(me:_name(self._unit),'has been captured',me:_name(me:_pos(self._unit)),me._hostageTxt or ''))
+					me:Chat('dominated',L('_msg_captured',{me:_name(self._unit),me:_name(me:_pos(self._unit))}))
 				end
 			end
 			if action_desc.type=='act' and action_desc.variant then
@@ -1922,7 +1920,7 @@ function TPocoHud3:_hook()
 			local down = self:Stat(pid,'down') or 0
 			if percent>= 99.8 and bPercent < percent then
 				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) and (now()-(self._startGameT or now()) > 1) then
-					self:Chat('replenished',self:_name(pid)..' replenished health by '.._.f(percent-bPercent)..'%'..(down>0 and '(+'..down..' down'..(down>1 and 's' or '')..')' or ''))
+					self:Chat('replenished',L('_msg_repenished',{self:_name(pid),_.f(percent-bPercent),down>0 and L('_msg_replenishedDown'..(down>1 and 'Plu' or ''),{down}) or ''}))
 				elseif bPercent == 0 then
 					self:Stat(pid,'_refreshBtm',1)
 				end
@@ -1952,9 +1950,9 @@ function TPocoHud3:_hook()
 		local OnCriminalDowned = function(pid)
 			self:Stat(pid,'down',1,true)
 			if (self:Stat(pid,'down') or 0) >= 3 then
-				self:Chat('downedWarning',_.s('Warning:'..me:_name(pid),'has been downed',me:Stat(pid,'down'),'times',me:_name(pid,true)))
+				self:Chat('downedWarning',L('_msg_downedWarning',{me:_name(pid),me:Stat(pid,'down')}))
 			else
-				self:Chat('downed',_.s(me:_name(pid),'was downed',me:_name(pid,true)))
+				self:Chat('downed',L('_msg_downed',{me:_name(pid)}))
 			end
 		end
 		hook( PlayerBleedOut, '_enter', function( self, ... )
@@ -2040,7 +2038,7 @@ function TPocoHud3:_hook()
 				self:Stat(pid,'custody',1)
 				self:Stat(pid,'room','in custody')
 				self:Stat(pid,'health',0)
-				self:Chat('custody',self:_name(pid)..' is in custody.')
+				self:Chat('custody',managers.localization:text('hint_teammate_dead',{TEAMMATE=self:_name(pid)}))
 			end
 		end
 		hook( UnitNetworkHandler, 'set_trade_death', function( ... )
