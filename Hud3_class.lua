@@ -29,7 +29,7 @@ local PocoEvent = {
 	WheelDown = 'onWheelDown',
 	Move = 'onMove',
 }
-local O, K, me
+local O, K, L, me
 PocoHud3Class = {
 	ALTFONT	= ALTFONT	,
 	FONT		= FONT		,
@@ -40,8 +40,8 @@ PocoHud3Class = {
 	PocoEvent = PocoEvent,
 }
 PocoHud3Class.loadVar = function(_O,_me,_L)
-	O = _O,
-	L = _L,
+	O = _O
+	L = _L
 	me = _me
 end
 
