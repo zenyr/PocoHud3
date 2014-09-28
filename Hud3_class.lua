@@ -362,7 +362,8 @@ local _defaultLocaleData = {
 	_msg_repenished = '[1] replenished health by [2]% [3]',
 	_msg_replenishedDown = '(+[1] down)',
 	_msg_replenishedDownPlu = '(+[1] downs)',
-
+	_msg_downedWarning = 'Warning: [1] has been downed [2] times',
+	_msg_downed = '[1] was downed',
 }
 --- miniClass start ---
 local TBuff = class()
