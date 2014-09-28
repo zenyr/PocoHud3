@@ -39,8 +39,9 @@ PocoHud3Class = {
 	Icon		= Icon		,
 	PocoEvent = PocoEvent,
 }
-PocoHud3Class.loadVar = function(_O,_me)
-	O = _O
+PocoHud3Class.loadVar = function(_O,_me,_L)
+	O = _O,
+	L = _L,
 	me = _me
 end
 
@@ -3683,4 +3684,14 @@ function Kits:current(category,raw)
 		if r then return r end
 	end
 	return '??'
+end
+
+----------------------------------
+-- Localizer : Auto Localizer
+----------------------------------
+local Localizer = class()
+PocoHud3Class.Localizer = Localizer
+
+function Localizer:init()
+
 end

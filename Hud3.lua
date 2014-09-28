@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 244
-local TAG = '0.20 hotfix 3 (ge473fd4)'
+local REV = 249
+local TAG = '0.20 hotfix 6 (fa152b5)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -18,7 +18,10 @@ Poco._req ('poco/Hud3_Options.lua')
 if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
 local K = PocoHud3Class.Kits:new()
+local L = PocoHud3Class.Localizer:new()
+PocoHud3Class.O = O
 PocoHud3Class.K = K
+PocoHud3Class.L = L
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
 local ALTFONT= PocoHud3Class.ALTFONT
@@ -2504,7 +2507,7 @@ TPocoHud3.Toggle = function()
 	else
 		PocoHud3 = true
 	end
-	PocoHud3Class.loadVar(O,me)
+	PocoHud3Class.loadVar(O,me,L)
 end
 if Poco and not Poco.dead then
 	TPocoHud3.Toggle()
