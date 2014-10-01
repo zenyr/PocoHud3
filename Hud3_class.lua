@@ -438,7 +438,7 @@ function TBuff:draw(t,x,y)
 			self:_make()
 		end
 		local data = self.data
-		local st,et = data.st,data.et
+		local st,et = data.st,data.et or 0
 		local prog = (now()-st)/(et-st)
 		local style = O:get('buff','style')
 		local vanilla = style == 2

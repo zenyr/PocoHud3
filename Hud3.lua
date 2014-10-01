@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 253
-local TAG = '0.20 hotfix 10 (b347a08)'
+local REV = 254
+local TAG = '0.20 hotfix 11 (37ed4c0)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -160,7 +160,8 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	local isSpecial = false
 	if unit then
 		local senderTweak = sender and sender:base()._tweak_table or '?'
-		isSpecial = tweak_data.character[ unit:base()._tweak_table ].priority_shout
+		isSpecial = tweak_data.character[ unit:base()._tweak_table ]
+		isSpecial = isSpecial and isSpecial.priority_shout
 		if isSpecial =='f34' then isSpecial = false end
 		for i = 1,4 do
 			local minion = self:Stat(i,'minion')
