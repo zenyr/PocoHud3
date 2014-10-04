@@ -159,8 +159,8 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	end
 	local isSpecial = false
 	if unit then
+		if not alive(sencer) then return end -- If an attacker died just before this, abandon		
 		local senderTweak = sender and alive(sender) and sender:base()._tweak_table
-		if not senderTweak then return end -- If an attacker died just before this, abandon
 		local unitTweak = unit and alive(unit) and unit:base()._tweak_table
 		isSpecial = tweak_data.character[ unitTweak ]
 		isSpecial = isSpecial and isSpecial.priority_shout
