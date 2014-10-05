@@ -355,7 +355,7 @@ local _defaultLocaleData = {
 	_buff_bulletStormShort = 'BS',
 	_buff_underdogShort = 'UD Dmg+',
 	_buff_overkillShort = 'OVK Dmg+',
-	_msg_usedPistolMessiah = 'Used pistol messiah, [1] left.',
+	_msg_usedPistolMessiah = 'Used Pistol messiah, [1] left.',
 	_msg_usedPistolMessiahCharges = '[1] charge',
 	_msg_usedPistolMessiahChargesPlu = '[1] charges',
 	_msg_captured = '[1] has been captured [2]',
@@ -3149,7 +3149,6 @@ function PocoHud3Class._drawPlayer(tab)
 end
 
 function PocoHud3Class._drawAbout(tab,REV,TAG)
-	local self = PocoHud3Class,me
 	PocoUIButton:new(tab,{
 		onClick = function(self)
 			PocoHud3Class._open('http://steamcommunity.com/groups/pocomods')
@@ -4017,6 +4016,10 @@ function Kits:current(category,raw)
 		if r then return r end
 	end
 	return '??'
+end
+
+function PocoHud3Class._drawJukebox(tab)
+-- TODO
 end
 
 ----------------------------------

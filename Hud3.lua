@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 256
-local TAG = '0.20 hotfix 12 (2nd Oct)'
+local REV = 260
+local TAG = '0.201'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -137,7 +137,7 @@ function TPocoHud3:onDestroy(gameEnd)
 	end
 end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
-	if unit then
+	if unit and alive(unit) then
 		local uType = unit:base()._tweak_table or 0
 		local _arr = {russian=1,german=1,spanish=1,american=1}
 		if not _arr[uType] then -- this filters PlayerDrama related events out when hosting a game
