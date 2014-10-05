@@ -346,6 +346,7 @@ local _defaultLocaleData = {
 	_tab_tools = 'Tools',
 	_tab_kitProfiler = 'Kit Profiler',
 	_tab_Inspect = 'Inspect Players',
+	_tab_jukebox = 'Jukebox',
 	_stat_crewKills = '[1]Crew: [2]',
 	_msg_converted = '[1] converted [2] [3]',
 	_buff_exhausted = 'Exhausted',
@@ -364,6 +365,86 @@ local _defaultLocaleData = {
 	_msg_replenishedDownPlu = '(+[1] downs)',
 	_msg_downedWarning = 'Warning: [1] has been downed [2] times',
 	_msg_downed = '[1] was downed',
+	_tab_stat_perheist = 'Per Heist',
+	_word_broker = 'Broker',
+	_word_job = 'Job',
+	_word_heat = 'Heat',
+	_word_na = 'N/A',
+	_tab_stat_perday = 'Per Day',
+	_word_heist = 'Heist',
+	_word_day = 'Day',
+	_word_started = 'Started',
+	_word_completed = 'Completed',
+	_word_time = 'Time',
+	_desc_heist_count_started_1 = 'From Beginning: ',
+	_desc_heist_count_started_2 = '\nDropped in: ',
+	_desc_heist_count_completed = 'Quit: ',
+	_desc_heist_time_hm = '[1]h [2]m',
+	_desc_heist_time_m = '[1]m',
+	_desc_heist_time_ms = '[1]m [1]s',
+	_desc_heist_time_average = 'Average: ',
+	_desc_heist_day = 'day [1]',
+	_desc_heist_dayalt = 'day [1] alt [2]',
+	_desc_heist_unlisted = '-- Not listed heists --',
+	_desc_heist_may_not_match = '* Numbers may not match between heists and days.',
+	_word_yes = 'Yes',
+	_word_no = 'No',
+	_desc_not_in_effect = 'Not in effect',
+	_desc_no_upgrades_acquired = 'No upgrades acquired\n',
+	_btn_apply_and_reload = 'APPLY & RELOAD',
+	_btn_discard = 'DISCARD CHANGES',
+	_btn_reset = 'RESET TO DEFAULT',
+	_btn_reset_category = 'RESET THIS CATEGORY',
+	_desc_apply_and_reload = 'Some options will be applied on the next session.',
+	_desc_discard = 'Discard temporary changes and revert to previous settings',
+	_desc_reset = 'Revert to the default setting.',
+	_desc_reset_category = 'Revert this category to the default setting.',
+	_desc_reset_ask = '\nContinue?',
+	_tab_buff = 'Buff',
+	_tab_chat = 'Chat',
+	_tab_corner = 'Corner Text',
+	_tab_float = 'Floating Labels',
+	_tab_game = 'Game mechanisms',
+	_tab_hit = 'Hit indicator',
+	_tab_playerBottom = 'Bottom Infobox',
+	_tab_playerFloat = 'Overhead infobox',
+	_tab_popup = 'Popup Labels',
+	_tab_root = 'PocoHud3',
+	_msg_not_implemented = 'Not Implemented for now',
+	_rose_whistle = 'whistle',
+	_rose_cable = 'use cableties',
+	_rose_medbag = 'need medbag',
+	_rose_shoot = 'shoot em',
+	_rose_drill = 'i got the drill',
+	_rose_overrun = 'we\'re overrun',
+	_rose_timetogo = 'time to go',
+	_rose_thisway = 'this way',
+	_rose_straight = 'straight ahead',
+	_rose_cantstay = 'can\'t stay here',
+	_rose_almost = 'almost there',
+	_rose_getout = 'get out',
+	_rose_upstairs = 'upstairs',
+	_rose_hurry = 'hurry',
+	_rose_alright = 'alright',
+	_rose_letsgo = 'let\'s go',
+	_rose_left = 'Left',
+	_rose_right = 'Right',
+	_rose_thanks = 'thanks',
+	_rose_halfway = 'halfway done',
+	_rose_careful = 'careful',
+	_rose_downstairs = 'downstairs',
+	_rose_inside = 'inside',
+	_rose_anysecond = 'ANY second',
+	_rose_fewminutes = 'few more minutes',
+	_rose_down = 'down here',
+	_rose_wrong = 'wrong way',
+	_rose_defended = 'keep defended',
+	_rose_cams = 'take cams',
+	_rose_shit = 'shit',
+	_rose_ammo = 'need ammo',
+	_rose_fuck = 'oh fuck',
+	_kit_categories = 'SET NAME,PRIMARY,SECONDARY,ARMOR,GADGET,MELEE',
+
 }
 --- miniClass start ---
 local TBuff = class()
@@ -2764,12 +2845,12 @@ function PocoHud3Class._drawHeistStats (tab)
 	local x, y, tbl = 10, 10, {}
 
 	-- [1] Per Heist
-	local oTab = oTabs:add('Per Heist')
+	local oTab = oTabs:add(L('_tab_stat_perheist'))
 	local pnl = oTab.pnl
 	local w, h, ww, hh = 0,0, pnl:size()
 	local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size*0.98
 	local _rowCnt = 0
-	tbl[#tbl+1] = {{'Broker',cl.BlanchedAlmond},'Job',{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},'Heat'}
+	tbl[#tbl+1] = {{L('_word_broker'),cl.BlanchedAlmond},L('_word_job'),{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},L('_word_heat')}
 	local addJob = function(host,heist)
 		local jobData = tweak_data.narrative.jobs[heist]
 		if jobData.wrapped_to_job then
@@ -2787,7 +2868,7 @@ function PocoHud3Class._drawHeistStats (tab)
 			if i > 1 or not pro then
 				table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
 			else
-				table.insert(rowObj, {c > 0 and c or 'N/A', cl.Tan:with_alpha(0.4)})
+				table.insert(rowObj, {c > 0 and c or L('_word_na'), cl.Tan:with_alpha(0.4)})
 			end
 		end
 		local multi = managers.job:get_job_heat_multipliers(heist)
@@ -2802,7 +2883,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		end
 	end
 	for no,heist in pairs(job_list) do
-		addJob('N/A',heist) -- Just in case
+		addJob(L('_word_na'),heist) -- Just in case
 	end
 	local _lastHost = ''
 	for row, _tbl in pairs(tbl) do
@@ -2817,12 +2898,12 @@ function PocoHud3Class._drawHeistStats (tab)
 	oTab:set_h(y)
 
 	-- [2] Per day
-	oTab = oTabs:add('Per Day')
+	oTab = oTabs:add(L('_tab_stat_perday'))
 	pnl = oTab.pnl
 	y = 10
 	local descs = {}
 	tbl = {}
-	tbl[#tbl+1] = {{'Heist',cl.BlanchedAlmond},{'Day',cl.Honeydew},{'Started',cl.LavenderBlush},{'Completed',cl.Wheat},'Time'}
+	tbl[#tbl+1] = {{L('_word_heist'),cl.BlanchedAlmond},{L('_word_day'),cl.Honeydew},{L('_word_started'),cl.LavenderBlush},{L('_word_completed'),cl.Wheat},L('_word_time')}
 	local levels = _.g('managers.statistics._global.sessions.levels') or {}
 	-- search JobsChain
 	local addDay = function(val,prefix,suffix)
@@ -2852,13 +2933,19 @@ function PocoHud3Class._drawHeistStats (tab)
 			prefix,
 			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,align='left',text=name,hintText=suffix}),
 			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text=level.started,hintText={
-				'From Beginning: ',_c(level.from_beginning),
-				'\nDropped in: ',_c(level.drop_in),
+				L('_desc_heist_count_started_1'),
+				_c(level.from_beginning),
+				L('_desc_heist_count_started_2'),
+				_c(level.drop_in)
 			}}),
-			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text=level.completed,hintText={'Quit: ',_c(level.quited,cl.Red)}}),
-			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text={t>0 and ( t > 60 and {_s(math.floor(t/60),'h ',math.floor(t%60),'m')} or {_s(t,'m')} ) or {'-',cl.Gray}},hintText={
-				'Average: ',{_s(math.floor(avg),'m ',math.floor(avg*60%60),'s'),avg>0 and cl.Lime or cl.Gray}
-			}})
+			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text=level.completed,hintText={L('_desc_heist_count_completed'), _c(level.quited,cl.Red)}}),
+			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text={
+				t>0 and (
+					t > 60 and L('_desc_heist_time_hm',{math.floor(t/60),math.floor(t%60)}) or L('_desc_heist_time_m',{t} )
+				) or {L('_word_na'),cl.Gray}
+			},hintText={
+				L('_desc_heist_time_average'),L('_desc_heist_time_ms',{math.floor(avg),math.floor(avg*60%60)})
+			},avg>0 and cl.Lime or cl.Gray})
 		}
 	end
 	for host,jobs in _.p(host_list) do
@@ -2873,10 +2960,10 @@ function PocoHud3Class._drawHeistStats (tab)
 			if jobData.chain then
 				for day,level in pairs(jobData.chain) do
 					if level.level_id then
-						addDay(level.level_id,managers.localization:to_upper_text(jobName),_.s('day',day))
+						addDay(level.level_id,managers.localization:to_upper_text(jobName),L('_desc_heist_day',{day}))
 					else -- alt Days
 						for alt,_level in pairs(level) do
-							addDay(_level.level_id,managers.localization:to_upper_text(jobName),_.s('day',day,'alt',alt))
+							addDay(_level.level_id,managers.localization:to_upper_text(jobName),L('_desc_heist_dayalt',{day,alt}))
 						end
 					end
 				end
@@ -2886,7 +2973,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		end
 	end
 	-- the rest
-	tbl[#tbl+1] = {{' -- Not listed heists --',cl.DodgerBlue}}
+	tbl[#tbl+1] = {{L('_desc_heist_unlisted'),cl.DodgerBlue}}
 	for key,val in _.p(level_list) do
 		addDay(val,{Icon.Ghost,cl.DodgerBlue})
 	end
@@ -2903,7 +2990,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		_rowCnt = _rowCnt + 1
 		y = me:_drawRow(pnl,fontSize,_tbl,x,y,ww-20, _rowCnt % 2 == 0,{1,_rowCnt == 1 and 1 or 0})
 	end
-	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=fontSize, pnl = pnl, x = 10, y = y+10},'* Numbers may not match between heists and days.',true)
+	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=fontSize, pnl = pnl, x = 10, y = y+10},L('_desc_heist_may_not_match'),true)
 
 	oTab:set_h(lbl:bottom())
 end
@@ -2934,7 +3021,7 @@ function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
 					elseif type(val) == 'table' then
 						val = _.s( type(val[1]) == 'number' and _.s(val[1]*100) .. '%' or _.s(val[1]==true and 'Yes' or val[1]), _.s(val[2],'sec') )
 					elseif val == true then
-						val = 'Yes'
+						val = L('_word_yes')
 					else
 						val = _.s(val)
 					end
@@ -2952,7 +3039,7 @@ function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
 				end
 			end
 			if cnt == 0 then
-				row[#row+1] =  {'Not effective',cl.LightSteelBlue}
+				row[#row+1] =  {L('_desc_not_in_effect'),cl.LightSteelBlue}
 			end
 			if #row > 0 then
 				while (#row <= large) do
@@ -2964,7 +3051,7 @@ function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
 		end
 		tab:set_h(y)
 	else
-		y = me:_drawRow(pnl,fontSize,{{'No upgrades acquired\n',cl.White:with_alpha(0.5)}},0,y,w)
+		y = me:_drawRow(pnl,fontSize,{{L('_desc_no_upgrades_acquired'),cl.White:with_alpha(0.5)}},0,y,w)
 	end
 	return y
 end
@@ -3202,12 +3289,12 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 					onClick = function(self)
 						PocoHud3Class._open(obj[4])
 					end,
-					x = 220, y = y, w = 400, h=50,
+					x = 220, y = y, w = 500, h=50,
 					fontSize = 22,align = 'left',
 					text=title,
 					hintText = {{obj[2]:sub(1,200)..'...'},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
 				})
-				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = tab.pnl, x = 240, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
+				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = tab.pnl, x = 340, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
 
 				y = y + 60
 				tab:set_h(y)
@@ -3262,8 +3349,8 @@ function PocoHud3Class._drawOptions(tab)
 		end,
 		x = 20, y = 10, w = 400, h=50,
 		fontSize = 30,font = FONTLARGE,
-		text={'APPLY & RELOAD',cl.SteelBlue},
-		hintText = 'Some options will be applied on the next session.'
+		text={L('_btn_apply_and_reload'),cl.SteelBlue},
+		hintText = L('_desc_apply_and_reload')
 	})
 
 	PocoUIButton:new(tab,{
@@ -3274,13 +3361,13 @@ function PocoHud3Class._drawOptions(tab)
 		end,
 		x = 500, y = 10, w = 200, h=50,
 		fontSize = 25,font = FONTLARGE,
-		text={'DISCARD CHANGES',cl.Gray},
-		hintText = 'Discard temporary changes and revert to previous settings'
+		text={L('_btn_discard'),cl.Gray},
+		hintText = L('_desc_discard')
 	})
 	PocoUIButton:new(tab,{
 		onClick = function()
 			managers.menu:show_default_option_dialog({
-				text = 'Revert all PocoHud3 options to the default setting?',
+				text =  L('_desc_reset')..L('_desc_reset_ask'),
 				callback = function()
 					for __,obj in pairs(objs) do
 						obj[1]:val(O:_default(obj[2],obj[3]))
@@ -3290,8 +3377,8 @@ function PocoHud3Class._drawOptions(tab)
 		end,
 		x = 710, y = 10, w = 200, h=50,
 		fontSize = 25,font = FONTLARGE,
-		text={'RESET TO DEFAULT',cl.Gray},
-		hintText = 'Revert to the default setting.'
+		text={L('_btn_reset'),cl.Gray},
+		hintText = L('_desc_reset')
 	})
 
 	local oTabs = PocoTabs:new(self._ws,{name = 'Options',x = 10, y = 70, w = tab.pnl:width()-20, th = 30, fontSize = 18, h = tab.pnl:height()-80, pTab = tab})
@@ -3304,7 +3391,7 @@ function PocoHud3Class._drawOptions(tab)
 			return _y - h - m
 		end
 
-		local oTab = oTabs:add(category:gsub('(%U)(%u)','%1 %2'):upper())
+		local oTab = oTabs:add(L('_tab_'..category))
 		if objects[1] then
 			local txts = L:parse(objects[1])
 			local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=20, pnl = oTab.pnl, x = x(), y = y(0)},txts,true)
@@ -3383,7 +3470,7 @@ function PocoHud3Class._drawOptions(tab)
 					}),category,name}
 				else
 					PocoUIButton:new(oTab,{
-						hintText = 'Not implemented for now.',
+						hintText = L('_msg_not_implemented'),
 						x = x()+10, y = y(30), w=390, h=30,
 						text=_.s(name,type,value)
 					})
@@ -3397,14 +3484,15 @@ end
 function PocoHud3Class._drawRose(tab)
 	local pnl = tab.pnl
 	local layout = {
-		{	{'whistle','whistling_attention'},	{'use cableties','g26'},	{'need medbag','g80x_plu'},	{'shoot em','g23'},	{'i got the drill','g61'},	},
-		{	{'we\'re overrun','g68'},	{'time to go','g17'},	{'this way','g12'},	{'straight ahead','g19'},	{'can\'t stay here','g69'},	},
-		{	{'almost there','g28'},	{'get out','g07'},	{'upstairs','g02'},	{'hurry','g09'},	{'alright','g92'},	},
-		{	{'let\'s go','g13'},	{'Left','g03'},	false,	{'Right','g04'},	{'thanks','s05x_sin'},	},
-		{	{'halfway done','t02x_sin'},	{'careful','g10'},	{'downstairs','g01'},	{'inside','g08'},	{'ANY second','t03x_sin'},	},
-		{	{'few more minutes','t01x_sin'},	{'down here','g20'},	{'wrong way','g11'},	{'keep defended','g16'},	{'take cams','g25'},	},
-		{	false,	{'shit','g60'},	{'need ammo','g81x_plu'},	{'oh fuck','g29'},	false,	},
+		{	{'_rose_whistle','whistling_attention'},	{'_rose_cable','g26'},	{'_rose_medbag','g80x_plu'},	{'_rose_shoot','g23'},	{'_rose_drill','g61'},	},
+		{	{'_rose_overrun','g68'},	{'_rose_timetogo','g17'},	{'_rose_thisway','g12'},	{'_rose_straight','g19'},	{'_rose_cantstay','g69'},	},
+		{	{'_rose_almost','g28'},	{'_rose_getout','g07'},	{'_rose_upstairs','g02'},	{'_rose_hurry','g09'},	{'alright','g92'},	},
+		{	{'_rose_letsgo','g13'},	{'_rose_left','g03'},	false,	{'_rose_right','g04'},	{'_rose_thanks','s05x_sin'},	},
+		{	{'_rose_halfway','t02x_sin'},	{'_rose_careful','g10'},	{'_rose_downstairs','g01'},	{'_rose_inside','g08'},	{'_rose_anysecond','t03x_sin'},	},
+		{	{'_rose_fewminutes','t01x_sin'},	{'_rose_down','g20'},	{'_rose_wrong','g11'},	{'_rose_defended','g16'},	{'_rose_cams','g25'},	},
+		{	false,	{'_rose_shit','g60'},	{'_rose_ammo','g81x_plu'},	{'_rose_fuck','g29'},	false,	},
 	}
+	layout = L:parse(layout)
 	local w,h = 200,70
 	local ox,oy = pnl:w()/2 - 2*w,pnl:h()/2 - 3*h
 	for y,row in pairs(layout) do
@@ -3488,7 +3576,7 @@ function PocoHud3Class._drawKit(tab)
 		_y = set and h or _y + h
 		return __y
 	end
-	local categories_vanity = ('set name,primary,secondary,armor,gadget,melee'):upper():split(',')
+	local categories_vanity = L('_kit_categories'):split(',')
 	local categories = ('name,primaries,secondaries,armor,gadget,melee'):split(',')
 	local __, lbl = _.l({font=FONT, color=cl.Gray, font_size=20, pnl = tab.pnl, x = 10, y = 10},
 		'* Kit profiler is dependant on your inventory setup. Any changes in your inventory(mods, sell) will be applied to the result.',true)
@@ -4019,7 +4107,12 @@ function Kits:current(category,raw)
 end
 
 function PocoHud3Class._drawJukebox(tab)
--- TODO
+	local __, lbl = _.l({font=FONT, color=cl.Gray, font_size=20, pnl = tab.pnl, x = 10, y = 10},
+		'* To be announced',true)
+
+	--managers.music:post_event(managers.music:jukebox_menu_track("mainmenu"))
+
+
 end
 
 ----------------------------------
@@ -4048,12 +4141,14 @@ function Localizer:init()
 			return r
 		end
 	}
-	self.data = _defaultLocaleData
+	self.data = {}
 end
 
 function Localizer:get(key,context)
 	local val = self.data[key]
-
+	if not val then
+		val = _defaultLocaleData[key]
+	end
 	if val and type(context)=='table' then
 		for k,v in pairs(context) do
 			val = val:gsub('%['..k..'%]',v)

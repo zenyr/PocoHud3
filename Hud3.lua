@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 270
-local TAG = '0.201 hotfix 10 (3d9f360)'
+local REV = 271
+local TAG = '0.201 hotfix 11 (6286464)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -363,6 +363,10 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 				local oTab = oTabs:add(L('_tab_Inspect'))
 				y = _drawPlayer(oTab, 0)
 				oTab:set_h(y)
+
+				local oTab = oTabs:add(L('_tab_jukebox'))
+				PocoHud3Class._drawJukebox(oTab)
+
 			end
 		end
 	end)
@@ -426,6 +430,7 @@ function TPocoHud3:_slowUpdate(t,dt)
 	end
 end
 function TPocoHud3:_update(t,dt)
+	if not PocoHud3Class then return end;
 	inGameDeep = inGame and BaseNetworkHandler._verify_gamestate(BaseNetworkHandler._gamestate_filter.any_ingame_playing)
 	if self.inGameDeep ~= inGameDeep then
 		if inGameDeep then
@@ -452,7 +457,6 @@ function TPocoHud3:_update(t,dt)
 	if self.menuGui then
 		self.menuGui:update(t,dt)
 	end
-
 	local location = PocoHud3Class.PocoLocation
 	location:update(t,dt)
 
