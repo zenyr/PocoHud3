@@ -738,6 +738,8 @@ local _drillHosts = {
 	['a8715759c090b251'] = 'a fence door',
 	['a7b371bf0e3fd30a'] = 'a truck hinge',
 	['07e2cf254ef76c5e'] = 'a vault cage door',
+	['d475830b4e6eda32'] = 'a vault door',
+	['b2928ed7d5b8797e'] = 'a cage door',
 }
 local __n = {}
 function TFloat:_getName()
@@ -2878,7 +2880,9 @@ function PocoHud3Class._drawHeistStats (tab)
 	end
 	for host,jobs in _.p(host_list) do
 		for no,heist in _.p(jobs) do
-			job_list[table.get_key(job_list,heist)] = nil
+			if table.get_key(job_list,heist) then
+				job_list[table.get_key(job_list,heist)] = nil
+			end
 			addJob(host,heist)
 		end
 	end

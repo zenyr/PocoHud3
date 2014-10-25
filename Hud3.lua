@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 265
-local TAG = '0.201 hotfix 5 (9f453f5)'
+local REV = 266
+local TAG = '0.202'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1925,7 +1925,7 @@ function TPocoHud3:_hook()
 			local percent = (pid==self.pid and data.current/data.total or data.current)*100 or 0
 			local bPercent = self:Stat(pid,'health') or 0
 			local down = self:Stat(pid,'down') or 0
-			if percent>= 99.8 and bPercent < percent then
+			if percent>= 99.8 and percent - bPercent > 1 then
 				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) and (now()-(self._startGameT or now()) > 1) then
 					self:Chat('replenished',L('_msg_repenished',{self:_name(pid),_.f(percent-bPercent),down>0 and L('_msg_replenishedDown'..(down>1 and 'Plu' or ''),{down}) or ''}))
 				elseif bPercent == 0 then
