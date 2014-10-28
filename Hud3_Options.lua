@@ -31,6 +31,8 @@ local scheme = {
 		style = {'num',1,{1,2},'_style_desc','style',nil,2},
 
 		showBerserker = {'bool',TRUE,nil,'_showBerserker_desc'},
+		showSwanSong = {'bool',TRUE,nil,'_showSwanSong_desc'},
+		showPainkiller = {'bool',TRUE,nil,'_showPainkiller_desc'},
 		showStamina = {'bool',TRUE,nil,'_showStamina_desc'},
 		showCharge = {'bool',TRUE,nil,'_showCharge_desc'},
 		showTransition = {'bool',TRUE,nil,'_showTransition_desc'},

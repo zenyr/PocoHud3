@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 
 local _ = UNDERSCORE
-local REV = 266
-local TAG = '0.202'
+local REV = 267
+local TAG = '0.202 hotfix 1 (9d5133f)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -37,6 +37,7 @@ local _BAGS = {
 	['8f59e19e1e45a05e']='Ammo',
 	['43ed278b1faf89b3']='Med',
 	['a163786a6ddb0291']='Body',
+	['e1474cdfd02aa274']='Aid',
 }
 
 local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = Icon.Div,Icon.Ghost
@@ -1151,7 +1152,12 @@ function TPocoHud3:_scanSmoke(t)
 				--[[if smoke:base().take_ammo then
 					per = smoke:base()._ammo_amount / smoke:base()._max_ammo_amount
 				end]]
-				name = name..Icon.Times.._.s(smoke:base()._ammo_amount or smoke:base()._amount or smoke:base()._bodybag_amount or '?')
+				local sBase = smoke:base() or {}
+				if sBase._damage_reduction_upgrade ~= nil then
+					name = name..(sBase._damage_reduction_upgrade and '+' or '')
+				else
+					name = name..Icon.Times.._.s(sBase._ammo_amount or sBase._amount or sBase._bodybag_amount or '?')
+				end
 				self:Float(smoke,2,1,{text=name})
 			end
 		end
@@ -1470,9 +1476,13 @@ function TPocoHud3:_hook()
 		local rectDict = {}
 		rectDict.combat_medic_damage_multiplier = {L('_buff_combatMedicShort'), { 5, 7 }}
 		rectDict.no_ammo_cost = {L('_buff_bulletStormShort'),{ 4, 5 }}
+		rectDict.berserker_damage_multiplier = {L('_buff_swanSongShort'),{ 5, 12 }}
+
 		rectDict.dmg_multiplier_outnumbered = {L('_buff_underdogShort'),{2,1}}
 		rectDict.dmg_dampener_outnumbered = ''-- {'Def+',{2,1}} -- Dupe
 		rectDict.overkill_damage_multiplier = {L('_buff_overkillShort'),{3,2}}
+		rectDict.passive_revive_damage_reduction = {L('_buff_painkillerShort'), { 0, 10 }}
+
 		hook( PlayerManager, 'activate_temporary_upgrade', function( self, category, upgrade )
 			Run('activate_temporary_upgrade',  self, category, upgrade )
 			local et = _.g('managers.player._temporary_upgrades.'..category ..'.'..upgrade..'.expire_time')
@@ -1480,7 +1490,9 @@ function TPocoHud3:_hook()
 			local rect = rectDict[upgrade]
 			if rect ~= '' then
 				local rect2 = rect and ({64*rect[2][1],64*rect[2][2],64,64})
-				local _keys = {
+				local _keys = { -- Better names for Option pnls
+					BerserkerDamageMultiplier = 'SwanSong',
+					PassiveReviveDamageReduction = 'Painkiller',
 					DmgMultiplierOutnumbered = 'Underdog',
 					CombatMedicDamageMultiplier = 'CombatMedic',
 					OverkillDamageMultiplier = 'Overkill',
@@ -1496,6 +1508,23 @@ function TPocoHud3:_hook()
 				}) )
 			end
 		end)
+		hook( PlayerManager, 'activate_temporary_upgrade_by_level', function( self, category, upgrade, level )
+			Run('activate_temporary_upgrade_by_level',  self, category, upgrade, level )
+			local et = _.g('managers.player._temporary_upgrades.'..category ..'.'..upgrade..'.expire_time')
+			if not et then return end
+			local rect = rectDict[upgrade]
+			if rect ~= '' then
+				local rect2 = rect and ({64*rect[2][1],64*rect[2][2],64,64})
+				local key = ('_'..upgrade):gsub('_(%U)',function(a) return a:upper() end)
+				pcall(me.Buff,me,({
+					key=key, good=true,
+					icon=rect2 and skillIcon or 'guis/textures/pd2/lock_incompatible', iconRect = rect2,
+					text=rect and rect[1] or upgrade,
+					st=now(), et=et
+				}) )
+			end
+		end)
+
 		hook( PlayerStandard, '_do_action_intimidate', function( self, t, interact_type, sound_name, skip_alert )
 			local r = Run('_do_action_intimidate',  self, t, interact_type, sound_name, skip_alert )
 			local et =_.g('managers.player:player_unit():movement()._current_state._intimidate_t')
@@ -1925,9 +1954,9 @@ function TPocoHud3:_hook()
 			local percent = (pid==self.pid and data.current/data.total or data.current)*100 or 0
 			local bPercent = self:Stat(pid,'health') or 0
 			local down = self:Stat(pid,'down') or 0
-			if percent>= 99.8 and percent - bPercent > 1 then
+			if percent>= 99.8 and percent - bPercent > 2 then
 				if bPercent ~= 0 and self:_name(pid) ~= self:_name(-1) and (now()-(self._startGameT or now()) > 1) then
-					self:Chat('replenished',L('_msg_repenished',{self:_name(pid),_.f(percent-bPercent),down>0 and L('_msg_replenishedDown'..(down>1 and 'Plu' or ''),{down}) or ''}))
+					self:Chat('replenished',L('_msg_repenished',{self:_name(pid),_.f(percent-bPercent), down>0 and L('_msg_replenishedDown'..(down>1 and 'Plu' or ''),{down}) or ''}))
 				elseif bPercent == 0 then
 					self:Stat(pid,'_refreshBtm',1)
 				end

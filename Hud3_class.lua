@@ -352,10 +352,10 @@ local _defaultLocaleData = {
 	_buff_exhausted = 'Exhausted',
 	_msg_minionLost = '[1] lost a minion to [2] [3].',
 	_msg_around = 'around [1]',
-	_buff_combatMedicDamageShort = 'CD Dmg+',
+	_buff_combatMedicDamageShort = 'Dmg+',
 	_buff_bulletStormShort = 'BS',
-	_buff_underdogShort = 'UD Dmg+',
-	_buff_overkillShort = 'OVK Dmg+',
+	_buff_underdogShort = 'Dmg+',
+	_buff_overkillShort = 'Dmg+',
 	_msg_usedPistolMessiah = 'Used Pistol messiah, [1] left.',
 	_msg_usedPistolMessiahCharges = '[1] charge',
 	_msg_usedPistolMessiahChargesPlu = '[1] charges',
@@ -444,6 +444,10 @@ local _defaultLocaleData = {
 	_rose_ammo = 'need ammo',
 	_rose_fuck = 'oh fuck',
 	_kit_categories = 'SET NAME,PRIMARY,SECONDARY,ARMOR,GADGET,MELEE',
+	_buff_painkillerShort = 'PK',
+	_showPainkiller_desc = 'Show received Painkiller duration',
+	_buff_swanSongShort = 'SS',
+	_showSwanSong_desc = 'Show Swansong-bulletstorm duration',
 
 }
 --- miniClass start ---
@@ -552,7 +556,7 @@ function TBuff:draw(t,x,y)
 				if type(data.text)=='table' then
 					txts = data.text
 				else
-					txts = {{data.text or '',data.color}}
+					txts = {{data.text and data.text..' ' or '',data.color}}
 					table.insert(txts,{_.f(et ~= 1 and et-now() or prog*100)..(et == 1 and '%' or 's'),data.good and clGood or clBad})
 				end
 			end
@@ -740,6 +744,7 @@ local _drillHosts = {
 	['07e2cf254ef76c5e'] = 'a vault cage door',
 	['d475830b4e6eda32'] = 'a vault door',
 	['b2928ed7d5b8797e'] = 'a cage door',
+	['43132b0a273df773'] = 'an office door',
 }
 local __n = {}
 function TFloat:_getName()
@@ -872,7 +877,7 @@ function TFloat:draw(t)
 				end
 				name = unit and unit:interaction() and unit:interaction().tweak_data
 				name = name and name:gsub('_jammed',''):gsub('_upgrade','') or 'drill'
-				name = _drillNames[name] or 'Drill'
+				name = _drillNames[name] or name
 				leftT = tGUI._time_left
 				prog = 1-tGUI._time_left/tGUI._timer
 				if pDist < 10000 or verbose then
