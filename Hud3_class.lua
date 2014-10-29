@@ -724,6 +724,7 @@ local _drillNames = {
 	hack_suburbia = 'Hacking Machine',
 	hold_download_keys = 'Encryption Keys', -- Hoxton Breakout
 	hold_hack_comp = 'Security Clearance', -- Hoxton Breakout Directors PC
+	hold_analyze_evidence = 'Evidence Analysis', -- Hoxton Breakout
 	digitalgui = 'Timelock',
 	huge_lance = 'The Beast',
 }
