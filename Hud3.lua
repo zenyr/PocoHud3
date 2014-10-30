@@ -4,10 +4,10 @@ local disclaimer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 
-
+-- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 268
-local TAG = '0.202 hotfix 2 (1c50a57)'
+local REV = 275
+local TAG = '0.203 hotfix 4 (d33fcd8)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me

@@ -447,7 +447,14 @@ local _defaultLocaleData = {
 	_buff_painkillerShort = 'PK',
 	_showPainkiller_desc = 'Show received Painkiller duration',
 	_buff_swanSongShort = 'SS',
-	_showSwanSong_desc = 'Show Swansong-bulletstorm duration',
+	_showSwanSong_desc = 'Show Swansong duration',
+	_tab_juke_stop = 'STOP',
+	_tab_juke_stealth = 'STEALTH',
+	_tab_juke_control = 'CONTROL',
+	_tab_juke_anticipation = 'ANTICIPATION',
+	_tab_juke_assault = 'ASSAULT',
+	_tab_juke_heist = 'Heist tracks',
+	_tab_juke_menu = 'Menu tracks',
 
 }
 --- miniClass start ---
@@ -1368,7 +1375,9 @@ end
 
 function PocoUIElem:hide()
 	self._hide = true
-	self.pnl:set_visible(false)
+	if alive(self.pnl) then
+		self.pnl:set_visible(false)
+	end
 end
 
 function PocoUIElem:setLabel(text)
@@ -3210,6 +3219,10 @@ function PocoHud3Class._drawPlayer(tab)
 									}
 								end
 								cnt = cnt + 1
+								if cnt > 500 then
+									-- something is wrong I guess??
+									break
+								end
 							end
 							if cnt == 0 then
 									tbl[#tbl+1] = {'Not found.'}
@@ -4119,10 +4132,97 @@ function Kits:current(category,raw)
 end
 
 function PocoHud3Class._drawJukebox(tab)
-	local __, lbl = _.l({font=FONT, color=cl.Gray, font_size=20, pnl = tab.pnl, x = 10, y = 10},
-		'* To be announced',true)
+	-- revised old code I made. also thx to PierreDjays for basic idea.
+	local music
+	music = {
+		play = function(num)
+			music.stop()
+			Global.music_manager.source:set_switch( "music_randomizer", num )
+			music.set(managers.music._last or 'setup')
+		end,
+		set = function(mode)
+			managers.music._last = type(mode)~='table' and mode
+			managers.music._skip_play = nil
+			managers.music:post_event( type(mode)=='table' and mode[1] or "music_heist_"..mode )
+		end,
+		stop = function()
+			managers.music:stop()
+		end
+	}
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+				music.stop()
+		end,
+		x = 440, y = 40, w = 200,h=40,
+		text=L('_tab_juke_stop')
+	})
 
-	--managers.music:post_event(managers.music:jukebox_menu_track("mainmenu"))
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+			music.set('setup')
+		end,
+		x = 440, y = 90, w = 200,h=40,
+		text=L('_tab_juke_stealth')
+	})
+
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+			music.set('control')
+		end,
+		x = 440, y = 140, w = 200,h=40,
+		text=L('_tab_juke_control')
+	})
+
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+			music.set('anticipation')
+		end,
+		x = 440, y = 190, w = 200,h=40,
+		text=L('_tab_juke_anticipation')
+	})
+
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+			music.set('assault')
+		end,
+		x = 440, y = 240, w = 200,h=40,
+		text=L('_tab_juke_assault')
+	})
+
+	local _addItems = function(oTab,inGame)
+		local y = 10;
+		local track_list,track_locked
+		if inGame then
+			track_list,track_locked = managers.music:jukebox_music_tracks()
+		else
+			track_list,track_locked = managers.music:jukebox_menu_tracks()
+		end
+		for __, track_name in pairs(track_list or {}) do
+			local text = managers.localization:text((inGame and 'menu_jukebox_' or 'menu_jukebox_screen_')..track_name)
+			local listed = inGame and managers.music:playlist_contains(track_name) or managers.music:playlist_menu_contains(track_name)
+			local locked = track_locked[track_name]
+			local hint = locked and managers.localization:text("menu_jukebox_locked_" .. locked) or nil
+			PocoUIButton:new(oTab,{
+				onClick = function(self)
+					if not locked then
+						music[inGame and 'play' or 'set'](inGame and track_name or {track_name})
+					end
+				end,
+				x = 10, y = y, w = 400,h=30,
+				text={text,locked and cl.Red or listed and cl.White or cl.Gray},
+				hintText = hint
+			})
+			y = y + 35
+		end
+		oTab:set_h(y)
+	end
+
+	local oTabs = PocoTabs:new(me._ws,{name = 'jukeboxes',x = 10, y = 10, w = 420, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
+	-- [1] Heist musics
+	_addItems(oTabs:add(L('_tab_juke_heist')), true)
+	-- [2] Menu musics
+	_addItems(oTabs:add(L('_tab_juke_menu')), false)
+
 
 
 end
