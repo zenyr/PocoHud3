@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 277
-local TAG = '0.203 hotfix 6 (bf443e5)'
+local REV = 278
+local TAG = '0.203 hotfix 7 (cabc67d)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1952,7 +1952,70 @@ function TPocoHud3:_hook()
 			return Run('add_teammate_panel', self, ... )
 		end)
 
-		local OnCriminalHealth = function(pid,data)
+
+		local onReplenish = function(pid,noReset)
+			if (now()-(self._startGameT or now()) < 1) then return end
+			local bPercent = self:Stat(pid,'health') or 0
+			local down = not noReset and self:Stat(pid,'down') or 0
+			local downStr = down>0 and L('_msg_replenishedDown'..(down>1 and 'Plu' or ''),{down}) or ''
+			self:Chat('replenished',L('_msg_repenished',{self:_name(pid),_.f(100-bPercent), downStr}))
+			if not noReset then -- reset down cnt
+				self:Stat(pid,'downAll',self:Stat(pid,'down'),true)
+				self:Stat(pid,'down',0)
+			end
+		end
+
+		hook( HUDManager, 'set_teammate_health', function( ... ) -- stash health
+			local self, i, data = unpack{...}
+			local pid
+			if i == 4 then
+				pid = me.pid
+			else
+				for __, data in pairs( managers.criminals._characters ) do
+					if data.taken and i == data.data.panel_id then
+						pid = data.peer_id
+					end
+				end
+			end
+			if pid then
+				local percent = (pid==me.pid and data.current/data.total or data.current)*100 or 0
+				if percent ~= 0 and me:Stat(pid,'health') == 0 then
+					me:Stat(pid,'custody',0)
+					me:Stat(pid,'_refreshBtm',1) -- Refresh btm when out of custody
+				end
+				me:Stat(pid,'health',percent)
+			end
+			return Run('set_teammate_health', ...)
+		end)
+
+		-- 1. Kit
+		hook( FirstAidKitBase, 'take', function( self, ... )
+			onReplenish(me.pid,true)
+			return Run('take',self,...)
+		end)
+		hook( FirstAidKitBase, 'sync_net_event', function( self, ... )
+			local event_id, peer = unpack{...}
+			onReplenish(peer:id(),true)
+			return Run('sync_net_event',self,...)
+		end)
+
+		-- 2. Med
+		hook( DoctorBagBase, 'take*', function( self, ... )
+			onReplenish(me.pid)
+			return Run('take*',self,...)
+		end)
+		hook( UnitNetworkHandler, 'sync_doctor_bag_taken', function( self, ... )
+			local unit, amount, sender = unpack{...}
+			local peer = self._verify_sender(sender)
+			local pid = peer:id()
+			if pid then
+				onReplenish(pid)
+			end
+			return Run('sync_doctor_bag_taken',self,...)
+		end)
+
+
+		--[[local OnCriminalHealth = function(pid,data)
 			local percent = (pid==self.pid and data.current/data.total or data.current)*100 or 0
 			local bPercent = self:Stat(pid,'health') or 0
 			local down = self:Stat(pid,'down') or 0
@@ -1984,7 +2047,7 @@ function TPocoHud3:_hook()
 				OnCriminalHealth(pid,data)
 			end
 			return Run('set_teammate_health', ...)
-		end)
+		end)]]
 		local OnCriminalDowned = function(pid)
 			self:Stat(pid,'down',1,true)
 			if (self:Stat(pid,'down') or 0) >= 3 then
