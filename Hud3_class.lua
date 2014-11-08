@@ -47,7 +47,7 @@ PocoHud3Class.loadVar = function(_O,_me,_L)
 	clBad = O:get('root','colorNegative')
 end
 local _defaultLocaleData = {
-		_opt_root = 'Root',
+	_opt_root = 'Root',
 	_enable = 'ENABLE',
 	_detailedModeKey = 'DETAILED MODE KEY',
 	_detailedModeToggle = 'DETAILED MODE TOGGLE',
@@ -461,6 +461,7 @@ local _defaultLocaleData = {
 	_tab_stat_night = '(NIGHT)',
 	_colorNegative_desc = 'De-buff color\n(Ignored in "vanilla" style)',
 	_colorPositive_desc = 'Buff color\n(Ignored in "vanilla" style)',
+	_mirrorDirection_desc = 'Increase buff gauge clockwise',
 
 }
 --- miniClass start ---

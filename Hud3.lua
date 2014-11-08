@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 278
-local TAG = '0.203 hotfix 7 (cabc67d)'
+local REV = 280
+local TAG = '0.21 hotfix 1 (dba5326)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1955,7 +1955,9 @@ function TPocoHud3:_hook()
 
 		local onReplenish = function(pid,noReset)
 			if (now()-(self._startGameT or now()) < 1) then return end
-			local bPercent = self:Stat(pid,'health') or 0
+			local bHealth = self:Stat(pid,'bHealth')
+			self:Stat(pid,'bHealth',-1)
+			local bPercent = bHealth > 0 and bHealth or self:Stat(pid,'health') or 0
 			local down = not noReset and self:Stat(pid,'down') or 0
 			local downStr = down>0 and L('_msg_replenishedDown'..(down>1 and 'Plu' or ''),{down}) or ''
 			self:Chat('replenished',L('_msg_repenished',{self:_name(pid),_.f(100-bPercent), downStr}))
@@ -1978,10 +1980,13 @@ function TPocoHud3:_hook()
 				end
 			end
 			if pid then
+				local bPercent = me:Stat(pid,'health')
 				local percent = (pid==me.pid and data.current/data.total or data.current)*100 or 0
-				if percent ~= 0 and me:Stat(pid,'health') == 0 then
+				if percent ~= 0 and bPercent == 0 then
 					me:Stat(pid,'custody',0)
 					me:Stat(pid,'_refreshBtm',1) -- Refresh btm when out of custody
+				elseif bPercent < percent then
+					me:Stat(pid,'bHealth',bPercent)
 				end
 				me:Stat(pid,'health',percent)
 			end
