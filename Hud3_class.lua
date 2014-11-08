@@ -43,9 +43,11 @@ PocoHud3Class.loadVar = function(_O,_me,_L)
 	O = _O
 	L = _L
 	me = _me
+	clGood = O:get('root','colorPositive')
+	clBad = O:get('root','colorNegative')
 end
 local _defaultLocaleData = {
-	_opt_root = 'Root',
+		_opt_root = 'Root',
 	_enable = 'ENABLE',
 	_detailedModeKey = 'DETAILED MODE KEY',
 	_detailedModeToggle = 'DETAILED MODE TOGGLE',
@@ -329,7 +331,7 @@ local _defaultLocaleData = {
 	_vanity_verbose = 'Never,Detailed mode only,Always',
 	_vanity_midstat = 'Never,50,100',
 	_vanity_align = 'none,Start,Middle,End',
-	_vanity_style = 'N/A,PocoHud,Vanilla',
+	_vanity_style = 'N/A,PocoHud,Vanilla,Glow',
 	_vanity_auto = 'Auto',
 	_vanity_desyncresolve = 'N/A,Off,Faster,Aggressive',
 	_vanity_corpse = 'N/A,Minimum,Less,Default,More,a Lot,Considerable,Massive,Mammoth,Colossal,Ridiculous',
@@ -457,6 +459,8 @@ local _defaultLocaleData = {
 	_tab_juke_menu = 'Menu tracks',
 	_tab_stat_day = '(DAY)',
 	_tab_stat_night = '(NIGHT)',
+	_colorNegative_desc = 'De-buff color\n(Ignored in "vanilla" style)',
+	_colorPositive_desc = 'Buff color\n(Ignored in "vanilla" style)',
 
 }
 --- miniClass start ---
@@ -478,6 +482,9 @@ end
 function TBuff:_make()
 	local buffO = O:get('buff')
 	local style = buffO.style
+	local vanilla = style == 2
+	local glowy = style == 3
+
 	local size = style==2 and 40 or buffO.buffSize
 	local data = self.data
 	local simple = self.owner:_isSimple(data.key)
@@ -488,19 +495,16 @@ function TBuff:_make()
 		self.pnl = pnl
 		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
 		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = simpleRadius, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
-	elseif style == 2 then
+	elseif vanilla then
 		local pnl = self.ppnl:panel({x = 0,y=0, w=100,h=100})
 		self.pnl = pnl
 		self.lbl = pnl:text{text='', font=FONT, align='center', font_size = size/2, color = data.color or data.good and clGood or clBad, x=1,y=1, layer=2, blend_mode = 'normal'}
 		self.bg = HUDBGBox_create( pnl, { w = size, h = size, x = 0, y = 0 }, { color = cl.White, blend_mode = 'normal' } )
 		self.bmp = data.icon and pnl:bitmap( { name='icon', texture=data.icon, texture_rect=data.iconRect, blend_mode = 'add', layer=1, x=0,y=0, color=style==2 and cl.White or data.good and clGood or clBad } ) or nil
 		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
-		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
-		self.pie:set_position( -size, 0)
 		if self.bmp then
-			local mul = style==2 and 1 or 0.7
-			if self.bmp:width() > mul*size then
-				self.bmp:set_size(mul*size,mul*size)
+			if self.bmp:width() > size then
+				self.bmp:set_size(size,size)
 			end
 			self.bmp:set_center(5+size + size/2,size/2)
 		end
@@ -512,9 +516,15 @@ function TBuff:_make()
 		self.lbl = pnl:text{text='', font=FONT, font_size = size/4, color = data.color or data.good and clGood or clBad, x=1,y=1, layer=2, blend_mode = 'normal'}
 		self.bg = pnl:bitmap( { name='bg', texture= 'guis/textures/pd2/hud_tabs',texture_rect=  { 105, 34, 19, 19 }, color= cl.Black:with_alpha(0.2), layer=0, x=0,y=0 } )
 		self.bmp = data.icon and pnl:bitmap( { name='icon', texture=data.icon, texture_rect=data.iconRect, blend_mode = 'add', layer=1, x=0,y=0, color=data.good and clGood or clBad } ) or nil
-		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
-		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
-		self.pie:set_position( 0, 0)
+		if glowy then
+			self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = 'guis/textures/pd2/specialization/progress_ring',
+			radius = size/2*1.2, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
+			self.pie:set_position( -size*0.1, -size*0.1)
+		else
+			local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
+			self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
+			self.pie:set_position( 0, 0)
+		end
 		if self.bmp then
 			if self.bmp:width() > 0.7*size then
 				self.bmp:set_size(0.7*size,0.7*size)
@@ -536,6 +546,7 @@ function TBuff:draw(t,x,y)
 		local prog = (now()-st)/(et-st)
 		local style = O:get('buff','style')
 		local vanilla = style == 2
+		local glowy = style == 3
 		local simple = self.owner:_isSimple(data.key)
 		if (prog >= 1 or prog < 0) and et ~= 1 then
 			self.dead = true
@@ -581,7 +592,12 @@ function TBuff:draw(t,x,y)
 					self.lbl:set_center(ww/2,hh-h/2)
 				end
 			end
-			self.pie:set_current(1-prog)
+			if self.pie then
+				if O:get('buff','mirrorDirection') then
+					self.pie._circle:set_rotation(-(1-prog)*360)
+				end
+				self.pie:set_current(1-prog)
+			end
 			if not self.dying then
 				self.pnl:set_alpha(1)
 			end
@@ -1122,6 +1138,9 @@ end
 function PocoLocation:endRoom()
 	local lvl = managers.job:current_level_id() or ''
 	local currentRooms = self.rooms[lvl] or {}
+	if type(currentRooms) == 'string' then
+		currentRooms = self.rooms[currentRooms] or {}
+	end
 	self.rooms[lvl] = currentRooms
 	self.currentRooms = currentRooms
 	local parsedRoom -- {x,y,z,x,y,z}

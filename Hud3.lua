@@ -7,7 +7,7 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
 local REV = 276
-local TAG = '0.203 hotfix 5 (635b8eb)'
+local TAG = '0.203 hotfix 5 (c02691f)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -69,7 +69,8 @@ TPocoHud3.classVersion = 3
 function TPocoHud3:onInit() -- ★설정
 --	Poco:LoadOptions(self:name(1),O)
 	O:load()
-
+	clGood = O:get('root','colorPositive')
+	clBad = O:get('root','colorNegative')
 	self._ws = managers.gui_data:create_fullscreen_workspace()
 	error = function(msg)
 		if self.dead then

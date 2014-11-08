@@ -1,6 +1,6 @@
 local TRUE,FALSE = true,false
 local scheme = {
-	root = {	'_opt_root_desc',
+		root = {	'_opt_root_desc',
 		enable = {'bool',TRUE,nil,'_enable_desc'},
 		detailedModeKey = {'key','`',nil,'_detailedModeKey_desc'},
 		detailedModeToggle = {'bool',FALSE,nil,'_detailedModeToggle_desc'},
@@ -9,6 +9,8 @@ local scheme = {
 		silentKitShortcut = {'bool',TRUE,nil,'_silentKitShortcut_desc'},
 		pocoRoseKey = {'key','b',nil,'_pocoRoseKey_desc'},
 		language = {'num',1,{1,2},'_language_desc'},
+		colorPositive = {'color','YellowGreen','color','_colorPositive_desc',nil,nil,2},
+		colorNegative = {'color','Gold','color','_colorNegative_desc',nil,nil,2},
 		['24HourClock'] = {'bool',TRUE,nil,'_24HourClock_desc'},
 	}, corner = {	'_opt_corner_desc',
 		color  = {'color','White','color','_color_desc'},
@@ -28,7 +30,8 @@ local scheme = {
 		buffSize = {'num',70,nil,'_buffSize_desc',nil,nil,2},
 		gap = {'num',10,nil,'_gap_desc',nil,nil,2},
 		justify = {'num',1,{1,3},'_justify_desc','align',nil,2},
-		style = {'num',1,{1,2},'_style_desc','style',nil,2},
+		mirrorDirection = {'bool',TRUE,nil,'_mirrorDirection_desc',nil,nil,2},
+		style = {'num',1,{1,3},'_style_desc','style',nil,2},
 
 		showBerserker = {'bool',TRUE,nil,'_showBerserker_desc'},
 		showSwanSong = {'bool',TRUE,nil,'_showSwanSong_desc'},
@@ -153,8 +156,8 @@ local scheme = {
 		subtitleOpacity = {'num',100,{10,100},'_subtitleOpacity_desc',nil,10,2},
 		truncateNames = {'num',1,{1,8},'_truncateNames_desc','truncateNames',nil,4},
 		truncateTags = {'bool',TRUE,nil,'_truncateTags_desc','truncateNames',nil,4},
-	}
-}
+
+}}
 local _vanity = {
 	ChatSend = '_vanity_chatsend',
 	Verbose = '_vanity_verbose',
