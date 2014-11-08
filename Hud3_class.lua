@@ -455,6 +455,8 @@ local _defaultLocaleData = {
 	_tab_juke_assault = 'ASSAULT',
 	_tab_juke_heist = 'Heist tracks',
 	_tab_juke_menu = 'Menu tracks',
+	_tab_stat_day = '(DAY)',
+	_tab_stat_night = '(NIGHT)',
 
 }
 --- miniClass start ---
@@ -2883,7 +2885,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		local rowObj = {host:upper(),job_string}
 		for i, name in ipairs( risks ) do
 			local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
-			local f = managers.statistics._global.sessions.jobs[heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'] or 0
+			local f = managers.statistics._global.sessions.jobs[(heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'):gsub('_wrapper','')] or 0
 			if i > 1 or not pro then
 				table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
 			else
@@ -2892,7 +2894,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		end
 		local multi = managers.job:get_job_heat_multipliers(heist)
 		local color = multi >= 1 and math.lerp( cl.Khaki, cl.Chartreuse, 6*(multi - 1) ) or math.lerp( cl.Crimson, cl.OrangeRed, 3*(multi - 0.7) )
-		table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..managers.job:get_job_heat(heist)..')',color:with_alpha(0.3)}})
+		table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..(managers.job:get_job_heat(heist) or '?')..')',color:with_alpha(0.3)}})
 		tbl[#tbl+1] = rowObj
 	end
 	for host,jobs in _.p(host_list) do
@@ -2934,10 +2936,12 @@ function PocoHud3Class._drawHeistStats (tab)
 		end
 		local level = levels[val]
 		if not level then return end
+		local isAlt = val:match('_night$') or val:match('_day$')
 		local name = managers.localization:to_upper_text(tweak_data.levels[val].name_id)
 		if name == prefix then
 			prefix = {Icon.Ghost,cl.Gray}
 		end
+		name = name .. (isAlt and ' '..L('_tab_stat'..isAlt) or '')
 		local _c = function(n,color)
 			return {n,n and n>0 and (color or cl.Lime) or cl.Gray }
 		end
@@ -2962,15 +2966,18 @@ function PocoHud3Class._drawHeistStats (tab)
 			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text=level.completed,hintText={L('_desc_heist_count_completed'), _c(level.quited,cl.Red)}}),
 			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text={
 				t>0 and (
-					t > 60 and L('_desc_heist_time_hm',{math.floor(t/60),math.floor(t%60)}) or L('_desc_heist_time_m',{t} )
+					t > 60 and L('_desc_heist_time_hm',{math.floor(t/60),math.floor(t%60)}) or L('_desc_heist_time_m',{_.f(t)} )
 				) or {L('_word_na'),cl.Gray}
 			},hintText={
 				L('_desc_heist_time_average'),L('_desc_heist_time_ms',{math.floor(avg),math.floor(avg*60%60)})
 			},avg>0 and cl.Lime or cl.Gray})
 		}
 	end
-	for host,jobs in _.p(host_list) do
-		for no,heist in _.p(jobs) do
+	for host,_jobs in _.p(host_list) do
+		local jobs = table.deepcopy(_jobs)
+
+		while table.size(jobs) > 0 do
+			local heist = table.remove(jobs,1)
 			local jobData = tweak_data.narrative.jobs[heist]
 			local jobName
 			if jobData.wrapped_to_job then
@@ -2978,10 +2985,16 @@ function PocoHud3Class._drawHeistStats (tab)
 			else
 				jobName = jobData.name_id
 			end
+			if jobData and jobData.job_wrapper then
+				for k,realJobs in pairs(jobData.job_wrapper) do
+					table.insert(jobs,realJobs)
+				end
+			end
 			if jobData.chain then
 				for day,level in pairs(jobData.chain) do
-					if level.level_id then
-						addDay(level.level_id,managers.localization:to_upper_text(jobName),L('_desc_heist_day',{day}))
+					local lID = level.level_id
+					if lID then
+						addDay(lID,managers.localization:to_upper_text(jobName),L('_desc_heist_day',{day}))
 					else -- alt Days
 						for alt,_level in pairs(level) do
 							addDay(_level.level_id,managers.localization:to_upper_text(jobName),L('_desc_heist_dayalt',{day,alt}))

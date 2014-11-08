@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 275
-local TAG = '0.203 hotfix 4 (d33fcd8)'
+local REV = 276
+local TAG = '0.203 hotfix 5 (635b8eb)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -341,7 +341,8 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 			do
 				local oTabs = C.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 				local oTab = oTabs:add(L('_tab_heistStatus'))
-				C._drawHeistStats(oTab)
+				local r,err = pcall(C._drawHeistStats,oTab) -- yeaaaah just in case. I know. I'm cheap
+				if not r then _('DHS:',err) end
 
 				oTab = oTabs:add(L('_tab_upgradeSkills'))
 				if inGame then
@@ -1474,7 +1475,7 @@ function TPocoHud3:_hook()
 			}) )
 		end)
 		local rectDict = {}
-		rectDict.combat_medic_damage_multiplier = {L('_buff_combatMedicShort'), { 5, 7 }}
+		rectDict.combat_medic_damage_multiplier = {L('_buff_combatMedicDamageShort'), { 5, 7 }}
 		rectDict.no_ammo_cost = {L('_buff_bulletStormShort'),{ 4, 5 }}
 		rectDict.berserker_damage_multiplier = {L('_buff_swanSongShort'),{ 5, 12 }}
 
