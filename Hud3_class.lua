@@ -459,9 +459,11 @@ local _defaultLocaleData = {
 	_tab_juke_menu = 'Menu tracks',
 	_tab_stat_day = '(DAY)',
 	_tab_stat_night = '(NIGHT)',
-	_colorNegative_desc = 'De-buff color\n(Ignored in "vanilla" style)',
-	_colorPositive_desc = 'Buff color\n(Ignored in "vanilla" style)',
+	_colorNegative_desc = 'Used in de-buff/bad things\n(Ignored in "vanilla" style, applied after reloading PH)',
+	_colorPositive_desc = 'Used in buff/good things\n(Ignored in "vanilla" style, applied after reloading PH)',
 	_mirrorDirection_desc = 'Increase buff gauge clockwise',
+	_showTriggerHappy_desc = 'Show \'Trigger happy\' skill duration',
+	_showFirstAid_desc = 'Show \'Quick fix Aced\' skill buff duration',
 
 }
 --- miniClass start ---

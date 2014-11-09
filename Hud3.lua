@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 280
-local TAG = '0.21 hotfix 1 (dba5326)'
+local REV = 281
+local TAG = '0.21 hotfix 2 (44e0560)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -711,7 +711,7 @@ function TPocoHud3:_checkBuff(t)
 		self:Buff({
 			key= 'charge', good=true,
 			icon=skillIcon,
-			iconRect = { 1*64, 3*64,64,64 },
+			iconRect = { 4*64, 12*64,64,64 },
 			text='',
 			st=melee, et=1
 		})
@@ -1433,6 +1433,28 @@ function TPocoHud3:_hook()
 				end
 			end
 		end)
+		hook( PlayerStandard, '_check_action_primary_attack', function( self, t, ... )
+			local result = Run('_check_action_primary_attack', self, t, ...)
+				-- capture TriggerHappy
+				local weap_base = self._equipped_unit:base()
+				local weapon_category = weap_base:weapon_tweak_data().category
+				if managers.player:has_category_upgrade(weapon_category, "stacking_hit_damage_multiplier") then
+					local stack = self._state_data and self._state_data.stacking_dmg_mul and self._state_data.stacking_dmg_mul[weapon_category]
+					if stack and stack[1] and t < stack[1] then
+						local mul = 1 + managers.player:upgrade_value(weapon_category, "stacking_hit_damage_multiplier") * stack[2]
+						me:Buff({
+							key='triggerHappy', good=true,
+							icon=skillIcon, iconRect = {7*64, 11*64, 64, 64},
+							text=_.f(mul)..'x',
+							st=t, et=stack[1]
+						})
+					else
+						me:RemoveBuff('triggerHappy')
+					end
+				end
+			return result
+		end)
+
 		hook( FPCameraPlayerBase, 'clbk_stance_entered', function( ... )
 			local self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration = unpack{...}
 			local r,err = pcall(function()
@@ -1495,6 +1517,7 @@ function TPocoHud3:_hook()
 				local _keys = { -- Better names for Option pnls
 					BerserkerDamageMultiplier = 'SwanSong',
 					PassiveReviveDamageReduction = 'Painkiller',
+					FirstAidDamageReduction = 'FirstAid',
 					DmgMultiplierOutnumbered = 'Underdog',
 					CombatMedicDamageMultiplier = 'CombatMedic',
 					OverkillDamageMultiplier = 'Overkill',

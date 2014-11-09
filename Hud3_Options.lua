@@ -1,6 +1,6 @@
 local TRUE,FALSE = true,false
 local scheme = {
-		root = {	'_opt_root_desc',
+	root = {	'_opt_root_desc',
 		enable = {'bool',TRUE,nil,'_enable_desc'},
 		detailedModeKey = {'key','`',nil,'_detailedModeKey_desc'},
 		detailedModeToggle = {'bool',FALSE,nil,'_detailedModeToggle_desc'},
@@ -54,6 +54,8 @@ local scheme = {
 		showBulletstorm = {'bool',TRUE,nil,'_showBulletstorm_desc'},
 		showSuppressed = {'bool',FALSE,nil,'_showSuppressed_desc'},
 		showReload = {'bool',TRUE,nil,'_showReload_desc'},
+		showTriggerHappy = {'bool',TRUE,nil,'_showTriggerHappy_desc'},
+		showFirstAid = {'bool',TRUE,nil,'_showFirstAid_desc'},
 
 		noSprintDelay  = {'bool',TRUE,nil,'_noSprintDelay_desc',nil,nil,4},
 		hideInteractionCircle  = {'bool',FALSE,nil,'_hideInteractionCircle_desc',nil,nil,4},
