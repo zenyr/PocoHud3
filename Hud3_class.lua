@@ -7,6 +7,7 @@ local clBad =  cl.Gold
 local isNil = function(a) return a == nil end
 local inGame = CopDamage ~= nil
 local KitsJSONFileName = 'poco\\hud3_kits.json'
+local KarmaJSONFileName = 'poco\\hud3_karma.json'
 
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
@@ -3288,10 +3289,9 @@ function PocoHud3Class._drawPlayer(tab)
 			----
 		end
 	end
-	if not y then
-		oTabs:add('N/A')
-		y = 0
-	end
+	local oTab = oTabs:add(L('_tab_karma'))
+	PocoHud3Class._drawKarma(oTab)
+
 	return y
 end
 
@@ -4164,6 +4164,64 @@ function Kits:current(category,raw)
 		if r then return r end
 	end
 	return '??'
+end
+
+
+----------------------------------
+-- Karma : Player tagger
+----------------------------------
+local Karma = class()
+Karma.VERDICT_NIL = 0
+Karma.VERDICT_NEU = 1
+Karma.VERDICT_POS = 2
+Karma.VERDICT_NEG = 3
+
+PocoHud3Class.Karma = Karma
+
+function Karma:init()
+	self.items = {}
+	self:load()
+end
+
+function Karma:load()
+	local f,err = io.open(KarmaJSONFileName, 'r')
+	local result = false
+	if f then
+		local t = f:read('*all')
+		local o = JSON:decode(t)
+		if type(o) == 'table' then
+			self.items = o
+		end
+		f:close()
+	end
+	self.items = self.items or {}
+	self.items.uids = self.items.uids or {}
+end
+
+function Karma:save()
+	local f = io.open(KarmaJSONFileName, 'w')
+	if f then
+		f:write(JSON:encode_pretty(self.items))
+		f:close()
+	end
+end
+
+function Karma:get(uid)
+	return self.items.uids[uid] or false
+end
+
+function Karma:verdict(uid)
+	local data = self:get(uid)
+	if data then
+		return unpack(data)
+	else
+		return self.VERDICT_NIL
+	end
+end
+
+
+function PocoHud3Class._drawKarma(tab)
+	local __, lbl = _.l({pnl = tab.pnl, x=10, y= 10, font = FONT, font_size = 20, color = cl.Green},'To be announced',true)
 end
 
 function PocoHud3Class._drawJukebox(tab)

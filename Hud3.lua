@@ -343,7 +343,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 				local oTabs = C.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 				local oTab = oTabs:add(L('_tab_heistStatus'))
 				local r,err = pcall(C._drawHeistStats,oTab) -- yeaaaah just in case. I know. I'm cheap
-				if not r then _('DHS:',err) end
+				if not r then me:err('DHS:',err) end
 
 				oTab = oTabs:add(L('_tab_upgradeSkills'))
 				if inGame then
@@ -369,7 +369,6 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 
 				local oTab = oTabs:add(L('_tab_jukebox'))
 				PocoHud3Class._drawJukebox(oTab)
-
 			end
 		end
 	end)
@@ -2377,6 +2376,8 @@ function TPocoHud3:_hook()
 			end
 			--
 		end)
+	else -- if outGame
+
 	end -- End of if inGame
 	-- Kick menu
 	if O:get('game','showRankInKickMenu') then
@@ -2474,6 +2475,62 @@ function TPocoHud3:_hook()
 
 --- DEBUG ONLY
 --------------
+
+	if not inGame then
+		--function CrimeNetGui:_create_job_gui(data, type, fixed_x, fixed_y, fixed_location)
+		hook( CrimeNetGui, '_create_job_gui', function( ... ) -- Hook crimenet font size & color
+			local size = tweak_data.menu.pd2_small_font_size
+			tweak_data.menu.pd2_small_font_size = size * 0.7
+			local result = Run('_create_job_gui',...)
+			tweak_data.menu.pd2_small_font_size = size
+			local self,data = unpack{...}
+			if result.side_panel and result.side_panel:child('job_name') then
+				local colors = {cl.Red,cl.PaleGreen,cl.PaleGoldenrod,cl.LavenderBlush,cl.Wheat,cl.Tomato}
+				result.side_panel:child('job_name'):set_color(colors[data.difficulty_id] or cl.White)
+			end
+			if result.heat_glow then
+				result.heat_glow:set_alpha(result.heat_glow:alpha()*0.5)
+			end
+			return result
+		end)
+
+		hook( CrimeNetGui, '_create_locations', function( ... ) -- Hook locations[1]
+			local result = Run('_create_locations', ...)
+			local self = unpack{...}
+			local newDots = {}
+			local xx,yy = 10,10
+			for i=1,xx do -- 224~1666 1442
+				for j=1,yy do -- 165~945 780
+					table.insert(newDots,{ 100+1642*i/xx+i, 100+680*j/yy })
+				end
+			end
+			self._locations[1][1].dots = newDots
+		end);
+
+		hook( CrimeNetGui, '_get_job_location', function( ... ) -- Hook locations[2]
+			local self,data = unpack{...}
+			local diff = (data and data.difficulty_id or 2) - 2
+			local diffX = 1800 / 10 * (diff * 2 + 1)
+			local locations = self:_get_contact_locations()
+			local sorted = clone(locations[1].dots)
+			local abs = math.abs
+			table.sort(sorted,function(a,b)
+				return abs(diffX-a[1]) < abs(diffX-b[1])
+			end)
+			for k,dot in pairs(sorted) do
+				if not dot[3] then
+					local x,y = dot[1],dot[2]
+					local tw = math.max(self._map_panel:child("map"):texture_width(), 1)
+					local th = math.max(self._map_panel:child("map"):texture_height(), 1)
+					x = math.round(x / tw * self._map_size_w)
+					y = math.round(y / th * self._map_size_h)
+
+					return x,y,dot
+				end
+			end
+			return self:_get_random_location() -- just in case of failure
+		end)
+	end
 end
 --- Utility functions ---
 function TPocoHud3:toggleVerbose(state)
