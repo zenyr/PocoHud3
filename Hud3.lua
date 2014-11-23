@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 285
-local TAG = '0.211 hotfix 3 (dd3ab6a)'
+local REV = 286
+local TAG = 'v0.22'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -17,12 +17,12 @@ if not PocoHud3Class then return end
 Poco._req ('poco/Hud3_Options.lua')
 if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
-local K = PocoHud3Class.Kits:new()
-local L = PocoHud3Class.Localizer:new()
-
 PocoHud3Class.O = O
+local K = PocoHud3Class.Kits:new()
 PocoHud3Class.K = K
+local L = PocoHud3Class.Localizer:new()
 PocoHud3Class.L = L
+
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
 local ALTFONT= PocoHud3Class.ALTFONT
@@ -44,21 +44,21 @@ local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = Icon.Div,Icon.Ghost
 local skillIcon = 'guis/textures/pd2/skilltree/icons_atlas'
 local now = function (type) return type and TimerManager:game():time() or managers.player:player_timer():time() end
 local _conv = {
-	city_swat	=	L('_city_swat'),
-	cop	=	L('_cop'),
-	fbi	=	L('_fbi'),
-	fbi_heavy_swat	=	L('_fbi_heavy_swat'),
-	fbi_swat	=	L('_fbi_swat'),
-	gangster	=	L('_gangster'),
-	gensec	=	L('_gensec'),
-	heavy_swat	=	L('_heavy_swat'),
-	security	=	L('_security'),
-	shield	=	L('_shield'),
-	sniper	=	L('_sniper'),
-	spooc	=	L('_spooc'),
-	swat	=	L('_swat'),
-	tank	=	L('_tank'),
-	taser	=	L('_taser'),
+	city_swat	=	L('_mob_city_swat'),
+	cop	=	L('_mob_cop'),
+	fbi	=	L('_mob_fbi'),
+	fbi_heavy_swat	=	L('_mob_fbi_heavy_swat'),
+	fbi_swat	=	L('_mob_fbi_swat'),
+	gangster	=	L('_mob_gangster'),
+	gensec	=	L('_mob_gensec'),
+	heavy_swat	=	L('_mob_heavy_swat'),
+	security	=	L('_mob_security'),
+	shield	=	L('_mob_shield'),
+	sniper	=	L('_mob_sniper'),
+	spooc	=	L('_mob_spooc'),
+	swat	=	L('_mob_swat'),
+	tank	=	L('_mob_tank'),
+	taser	=	L('_mob_taser'),
 }
 --- Class Start ---
 local TPocoHud3 = class(TPocoBase)
@@ -353,8 +353,8 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 						end
 					end
 				end
-				y = _drawUpgrades(oTab,_.g('Global.player_manager.team_upgrades'),true,L('_youAndCrewsPerks'),y)
-				y = _drawUpgrades(oTab,_.g('Global.player_manager.upgrades'),false,L('_yourPerks'),y)
+				y = _drawUpgrades(oTab,_.g('Global.player_manager.team_upgrades'),true,L('_line_youAndCrewsPerks'),y)
+				y = _drawUpgrades(oTab,_.g('Global.player_manager.upgrades'),false,L('_line_yourPerks'),y)
 			end
 
 			tab = gui:add(L('_tab_tools'))
@@ -2476,6 +2476,21 @@ function TPocoHud3:_hook()
 		local result = Run('jukebox_menu_track', ...)
 		if result then
 			me._music_started = managers.localization:text('menu_jukebox_screen_'..result)
+		end
+		return result
+	end)
+	--function LevelsTweakData:get_music_event(stage)
+	hook( LevelsTweakData, 'get_music_event', function( ... )
+		local result = Run('get_music_event', ...)
+		if result and O('root','shuffleMusic') then
+			local self,stage = unpack{...}
+			if stage == 'control' then
+				if self._poco_can_shuffle then
+					_.g('managers.music:check_music_switch()')
+				else
+					self._poco_can_shuffle = 1
+				end
+			end
 		end
 		return result
 	end)
