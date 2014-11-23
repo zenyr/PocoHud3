@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 283
-local TAG = '0.211 hotfix 1 (9ccc1a9)'
+local REV = 284
+local TAG = '0.211 hotfix 2 (17e94e0)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -993,11 +993,18 @@ function TPocoHud3:_updatePlayers(t)
 		end
 	end
 end
-function TPocoHud3:_processMsg(channel,name,message)
+function TPocoHud3:_processMsg(channel,name,message,color)
 	-- ToDo : better priority balancing, transmit more info etc
-	local isMine = name == self:_name(self.pid)
+	local pid = 0
+	for i = 1,4 do
+		if color == self:_color(i) then
+			pid = i
+		end
+	end
+	local isMine = pid == self.pid
+	local isPrioritized = pid < self.pid
 	local isPoco = channel == 8
-	if not self._muted and (not isMine) and not Network:is_server() and message and message:find(_BROADCASTHDR) then
+	if not self._muted and isPrioritized and message and message:find(_BROADCASTHDR) then
 		_.c(_BROADCASTHDR_HIDDEN,'PocoHud broadcast Muted.')
 		self._muted = true
 	end
@@ -1942,7 +1949,7 @@ function TPocoHud3:_hook()
 		end)
 		hook( ChatManager, '_receive_message', function( self, ... )
 			local channel_id, name, message, color, icon = unpack{...}
-			me:_processMsg(channel_id,name,message)
+			me:_processMsg(channel_id,name,message,color)
 			return Run('_receive_message', self,  ...)
 		end)
 		-- CriminalDown
