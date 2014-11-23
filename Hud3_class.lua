@@ -465,6 +465,12 @@ local _defaultLocaleData = {
 	_mirrorDirection_desc = 'Increase buff gauge clockwise',
 	_showTriggerHappy_desc = 'Show \'Trigger happy\' skill duration',
 	_showFirstAid_desc = 'Show \'Quick fix Aced\' skill buff duration',
+	_tab_karma = 'Karma List',
+	_vanity_resizeCrimenet = '60%,70%,80%,90%,100%',
+	_gridCrimenet_desc = 'Align Crimenet contracts to grid',
+	_colorizeCrimenet_desc = 'Color-code Crimnet contracts by difficulty and tone down heat bonus glow',
+	_resizeCrimenet_desc = 'Resize Crimenet font size',
+	_sortCrimenet_desc = 'Sort Crimenet contracts by difficulty\nNote: requires Grid crimenet to work as expected',
 
 }
 --- miniClass start ---
@@ -1866,7 +1872,7 @@ end
 function PocoUIChooseValue:go(delta)
 	local val = self:val()
 	local sel = self:selection()
-	local keys = table.sorted_keys(sel)
+	local keys = table.map_keys(sel)
 	local ind = table.index_of(keys,val)
 	self:val(keys[ind+delta] or delta>0 and keys[1] or keys[#keys] )
 end

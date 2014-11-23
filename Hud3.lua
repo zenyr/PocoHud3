@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 281
-local TAG = '0.21 hotfix 2 (e954c80)'
+local REV = 283
+local TAG = '0.211 hotfix 1 (9ccc1a9)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -2479,16 +2479,20 @@ function TPocoHud3:_hook()
 	if not inGame then
 		--function CrimeNetGui:_create_job_gui(data, type, fixed_x, fixed_y, fixed_location)
 		hook( CrimeNetGui, '_create_job_gui', function( ... ) -- Hook crimenet font size & color
+			local sizeMul = O('game','resizeCrimenet')
+			local colorize = O('game','colorizeCrimenet')
+
+			sizeMul = sizeMul and sizeMul / 10 + 0.5 or 1
 			local size = tweak_data.menu.pd2_small_font_size
-			tweak_data.menu.pd2_small_font_size = size * 0.7
+			tweak_data.menu.pd2_small_font_size = size * sizeMul
 			local result = Run('_create_job_gui',...)
 			tweak_data.menu.pd2_small_font_size = size
 			local self,data = unpack{...}
-			if result.side_panel and result.side_panel:child('job_name') then
+			if colorize and result.side_panel and result.side_panel:child('job_name') then
 				local colors = {cl.Red,cl.PaleGreen,cl.PaleGoldenrod,cl.LavenderBlush,cl.Wheat,cl.Tomato}
 				result.side_panel:child('job_name'):set_color(colors[data.difficulty_id] or cl.White)
 			end
-			if result.heat_glow then
+			if colorize and result.heat_glow then
 				result.heat_glow:set_alpha(result.heat_glow:alpha()*0.5)
 			end
 			return result
@@ -2496,29 +2500,37 @@ function TPocoHud3:_hook()
 
 		hook( CrimeNetGui, '_create_locations', function( ... ) -- Hook locations[1]
 			local result = Run('_create_locations', ...)
-			local self = unpack{...}
-			local newDots = {}
-			local xx,yy = 10,10
-			for i=1,xx do -- 224~1666 1442
-				for j=1,yy do -- 165~945 780
-					table.insert(newDots,{ 100+1642*i/xx+i, 100+680*j/yy })
+			if O('game','gridCrimenet') then
+				local self = unpack{...}
+				local newDots = {}
+				local xx,yy = 10,10
+				for i=1,xx do -- 224~1666 1442
+					for j=1,yy do -- 165~945 780
+						table.insert(newDots,{ 100+1642*i/xx, 100+680*(i % 2 == 0 and j or j - 0.5)/yy })
+					end
 				end
+				self._locations[1][1].dots = newDots
 			end
-			self._locations[1][1].dots = newDots
 		end);
 
 		hook( CrimeNetGui, '_get_job_location', function( ... ) -- Hook locations[2]
-			local self,data = unpack{...}
-			local diff = (data and data.difficulty_id or 2) - 2
-			local diffX = 1800 / 10 * (diff * 2 + 1)
-			local locations = self:_get_contact_locations()
-			local sorted = clone(locations[1].dots)
-			local abs = math.abs
-			table.sort(sorted,function(a,b)
-				return abs(diffX-a[1]) < abs(diffX-b[1])
-			end)
-			for k,dot in pairs(sorted) do
-				if not dot[3] then
+			if O('game','sortCrimenet') then
+				local self,data = unpack{...}
+				local diff = (data and data.difficulty_id or 2) - 2
+				local diffX = 1800 / 10 * (diff * 2)
+				local locations = self:_get_contact_locations()
+				local sorted = {}
+				for k,dot in pairs(locations[1].dots) do
+					if not dot[3] then
+						table.insert(sorted,dot)
+					end
+				end
+				if #sorted > 0 then
+					local abs = math.abs
+					table.sort(sorted,function(a,b)
+						return abs(diffX-a[1]) < abs(diffX-b[1])
+					end)
+					local dot = sorted[1]
 					local x,y = dot[1],dot[2]
 					local tw = math.max(self._map_panel:child("map"):texture_width(), 1)
 					local th = math.max(self._map_panel:child("map"):texture_height(), 1)
@@ -2526,9 +2538,12 @@ function TPocoHud3:_hook()
 					y = math.round(y / th * self._map_size_h)
 
 					return x,y,dot
+				else
+					return self:_get_random_location() -- just in case of failure
 				end
+			else
+				return Run('_get_job_location', ...)
 			end
-			return self:_get_random_location() -- just in case of failure
 		end)
 	end
 end

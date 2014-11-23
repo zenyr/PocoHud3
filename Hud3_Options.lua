@@ -157,8 +157,11 @@ local scheme = {
 		subtitleFontColor = {'color','White',nil,'_subtitleFontColor_desc',nil,nil,2},
 		subtitleOpacity = {'num',100,{10,100},'_subtitleOpacity_desc',nil,10,2},
 		truncateNames = {'num',1,{1,8},'_truncateNames_desc','truncateNames',nil,4},
-		truncateTags = {'bool',TRUE,nil,'_truncateTags_desc','truncateNames',nil,4},
-
+		truncateTags = {'bool',TRUE,nil,'_truncateTags_desc',nil,nil,4},
+		sortCrimenet = {'bool',TRUE,nil,'_sortCrimenet_desc',nil,nil,5},
+		gridCrimenet = {'bool',TRUE,nil,'_gridCrimenet_desc',nil,nil,5},
+		colorizeCrimenet = {'bool',FALSE,nil,'_colorizeCrimenet_desc',nil,nil,5},
+		resizeCrimenet = {'num',2,{1,5},'_resizeCrimenet_desc','resizeCrimenet',nil,5},
 }}
 local _vanity = {
 	ChatSend = '_vanity_chatsend',
@@ -171,6 +174,7 @@ local _vanity = {
 	corpse = '_vanity_corpse',
 	cantedSight = '_vanity_cantedsight',
 	truncateNames = '_vanity_truncatenames',
+	resizeCrimenet = '_vanity_resizeCrimenet',
 }
 ----------------------------------------------------
 local JSONFileName = 'poco\\hud3_config.json'
@@ -181,6 +185,12 @@ end
 local Option = class()
 PocoHud3Class.Option = Option
 function Option:init()
+	local mt = getmetatable(self)
+	mt.__call = function(__,...)
+		return self:get(...)
+	end
+	setmetatable(self,mt)
+
 	self:default()
 	self.scheme = scheme
 end
