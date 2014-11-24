@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 288
-local TAG = 'v0.22 hotfix 2 (8961932)'
+local REV = 289
+local TAG = 'v0.22 hotfix 3 (dc2bb69)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -69,6 +69,7 @@ TPocoHud3.classVersion = 3
 function TPocoHud3:onInit() -- ★설정
 --	Poco:LoadOptions(self:name(1),O)
 	O:load()
+	L:load()
 	clGood = O:get('root','colorPositive')
 	clBad = O:get('root','colorNegative')
 	self._ws = managers.gui_data:create_fullscreen_workspace()
@@ -2029,7 +2030,9 @@ function TPocoHud3:_hook()
 		end)
 		hook( FirstAidKitBase, 'sync_net_event', function( self, ... )
 			local event_id, peer = unpack{...}
-			onReplenish(peer:id(),true)
+			if peer then
+				onReplenish(peer:id(),true)
+			end
 			return Run('sync_net_event',self,...)
 		end)
 
@@ -2041,7 +2044,7 @@ function TPocoHud3:_hook()
 		hook( UnitNetworkHandler, 'sync_doctor_bag_taken', function( self, ... )
 			local unit, amount, sender = unpack{...}
 			local peer = self._verify_sender(sender)
-			local pid = peer:id()
+			local pid = peer and peer:id()
 			if pid then
 				onReplenish(pid)
 			end

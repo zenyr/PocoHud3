@@ -49,59 +49,43 @@ PocoHud3Class.loadVar = function(_O,_me,_L)
 	clBad = O:get('root','colorNegative')
 end
 local _defaultLocaleData = {
-	_opt_chat_desc = {
-		'_opt_chat_desc_1', {
-			'_opt_chat_desc_2', cl.White: with_alpha(0.5)
-		}, {
-			'_opt_chat_desc_3', cl.White: with_alpha(0.6)
-		}, {
-			'_opt_chat_desc_4', cl.White: with_alpha(0.7)
-		}, {
-			'_opt_chat_desc_5', cl.White: with_alpha(0.8)
-		}, {
-			'_opt_chat_desc_6', cl.White: with_alpha(0.9)
-		}, {
-			'_opt_chat_desc_7', cl.White: with_alpha(1)
-		}
-	},
-	_truncateTags_desc = {
-		'_truncateTags_desc_1', {
-			'[Poco]Hud', cl.Tan
-		}, ' > ', {
-			PocoHud3Class.Icon.Dot..
-			'Hud', cl.Tan
-		}
-	},
+	_kit_equip_btn_hint = {'_kit_equip_btn_hint1',' ',{'_kit_equip_btn_hint2',cl.Tan},'\n','_kit_equip_btn_hint3',{'_kit_equip_btn_hint4',cl.Red},' ','_kit_equip_btn_hint5'},
+	_kit_key_edit_hint = {'_kit_key_edit_hint1',' ',{'_kit_key_edit_hint2',cl.Yellow},' ','_kit_key_edit_hint3','\n',{'_kit_key_edit_hint4',cl.Silver},'\n',{'_kit_key_edit_hint5',cl.Red}},
+	_kit_profiler_desc = {PocoHud3Class.Icon.Chapter ..' ','_kit_profiler_desc1',{' '..PocoHud3Class.Icon.RC ..' ',cl.White},{'_kit_profiler_desc2',cl.White}},
+	_kit_save_desc = {PocoHud3Class.Icon.Chapter,' ','_kit_save_desc1',{' '..PocoHud3Class.Icon.RC..' ',cl.White},{'_kit_save_desc2',cl.White}},
+	_kit_save_hint = {{'_kit_save_hint1',cl.Tan},' / ',{'_kit_save_hint2',cl.Tomato},' ','_kit_save_hint3'},
+	_kit_saved_kits_title = {PocoHud3Class.Icon.Chapter ..' ','_kit_saved_kits_title1',{' '..PocoHud3Class.Icon.RC ..' ',cl.White},{'_kit_saved_kits_title2',cl.White}},
 	_mob_city_swat = 'a Gensec Elite',
-_mob_cop = 'a cop',
-_mob_fbi = 'an FBI agent',
-_mob_fbi_heavy_swat = 'an FBI heavy SWAT',
-_mob_fbi_swat = 'an FBI SWAT',
-_mob_gangster = 'a gangster',
-_mob_gensec = 'a Gensec guard',
-_mob_heavy_swat = 'a heavy SWAT',
-_mob_security = 'a guard',
-_mob_shield = 'a shield',
-_mob_sniper = 'a sniper',
-_mob_spooc = 'a cloaker',
-_mob_swat = 'a SWAT',
-_mob_tank = 'a bulldozer',
-_mob_taser = 'a taser',
-_msg_around = 'around [1]',
-_msg_captured = '[1] has been captured [2]',
-_msg_converted = '[1] converted [2] [3]',
-_msg_downed = '[1] was downed',
-_msg_downedWarning = 'Warning: [1] has been downed [2] times',
-_msg_minionLost = '[1] lost a minion to [2] [3].',
-_msg_minionShot = '[1] damaged [2] minion for [3]',
-_msg_not_implemented = 'Not Implemented for now',
-_msg_repenished = '[1] replenished health by [2]% [3]',
-_msg_replenishedDown = '(+[1] down)',
-_msg_replenishedDownPlu = '(+[1] downs)',
-_msg_usedPistolMessiah = 'Used Pistol messiah, [1] left.',
-_msg_usedPistolMessiahCharges = '[1] charge',
-_msg_usedPistolMessiahChargesPlu = '[1] charges',
-
+	_mob_cop = 'a cop',
+	_mob_fbi = 'an FBI agent',
+	_mob_fbi_heavy_swat = 'an FBI heavy SWAT',
+	_mob_fbi_swat = 'an FBI SWAT',
+	_mob_gangster = 'a gangster',
+	_mob_gensec = 'a Gensec guard',
+	_mob_heavy_swat = 'a heavy SWAT',
+	_mob_security = 'a guard',
+	_mob_shield = 'a shield',
+	_mob_sniper = 'a sniper',
+	_mob_spooc = 'a cloaker',
+	_mob_swat = 'a SWAT',
+	_mob_tank = 'a bulldozer',
+	_mob_taser = 'a taser',
+	_msg_around = 'around [1]',
+	_msg_captured = '[1] has been captured [2]',
+	_msg_converted = '[1] converted [2] [3]',
+	_msg_downed = '[1] was downed',
+	_msg_downedWarning = 'Warning: [1] has been downed [2] times',
+	_msg_minionLost = '[1] lost a minion to [2] [3].',
+	_msg_minionShot = '[1] damaged [2] minion for [3]',
+	_msg_not_implemented = 'Not Implemented for now',
+	_msg_repenished = '[1] replenished health by [2]% [3]',
+	_msg_replenishedDown = '(+[1] down)',
+	_msg_replenishedDownPlu = '(+[1] downs)',
+	_msg_usedPistolMessiah = 'Used Pistol messiah, [1] left.',
+	_msg_usedPistolMessiahCharges = '[1] charge',
+	_msg_usedPistolMessiahChargesPlu = '[1] charges',
+	_opt_chat_desc = {'_opt_chat_desc_1','\n',{'_opt_chat_desc_2',cl.White:with_alpha(0.5)},'\n',{'_opt_chat_desc_3',cl.White:with_alpha(0.6)},'\n',{'_opt_chat_desc_4',cl.White:with_alpha(0.7)},'\n',{'_opt_chat_desc_5',cl.White:with_alpha(0.8)},'\n',{'_opt_chat_desc_6',cl.White:with_alpha(0.9)},'\n',{'_opt_chat_desc_7',cl.White:with_alpha(1)}},
+	_opt_truncateTags_desc = {'_opt_truncateTags_desc_1',{'[Poco]Hud',cl.Tan},' > ', {PocoHud3Class.Icon.Dot..'Hud',cl.Tan}},
 }
 --- miniClass start ---
 local TBuff = class()
@@ -2618,7 +2602,7 @@ function PocoHud3Class._drawHeistStats (tab)
 			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,align='left',text=name,hintText=suffix}),
 			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text=level.started,hintText={
 				L('_desc_heist_count_started_1'),
-				_c(level.from_beginning),
+				_c(level.from_beginning),'\n',
 				L('_desc_heist_count_started_2'),
 				_c(level.drop_in)
 			}}),
@@ -2712,7 +2696,7 @@ function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
 					if isMulti and type(val) == 'number' then
 						val = _.s(val*100) .. '%'
 					elseif type(val) == 'table' then
-						val = _.s( type(val[1]) == 'number' and _.s(val[1]*100) .. '%' or _.s(val[1]==true and 'Yes' or val[1]), _.s(val[2],'sec') )
+						val = _.s( type(val[1]) == 'number' and _.s(val[1]*100) .. '%' or _.s(val[1]==true and L('_word_yes') or val[1]), _.s(val[2],'sec') )
 					elseif val == true then
 						val = L('_word_yes')
 					else
@@ -2744,7 +2728,7 @@ function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
 		end
 		tab:set_h(y)
 	else
-		y = me:_drawRow(pnl,fontSize,{{L('_desc_no_upgrades_acquired'),cl.White:with_alpha(0.5)}},0,y,w)
+		y = me:_drawRow(pnl,fontSize,{{L('_desc_no_upgrades_acquired'),cl.White:with_alpha(0.5)},'\n'},0,y,w)
 	end
 	return y
 end
@@ -2758,7 +2742,7 @@ function PocoHud3Class._drawPlayer(tab)
 		local peer = member and member:peer()
 		if peer then
 			local uid, __ = peer._user_id
-			local oTab = oTabs:add(_.s('Player',i,':',peer._name))
+			local oTab = oTabs:add(L('_insp_player',{i,peer._name}))
 			local isMe = i==me.pid
 
 			local objs = {} -- stores UIelems & cbks
@@ -2766,14 +2750,14 @@ function PocoHud3Class._drawPlayer(tab)
 			local ooTabs = PocoTabs:new(me._ws,{name = 'Player'..i,x = 10, y = 10, w = oTab.pnl:width()-20, th = 30, fontSize = 18, h = oTab.pnl:height()-20, pTab = oTab})
 
 			-- Inner - Basic
-			local ooTab = ooTabs:add('Basic')
-			local tbl = {{'Key','Value'}}
+			local ooTab = ooTabs:add(L('_insp_basic'))
+			local tbl = {{L('_insp_key'),L('_insp_value')}}
 			y = 10
 			objs.btnProfile = PocoUIButton:new(ooTab,{
 				onClick = function()
 					PocoHud3Class._open('http://steamcommunity.com/profiles/'..uid)
 				end,
-				x = 10, y = 10, w = 200,h=26, text=_.s(uid), hintText='Hold Shift to open in out-game browser.'
+				x = 10, y = 10, w = 200,h=26, text=_.s(uid), hintText=L('_about_hold_shift')
 			})
 
 			objs.btnSteam = PocoUIButton:new(ooTab,{
@@ -2789,12 +2773,12 @@ function PocoHud3Class._drawPlayer(tab)
 										local lbl2 = objs['lblGameTime'..i]
 										if lbl and alive(lbl) then
 											lbl:set_text(_.s(obj.name))
-											lbl2:set_text(_.s('Total',obj.playtime_forever/60,'h,',obj.playtime_2weeks/60,'h lately'))
+											lbl2:set_text(L('_insp_total_lately',{_.f(obj.playtime_forever/60),_.f(obj.playtime_2weeks/60)}))
 										end
 									end
-									self:setLabel(_.s('Successfully received',#result.games,'games from Steam profile.'))
+									self:setLabel(L('_insp_profile_success',{#result.games}))
 								else
-									self:setLabel('Denied: Private/Member-only profile?')
+									self:setLabel(L('_insp_profile_denied'))
 								end
 								self:disable()
 							else
@@ -2804,11 +2788,11 @@ function PocoHud3Class._drawPlayer(tab)
 					end)
 				end,
 				x = 10, y = 10, w = 370,h=26,
-				text='Fetch Recent Games'
+				text=L('_insp_fetch_recent')
 			})
-			__, objs.lblGame1 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'Game1')
-			__, objs.lblGame2 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'Game2')
-			__, objs.lblGame3 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'Game3')
+			__, objs.lblGame1 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},L('_insp_game',{1}))
+			__, objs.lblGame2 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},L('_insp_game',{2}))
+			__, objs.lblGame3 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},L('_insp_game',{3}))
 			__, objs.lblGameTime1 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
 			__, objs.lblGameTime2 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
 			__, objs.lblGameTime3 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
@@ -2822,10 +2806,10 @@ function PocoHud3Class._drawPlayer(tab)
 							if r then
 								if result.error_code == 0 then
 									self:disable()
-									self:setLabel('Successfully received from PD2Stats.com')
-									objs.btnPD2Cheater:setLabel(result.cheater and 'Suspicious.' or 'Seems legit.')
+									self:setLabel(L('_insp_pd2_success'))
+									objs.btnPD2Cheater:setLabel(L('_insp_pd2_'..(result.cheater and 'susp' or 'legit')))
 								else
-									self:setLabel(result.error_string or 'Failed.')
+									self:setLabel(result.error_string or L('_insp_pd2_failed'))
 								end
 							else
 								me:err(result)
@@ -2834,13 +2818,13 @@ function PocoHud3Class._drawPlayer(tab)
 					end)
 				end,
 				x = 10, y = 10, w = 370,h=26,
-				text='Fetch PD2Stats.com data'
+				text=L('_insp_fetch_pd2_btn')
 			})
 			objs.btnPD2Cheater = PocoUIButton:new(ooTab,{
 				onClick = function()
 					PocoHud3Class._open('http://pd2stats.com/profiles/'..uid)
 				end,
-				x = 10, y = 10, w = 200,h=26, text='Unknown', hintText='Hold Shift to open in out-game browser.'
+				x = 10, y = 10, w = 200,h=26, text=L('_word_unknown'), hintText=L('_about_hold_shift')
 			})
 
 --[[ Check Skills
@@ -2848,16 +2832,16 @@ function PocoHud3Class._drawPlayer(tab)
 			local upg = _.g('Global.player_manager.synced_team_upgrades')
 			upg = upg and
 --]]
-			tbl[#tbl+1] = {{'Level',cl.Tan},_.s(isMe and managers.experience:current_rank() or peer:rank() or 0,Icon.Dot,isMe and managers.experience:current_level() or peer:level())}
-			tbl[#tbl+1] = {{'Sync',cl.Tan},peer._synced and 'Completed' or 'Not completed'}
-			tbl[#tbl+1] = {{'UID',cl.Tan},objs.btnProfile}
+			tbl[#tbl+1] = {{L('_word_level'),cl.Tan},_.s(isMe and managers.experience:current_rank() or peer:rank() or 0,Icon.Dot,isMe and managers.experience:current_level() or peer:level())}
+			tbl[#tbl+1] = {{L('_word_sync'),cl.Tan},L(peer._synced and '_word_completed' or '_word_not_completed')}
+			tbl[#tbl+1] = {{L('_word_uid'),cl.Tan},objs.btnProfile}
 			tbl[#tbl+1] = {objs.btnSteam}
 			tbl[#tbl+1] = {objs.lblGame1,objs.lblGameTime1}
 			tbl[#tbl+1] = {objs.lblGame2,objs.lblGameTime2}
 			tbl[#tbl+1] = {objs.lblGame3,objs.lblGameTime3}
 			tbl[#tbl+1] = {objs.btnAchievement}
 			tbl[#tbl+1] = {objs.btnPD2Stats}
-			tbl[#tbl+1] = {{'PD2Stats Verdict',cl.Tan},objs.btnPD2Cheater}
+			tbl[#tbl+1] = {{L('_insp_pd2_verdict'),cl.Tan},objs.btnPD2Cheater}
 			for k,row in pairs(tbl) do
 				y = me:_drawRow(ooTab.pnl,20,row,10,y,600,k % 2 ~= 0,true,1.3)
 			end
@@ -2866,7 +2850,7 @@ function PocoHud3Class._drawPlayer(tab)
 			----
 
 			-- CheckAchievement
-			local ooTab = ooTabs:add('Achievements')
+			local ooTab = ooTabs:add(L('_insp_achievements'))
 			PocoUIButton:new(ooTab,{
 				onClick = function(self)
 					PocoHud3Class._get(self,'http://steamcommunity.com/profiles/'..uid..'/stats/PAYDAY2', function(success, body)
@@ -2876,7 +2860,7 @@ function PocoHud3Class._drawPlayer(tab)
 							tbl = {{
 								PocoUIButton:new(ooTab,{
 									onClick=function() PocoHud3Class._open('http://steamcommunity.com/profiles/'..uid..'/stats/PAYDAY2') end,
-									x=0,y=0,w=450,h=26,font_size=20,align='center',text={'Achievements',cl.Moccasin},hintText='Hold SHIFT to open in out-game browser'}),
+									x=0,y=0,w=450,h=26,font_size=20,align='center',text={L('_insp_achievements'),cl.Moccasin},hintText=L('_about_hold_shift')}),
 								{'Date',cl.Moccasin}
 							}}
 							y = 10
@@ -2892,7 +2876,7 @@ function PocoHud3Class._drawPlayer(tab)
 								end
 								cnt = cnt + 1
 								if cnt > 500 then
-									-- something is wrong I guess??
+									-- something went wrong I guess??
 									break
 								end
 							end
@@ -2909,7 +2893,7 @@ function PocoHud3Class._drawPlayer(tab)
 					end)
 				end,
 				x = 10, y = 10, w = 400,h=50,
-				text='Fetch Achievements data'
+				text=L('_insp_fetch_achievements_btn')
 			})
 
 --
@@ -2938,10 +2922,10 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		end,
 		x = 10, y = 10, w = 200,h=100,
 		text={{'PocoHud3 r'},{REV,cl.Gray},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\n'..TAG,cl.Silver}},
-		hintText = {{'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
+		hintText = {{L('_about_group_btn'),cl.LightSkyBlue},'\n',L('_about_hold_shift')}
 	})
 
-	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = tab.pnl, x = 220, y = 10},'Loading RSS...',true)
+	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = tab.pnl, x = 220, y = 10},L('_about_loading_rss'),true)
 	local _strip = function(s)
 		return s:gsub('&lt;','<'):gsub('&gt;','>'):gsub('<br>','\n'):gsub(string.char(13),''):gsub('<.->',''):gsub('&amp;','&'):gsub('&amp;','&')
 	end
@@ -2960,10 +2944,10 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 					local diffS = - _.t(false,d)
 					if diffS < 3600*24 then
 						local h = math.max(0,math.floor(diffS/3600))
-						date = _.s( h==1 and 'an' or h,h>1 and 'hrs' or 'hr','ago')
+						date = _.s( h==1 and L('_word_an') or h,h>1 and L('_word_hrs') or L('_word_hr'),L('_word_ago'))
 					else
 						local d = math.floor(diffS/3600/24)
-						date = _.s( d==1 and 'a' or d,d>1 and 'days' or 'day','ago')
+						date = _.s( d==1 and L('_word_a') or d,d>1 and L('_word_days') or L('_word_day'),L('_word_ago'))
 					end
 					rss[#rss+1] = {_strip(title),_strip(desc),date,link}
 
@@ -2971,7 +2955,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 			end
 			Poco._rss = rss
 			if not alive(lbl) then return end
-			_.l(lbl,'Recent PocoMod Updates',true)
+			_.l(lbl,L('_about_recent_updates'),true)
 			local y = 35
 			for ind,obj in pairs(rss) do
 				local title = '   '..obj[1]
@@ -2988,7 +2972,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 					x = 220, y = y, w = 500, h=50,
 					fontSize = 22,align = 'left',
 					text=title,
-					hintText = {{obj[2]:sub(1,200)..'...'},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
+					hintText = {{obj[2]:sub(1,200)..'...'},'\n',L('_about_hold_shift')}
 				})
 				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = tab.pnl, x = 340, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
 
@@ -3010,7 +2994,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		end,
 		x = 10, y = 120, w = 200,h=40,
 		text={'@zenyr',cl.OrangeRed},
-		hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
+		hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki},'\n',L('_about_hold_shift')}
 	})
 
 	PocoUIButton:new(tab,{
@@ -3018,8 +3002,8 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 			PocoHud3Class._open('http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 		end,
 		x = 10, y = 170, w = 200,h=40,
-		text={'Color codes reference page', cl.Silver},-- no moar fun tho
-		hintText = {'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
+		text={L('_about_colors'), cl.Silver},-- no moar fun tho
+		hintText = {L('_about_colors_hint'),'\n',L('_about_hold_shift')}
 	})
 
 end
@@ -3063,7 +3047,7 @@ function PocoHud3Class._drawOptions(tab)
 	PocoUIButton:new(tab,{
 		onClick = function()
 			managers.menu:show_default_option_dialog({
-				text =  L('_desc_reset')..L('_desc_reset_ask'),
+				text =  L('_desc_reset')..'\n'..L('_desc_reset_ask'),
 				callback = function()
 					for __,obj in pairs(objs) do
 						obj[1]:val(O:_default(obj[2],obj[3]))
@@ -3182,7 +3166,7 @@ function PocoHud3Class._drawRose(tab)
 	local layout = {
 		{	{'_rose_whistle','whistling_attention'},	{'_rose_cable','g26'},	{'_rose_medbag','g80x_plu'},	{'_rose_shoot','g23'},	{'_rose_drill','g61'},	},
 		{	{'_rose_overrun','g68'},	{'_rose_timetogo','g17'},	{'_rose_thisway','g12'},	{'_rose_straight','g19'},	{'_rose_cantstay','g69'},	},
-		{	{'_rose_almost','g28'},	{'_rose_getout','g07'},	{'_rose_upstairs','g02'},	{'_rose_hurry','g09'},	{'alright','g92'},	},
+		{	{'_rose_almost','g28'},	{'_rose_getout','g07'},	{'_rose_upstairs','g02'},	{'_rose_hurry','g09'},	{'_rose_alright','g92'},	},
 		{	{'_rose_letsgo','g13'},	{'_rose_left','g03'},	false,	{'_rose_right','g04'},	{'_rose_thanks','s05x_sin'},	},
 		{	{'_rose_halfway','t02x_sin'},	{'_rose_careful','g10'},	{'_rose_downstairs','g01'},	{'_rose_inside','g08'},	{'_rose_anysecond','t03x_sin'},	},
 		{	{'_rose_fewminutes','t01x_sin'},	{'_rose_down','g20'},	{'_rose_wrong','g11'},	{'_rose_defended','g16'},	{'_rose_cams','g25'},	},
@@ -3275,13 +3259,13 @@ function PocoHud3Class._drawKit(tab)
 	local categories_vanity = L('_kit_categories'):split(',')
 	local categories = ('name,primaries,secondaries,armor,gadget,melee'):split(',')
 	local __, lbl = _.l({font=FONT, color=cl.Gray, font_size=20, pnl = tab.pnl, x = 10, y = 10},
-		'* Kit profiler is dependant on your inventory setup. Any changes in your inventory(mods, sell) will be applied to the result.',true)
+		L('_kit_desc'),true)
 
 	local draw, _Current
 	local oTabs = PocoTabs:new(me._ws,{name = 'kits',x = 10, y = 40, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
 
-	local tabBtn = oTabs:add('USE KIT')
-	local tabEdt =oTabs:add('EDIT')
+	local tabBtn = oTabs:add(L('_kit_tab_use_kit'))
+	local tabEdt =oTabs:add(L('_kit_tab_edit_kit'))
 	draw = function()
 		y(10,true)
 		if _kitPnl and alive(_kitPnl) then
@@ -3291,7 +3275,7 @@ function PocoHud3Class._drawKit(tab)
 		_kitPnl = pnl
 		local cnt,row = 0
 		local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = y(0)},
-			{PocoHud3Class.Icon.Chapter ..' Current Kit',{' '..PocoHud3Class.Icon.RC..' Save to the profiler. Unchecked items will be removed.',cl.White}},true)
+			L('_kit_save_desc'),true)
 		y(lbl:h())
 		-- New Header with OpenIcon
 		local mcm = _.g('managers.menu_component._mission_briefing_gui')
@@ -3350,7 +3334,7 @@ function PocoHud3Class._drawKit(tab)
 				end
 				local elem = PocoUIStringValue:new(tabEdt,{ pnl = pnl,
 					x = 0, y = 0, w=150, h=20, category = false, name = false,
-					fontSize = 18, text=' ' , value = s..sNum , max = 20, hintText = 'Set this kit\'s Vanity name for yourself.'
+					fontSize = 18, text=' ' , value = s..sNum , max = 20, hintText = L('_kit_name_edit_hint')
 				})
 				_Current[category] = {elem}
 				row[#row+1] = elem
@@ -3358,18 +3342,14 @@ function PocoHud3Class._drawKit(tab)
 		end
 		local elem = PocoUIColorValue:new(tabEdt,{ pnl = pnl,
 			x = 330, y = 110, w = 300, h=30, category = false, name = false,
-			fontSize = 18, text=('Button Color'):upper() , value = 'White', hintText = 'Set this kit\'s Vanity color for yourself.'
+			fontSize = 18, text=('Button Color'):upper() , value = 'White', hintText = L('_kit_color_edit_hint')
 		})
 		_Current['color'] = {elem}
 
 		elem = PocoUIKeyValue:new(tabEdt,{ pnl = pnl,
 			x = 120, y = 110, w = 200, h=30, category = false, name = false,
 			fontSize = 18, text=('Key Bind'):upper() , value = '',
-			hintText = {
-				'If set, press ',{'Ctrl + ALT + THIS',cl.Yellow},' key while out-game to equip this kit.',
-				{'\nCustom key-combination not available.\nDuplicated keybind can result unexpected result.\n(Only one kit can/will be equipped)',cl.Silver},
-				{'\nBackspace to Remove bound key.',cl.Red}
-			}
+			hintText = L('_kit_key_edit_hint')
 		})
 		_Current['key'] = {elem}
 
@@ -3377,7 +3357,7 @@ function PocoHud3Class._drawKit(tab)
 		y(lH,true)
 		y(50)
 		__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = y(0)},
-			{PocoHud3Class.Icon.Chapter ..' Saved Kits',{' '..PocoHud3Class.Icon.RC ..' Edit or remove saved kits',cl.White}},true)
+			L('_kit_saved_kits_title'),true)
 		y(lbl:h())
 		lH = me:_drawRow(pnl,20,categories_vanity,20,y(),pnl:w()-40,true,true,1.3)
 		y(lH,true)
@@ -3389,7 +3369,7 @@ function PocoHud3Class._drawKit(tab)
 			for col,category in pairs(categories) do
 				if col ~= 1 then
 					local val = K:get(ind,category,true)
-					row[#row+1] = val and {val,K:locked(ind,category) and cl.Red:with_alpha(0.6) or cl.White} or {'LEAVE AS IS',cl.Gray}
+					row[#row+1] = val and {val,K:locked(ind,category) and cl.Red:with_alpha(0.6) or cl.White} or {L('_kit_leave_as_is'),cl.Gray}
 				else
 					row[#row+1] = PocoUIButton:new(tabEdt,{ pnl = pnl,
 						onClick = function(self)
@@ -3420,7 +3400,7 @@ function PocoHud3Class._drawKit(tab)
 							end
 						end,
 						x = 0, y = 0, w=150, h=22,
-						fontSize = 22, text={ind,cl[K:get(ind,'color') or 'White']}, hintText = {'Click to ',{'copy',cl.Tan},'\nDoubleClick to ',{'Remove',cl.Red},' this item'}
+						fontSize = 22, text={ind,cl[K:get(ind,'color') or 'White']}, hintText = L('_kit_equip_btn_hint')
 					})
 				end
 			end
@@ -3438,11 +3418,16 @@ function PocoHud3Class._drawKit(tab)
 		_kitPnlBtn = pnl
 
 		local c,x,y,m,ww,w,h = 0,0,0,10,pnl:w()-20,300,100
+		local titles = L('_kit_profiler_desc')
+		if me.inGameDeep then
+			table.insert(titles,{' '..PocoHud3Class.Icon.BigDot..' ',cl.Red})
+			table.insert(titles,{L('_kit_profiler_disabled_ingame'),cl.Red})
+		end
 		local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = 15},
-			{PocoHud3Class.Icon.Chapter ..' Profiler',{' '..PocoHud3Class.Icon.RC ..' Double click to equip a kit setup',cl.White},me.inGameDeep and {' '..PocoHud3Class.Icon.BigDot..' Disabled in game.',cl.Red} or false},true)
+			titles,true)
 
 		if table.size(K.items) == 0 then
-			_.l({font=FONT, color=cl.Silver, font_size=25, pnl = pnl, x = m, y=m*2+lbl:h()},'No Kit profiles available',true)
+			_.l({font=FONT, color=cl.Silver, font_size=25, pnl = pnl, x = m, y=m*2+lbl:h()},L('_kit_not_available'),true)
 		end
 		for ind,obj in _.p(K.items,function(a,b)return tostring(a)<tostring(b) end) do
 			x = m+(c % 3) * (w+m)
@@ -3465,10 +3450,10 @@ function PocoHud3Class._drawKit(tab)
 			end
 			local boundKey = K:get(ind,'key')
 			if not inGameDeep and boundKey and boundKey ~= '' then
-				row[#row+1] = {'KeyBind : ',cl.Tan}
-				row[#row+1] = {'CTRL + ALT + '..boundKey..'\n',cl.Lime}
+				row[#row+1] = {L('_kit_keybind')..' : ',cl.Tan}
+				row[#row+1] = {L('_kit_keyombination',{boundKey})..'\n',cl.Lime}
 			end
-			row[#row+1] = inGameDeep and 'N/A in game' or '* DoubleClick to Equip this item'
+			row[#row+1] = inGameDeep and L('_kit_na_in_game') or L('_kit_dblclick_to_equip')
 			PocoUIButton:new(tabBtn,{ pnl = pnl,
 				onPressed = function(self)
 					self.mute = true
@@ -3512,7 +3497,7 @@ function PocoHud3Class._drawKit(tab)
 			end
 		end,
 		x = 640, y = 105, w = 300, h=40,
-		text={'SAVE',cl.CornFlowerBlue},hintText = {{'Add',cl.Tan},' or ',{'overwrite',cl.Tomato},' depending on the SET NAME'}
+		text={L('_word_save'),cl.CornFlowerBlue},hintText = L('_kit_save_hint')
 	})
 	tabEdt.pnl:bitmap({
 		texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
@@ -3918,7 +3903,7 @@ function PocoHud3Class._drawJukebox(tab)
 		text=L('_tab_juke_assault')
 	})
 
-	local __, lbl = _.l({pnl = tab.pnl, x=440, y= 290, font = FONT, font_size = 20, color = cl.Gray},'* You can use Auto shuffler via [Options]-[PocoHud3]-[Shuffle Music]',true)
+	local __, lbl = _.l({pnl = tab.pnl, x=440, y= 290, font = FONT, font_size = 20, color = cl.Gray},L('_tab_juke_shuffle_tip'),true)
 
 
 	local _addItems = function(oTab,inGame)
@@ -3986,7 +3971,6 @@ function Localizer:init()
 		end
 	}
 	self.data = {}
-	self:load()
 end
 
 function Localizer:get(key,context)
