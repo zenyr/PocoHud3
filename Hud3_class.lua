@@ -72,6 +72,36 @@ local _defaultLocaleData = {
 			'Hud', cl.Tan
 		}
 	},
+	_mob_city_swat = 'a Gensec Elite',
+_mob_cop = 'a cop',
+_mob_fbi = 'an FBI agent',
+_mob_fbi_heavy_swat = 'an FBI heavy SWAT',
+_mob_fbi_swat = 'an FBI SWAT',
+_mob_gangster = 'a gangster',
+_mob_gensec = 'a Gensec guard',
+_mob_heavy_swat = 'a heavy SWAT',
+_mob_security = 'a guard',
+_mob_shield = 'a shield',
+_mob_sniper = 'a sniper',
+_mob_spooc = 'a cloaker',
+_mob_swat = 'a SWAT',
+_mob_tank = 'a bulldozer',
+_mob_taser = 'a taser',
+_msg_around = 'around [1]',
+_msg_captured = '[1] has been captured [2]',
+_msg_converted = '[1] converted [2] [3]',
+_msg_downed = '[1] was downed',
+_msg_downedWarning = 'Warning: [1] has been downed [2] times',
+_msg_minionLost = '[1] lost a minion to [2] [3].',
+_msg_minionShot = '[1] damaged [2] minion for [3]',
+_msg_not_implemented = 'Not Implemented for now',
+_msg_repenished = '[1] replenished health by [2]% [3]',
+_msg_replenishedDown = '(+[1] down)',
+_msg_replenishedDownPlu = '(+[1] downs)',
+_msg_usedPistolMessiah = 'Used Pistol messiah, [1] left.',
+_msg_usedPistolMessiahCharges = '[1] charge',
+_msg_usedPistolMessiahChargesPlu = '[1] charges',
+
 }
 --- miniClass start ---
 local TBuff = class()
