@@ -2925,7 +2925,12 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		hintText = {{L('_about_group_btn'),cl.LightSkyBlue},'\n',L('_about_hold_shift')}
 	})
 
-	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = tab.pnl, x = 220, y = 10},L('_about_loading_rss'),true)
+	local self = me
+	local oTabs = PocoTabs:new(self._ws,{name = 'abouts',x = 220, y = 10, w = tab.pnl:width()-230, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
+	local oTab = oTabs:add(L('_about_recent_updates'))
+
+
+	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = oTab.pnl, x = 10, y = 10},L('_about_loading_rss'),true)
 	local _strip = function(s)
 		return s:gsub('&lt;','<'):gsub('&gt;','>'):gsub('<br>','\n'):gsub(string.char(13),''):gsub('<.->',''):gsub('&amp;','&'):gsub('&amp;','&')
 	end
@@ -2955,8 +2960,8 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 			end
 			Poco._rss = rss
 			if not alive(lbl) then return end
-			_.l(lbl,L('_about_recent_updates'),true)
-			local y = 35
+			_.l(lbl,'',true)
+			local y = 10
 			for ind,obj in pairs(rss) do
 				local title = '   '..obj[1]
 				local bef,name,rev,rest=title:match('^(.-)(PocoHud3 r)(%d-)( .-)$')
@@ -2965,19 +2970,19 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 				else
 					title = {title,cl.DeepSkyBlue}
 				end
-				PocoUIButton:new(tab,{
+				PocoUIButton:new(oTab,{
 					onClick = function(self)
 						PocoHud3Class._open(obj[4])
 					end,
-					x = 220, y = y, w = 500, h=50,
-					fontSize = 22,align = 'left',
+					x = 10, y = y, w = 500, h=50,
+					fontSize = 20,align = 'left',
 					text=title,
 					hintText = {{obj[2]:sub(1,200)..'...'},'\n',L('_about_hold_shift')}
 				})
-				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = tab.pnl, x = 340, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
+				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = oTab.pnl, x = 120, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
 
 				y = y + 60
-				tab:set_h(y)
+				oTab:set_h(y)
 				--_.l(lbl,obj[1]..'\n'..obj[2],true)
 			end
 		end
@@ -2987,6 +2992,9 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 	else
 		PocoHud3Class._get(nil,'http://steamcommunity.com/groups/pocomods/rss', _onRSS)
 	end
+	local oTab = oTabs:add(L('_about_trans_volunteers'))
+	__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = oTab.pnl, x = 10, y = 10},L('_about_trans_presented'),true)
+
 
 	PocoUIButton:new(tab,{
 		onClick = function(self)

@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 290
-local TAG = 'v0.22 hotfix 4 (f173f98)'
+local REV = 291
+local TAG = 'v0.22 hotfix 5 (1a978d7)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
