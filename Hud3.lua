@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 289
-local TAG = 'v0.22 hotfix 3 (dc2bb69)'
+local REV = 290
+local TAG = 'v0.22 hotfix 4 (f173f98)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -2030,7 +2030,7 @@ function TPocoHud3:_hook()
 		end)
 		hook( FirstAidKitBase, 'sync_net_event', function( self, ... )
 			local event_id, peer = unpack{...}
-			if peer then
+			if event_id == 2 and peer then
 				onReplenish(peer:id(),true)
 			end
 			return Run('sync_net_event',self,...)
