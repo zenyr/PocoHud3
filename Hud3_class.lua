@@ -50,6 +50,8 @@ PocoHud3Class.loadVar = function(_O,_me,_L)
 	clBad = O:get('root','colorNegative')
 end
 local _defaultLocaleData = {
+	_about_trans_fullList = '{Dansk(DA)|Tan}\nNickyFace, DanishDude93\n{Español(ES)|Tan}\nNiccy, BurnBabyBurn\n{Français(FR)|Tan}\nChopper385, Dewk Noukem, Lekouzin, Shendow\n{Italiano(IT)|Tan}\nOktober, Nitronik\n{Nederlands(NL)|Tan}\nNickolas Cat, Rezqual\n{Norsk(NO)|Tan}\nikoddn\n{Polski(PL_PL)|Tan}\nMartinz, Kuziz, gmaxpl3\n{Português(PT_PT)|Tan}\nBruno \"Personagem\" Tibério, John Ryder\n{Português(PT_BR)|Tan}\njkisten\n{Русский(RU)|Tan}\ncollboy, Hellsing, troskahtoh',
+	_about_trans_special_thanks_list = '{Overkill|White}\nfor a legendary game & not kicking my arse off\n{Harfatus|White}\nfor a cool injector\n{Olipro|White}\nfor keeping MOD community alive\n{gir489 & 90e|White}\nfor making me able to learn Lua from the ground\n{Arkkat|White}\nfor helping me out since alpha stage\n{You|Yellow}\nfor keeping me busy to go out at weekends {/notreally|Silver|0.5}',
 	_kit_equip_btn_hint = '{_kit_equip_btn_hint1} {_kit_equip_btn_hint2|Tan}\n{_kit_equip_btn_hint3} {_kit_equip_btn_hint4|Red} {_kit_equip_btn_hint5}',
 	_kit_key_edit_hint = '{_kit_key_edit_hint1}  {_kit_key_edit_hint2|Yellow} {_kit_key_edit_hint3}\n{_kit_key_edit_hint4|Silver}\n{_kit_key_edit_hint5|Red}',
 	_kit_profiler_desc = '{_Chapter} {_kit_profiler_desc1} {_RC|White} {_kit_profiler_desc2|White}',
@@ -2962,7 +2964,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 			end
 			Poco._rss = rss
 			if not alive(lbl) then return end
-			_.l(lbl,'',true)
+			_.l(lbl,' ',true)
 			local y = 10
 			for ind,obj in pairs(rss) do
 				local title = '   '..obj[1]
@@ -2995,8 +2997,31 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		PocoHud3Class._get(nil,'http://steamcommunity.com/groups/pocomods/rss', _onRSS)
 	end
 	local oTab = oTabs:add(L('_about_trans_volunteers'))
-	__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = oTab.pnl, x = 10, y = 10},L('_about_trans_presented'),true)
+	local y = 10
+	__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_presented'),true)
+	y = y + 20
+	lbl:set_w(600)
+	__, lbl = _.l({font=FONT, color=cl.White, font_size=25, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_names'),true)
+	y = y + lbl:h()+20
+	lbl:set_w(600)
 
+	__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_special_thanks'),true)
+	y = y + 20
+	lbl:set_w(600)
+
+	__, lbl = _.l({font=FONT, color=cl.Silver, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_special_thanks_list'),true)
+	y = y + lbl:h()+20
+	lbl:set_w(600)
+
+	__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_volunteers'),true)
+	y = y + lbl:h()
+	lbl:set_w(600)
+	oTab:set_h(y)
+
+	__, lbl = _.l({font=FONT, color=cl.Silver, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_fullList'),true)
+	y = y + lbl:h()+20
+	lbl:set_w(600)
+	oTab:set_h(y)
 
 	PocoUIButton:new(tab,{
 		onClick = function(self)
