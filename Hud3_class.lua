@@ -9,6 +9,7 @@ local inGame = CopDamage ~= nil
 local KitsJSONFileName = 'poco\\hud3_kits.json'
 local KarmaJSONFileName = 'poco\\hud3_karma.json'
 local LocJSONFileName = 'poco\\hud3_locale$.json'
+local LocationJSONFilename = 'poco\\hud3_rooms.json';
 
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
@@ -49,12 +50,12 @@ PocoHud3Class.loadVar = function(_O,_me,_L)
 	clBad = O:get('root','colorNegative')
 end
 local _defaultLocaleData = {
-	_kit_equip_btn_hint = {'_kit_equip_btn_hint1',' ',{'_kit_equip_btn_hint2',cl.Tan},'\n','_kit_equip_btn_hint3',{'_kit_equip_btn_hint4',cl.Red},' ','_kit_equip_btn_hint5'},
-	_kit_key_edit_hint = {'_kit_key_edit_hint1',' ',{'_kit_key_edit_hint2',cl.Yellow},' ','_kit_key_edit_hint3','\n',{'_kit_key_edit_hint4',cl.Silver},'\n',{'_kit_key_edit_hint5',cl.Red}},
-	_kit_profiler_desc = {PocoHud3Class.Icon.Chapter ..' ','_kit_profiler_desc1',{' '..PocoHud3Class.Icon.RC ..' ',cl.White},{'_kit_profiler_desc2',cl.White}},
-	_kit_save_desc = {PocoHud3Class.Icon.Chapter,' ','_kit_save_desc1',{' '..PocoHud3Class.Icon.RC..' ',cl.White},{'_kit_save_desc2',cl.White}},
-	_kit_save_hint = {{'_kit_save_hint1',cl.Tan},' / ',{'_kit_save_hint2',cl.Tomato},' ','_kit_save_hint3'},
-	_kit_saved_kits_title = {PocoHud3Class.Icon.Chapter ..' ','_kit_saved_kits_title1',{' '..PocoHud3Class.Icon.RC ..' ',cl.White},{'_kit_saved_kits_title2',cl.White}},
+	_kit_equip_btn_hint = '{_kit_equip_btn_hint1} {_kit_equip_btn_hint2|Tan}\n{_kit_equip_btn_hint3} {_kit_equip_btn_hint4|Red} {_kit_equip_btn_hint5}',
+	_kit_key_edit_hint = '{_kit_key_edit_hint1}  {_kit_key_edit_hint2|Yellow} {_kit_key_edit_hint3}\n{_kit_key_edit_hint4|Silver}\n{_kit_key_edit_hint5|Red}',
+	_kit_profiler_desc = '{_Chapter} {_kit_profiler_desc1} {_RC|White} {_kit_profiler_desc2|White}',
+	_kit_save_desc = '{_Chapter} {_kit_save_desc1} {_RC|White} {_kit_save_desc2|White}',
+	_kit_save_hint = '{_kit_save_hint1|Tan} / {_kit_save_hint2|Tomato} {_kit_save_hint3}',
+	_kit_saved_kits_title = '{_Chapter} {_kit_saved_kits_title1} {_RC|White} {_kit_saved_kits_title2|White}',
 	_mob_city_swat = 'a Gensec Elite',
 	_mob_cop = 'a cop',
 	_mob_fbi = 'an FBI agent',
@@ -84,8 +85,8 @@ local _defaultLocaleData = {
 	_msg_usedPistolMessiah = 'Used Pistol messiah, [1] left.',
 	_msg_usedPistolMessiahCharges = '[1] charge',
 	_msg_usedPistolMessiahChargesPlu = '[1] charges',
-	_opt_chat_desc = {'_opt_chat_desc_1','\n',{'_opt_chat_desc_2',cl.White:with_alpha(0.5)},'\n',{'_opt_chat_desc_3',cl.White:with_alpha(0.6)},'\n',{'_opt_chat_desc_4',cl.White:with_alpha(0.7)},'\n',{'_opt_chat_desc_5',cl.White:with_alpha(0.8)},'\n',{'_opt_chat_desc_6',cl.White:with_alpha(0.9)},'\n',{'_opt_chat_desc_7',cl.White:with_alpha(1)}},
-	_opt_truncateTags_desc = {'_opt_truncateTags_desc_1',{'[Poco]Hud',cl.Tan},' > ', {PocoHud3Class.Icon.Dot..'Hud',cl.Tan}},
+	_opt_chat_desc = '{_opt_chat_desc_1}\n{_opt_chat_desc_2|White|0.5}\n{_opt_chat_desc_3|White|0.6}\n{_opt_chat_desc_4|White|0.7}\n{_opt_chat_desc_5|White|0.8}\n{_opt_chat_desc_6|White|0.9}\n{_opt_chat_desc_7|White}',
+	_opt_truncateTags_desc = '{_opt_truncateTags_desc_1} {[Poco]Hud|Tan} > {_Dot|Tan}{Hud|Tan}',
 }
 --- miniClass start ---
 local TBuff = class()
@@ -849,8 +850,9 @@ function PocoLocation:update(t,dt)
 		self._loaded = true
 		self:load()
 	end
-	local ff = _.g('setup:freeflight()')
+	local ff = Poco.ff or _.g('setup:freeflight()')
 	if ff then
+		Poco.ff = ff
 		ff:update(t, dt)
 	end
 	if not Poco.roomOn then return end
@@ -911,7 +913,6 @@ end
 
 --- End of Location2
 
-local LocationJSONFilename = 'poco\\hud3_rooms.json';
 function PocoLocation:load()
 	local f,err = io.open(LocationJSONFilename, 'r')
 	local result = false
@@ -1606,6 +1607,7 @@ function PocoUIKeyValue:setup()
 				return
 			end
 		end
+		Poco:ignoreBind()
 		self:sound('menu_skill_investment')
 		self:val(keyName)
 		self:cancel()
@@ -2833,7 +2835,7 @@ function PocoHud3Class._drawPlayer(tab)
 			upg = upg and
 --]]
 			tbl[#tbl+1] = {{L('_word_level'),cl.Tan},_.s(isMe and managers.experience:current_rank() or peer:rank() or 0,Icon.Dot,isMe and managers.experience:current_level() or peer:level())}
-			tbl[#tbl+1] = {{L('_word_sync'),cl.Tan},L(peer._synced and '_word_completed' or '_word_not_completed')}
+			tbl[#tbl+1] = {{L('_word_sync'),cl.Tan},L(peer._synced and '_word_synced' or '_word_not_completed')}
 			tbl[#tbl+1] = {{L('_word_uid'),cl.Tan},objs.btnProfile}
 			tbl[#tbl+1] = {objs.btnSteam}
 			tbl[#tbl+1] = {objs.lblGame1,objs.lblGameTime1}
@@ -3459,7 +3461,7 @@ function PocoHud3Class._drawKit(tab)
 			local boundKey = K:get(ind,'key')
 			if not inGameDeep and boundKey and boundKey ~= '' then
 				row[#row+1] = {L('_kit_keybind')..' : ',cl.Tan}
-				row[#row+1] = {L('_kit_keyombination',{boundKey})..'\n',cl.Lime}
+				row[#row+1] = {L('_kit_key_combination',{boundKey})..'\n',cl.Lime}
 			end
 			row[#row+1] = inGameDeep and L('_kit_na_in_game') or L('_kit_dblclick_to_equip')
 			PocoUIButton:new(tabBtn,{ pnl = pnl,
@@ -3968,7 +3970,36 @@ function Localizer:init()
 
 	self.parser = {
 		string = function(str,context)
-			return str:find('^[_!]') and self:parse(self:get(str,context),context) or str
+			if str == '##' then -- Special case: omit string instructor
+				return ''
+			end
+			-- parse 'something {color|key|alpha} something'
+			local p,exploded = 1,{}
+			for s,tag,e in str:gmatch('(){(.-)}()') do
+					table.insert(exploded,str:sub(p,s-1))
+					if tag:find('|') then
+						local key,color = tag:match('^(.-)|(.+)$')
+						local alpha
+						if color:find('|') then
+							color, alpha = color:match('(.+)|(.+)')
+							alpha = tonumber(alpha)
+						end
+						color = cl[color] or cl.White
+						if alpha then
+							color = color:with_alpha(alpha)
+						end
+						table.insert(exploded,{key,color})
+					else
+						table.insert(exploded,tag)
+					end
+					p = e
+			end
+			table.insert(exploded,str:sub(p,str:len()))
+			if exploded[2] then
+				return self:parse(exploded,context)
+			else
+				return str:find('^[_!]') and self:parse(self:get(str,context),context) or str
+			end
 		end,
 		table = function(tbl,context)
 			local r = {}
@@ -3982,10 +4013,7 @@ function Localizer:init()
 end
 
 function Localizer:get(key,context)
-	local val = self.data[key]
-	if not val then
-		val = _defaultLocaleData[key]
-	end
+	local val = _defaultLocaleData[key] or self.data[key] or PocoHud3Class.Icon[key:gsub('_','')]
 	if val and type(context)=='table' then
 		for k,v in pairs(context) do
 			val = val:gsub('%['..k..'%]',v)
@@ -3997,7 +4025,6 @@ end
 function Localizer:load()
 	local lang = PocoHud3Class.O('root','language')
 	local f,err = io.open(LocJSONFileName:gsub('%$',lang), 'r')
-	local result = false
 	if f then
 		local t = f:read('*all')
 		local o = JSON:decode(t)
@@ -4006,6 +4033,21 @@ function Localizer:load()
 		end
 		f:close()
 	end
+
+	f,err = io.open(LocJSONFileName:gsub('%$','EN'), 'r')
+	if f then
+		local t = f:read('*all')
+		local o = JSON:decode(t)
+		if type(o) == 'table' then
+			local def = _defaultLocaleData
+			for k,v in pairs(o) do
+				def[k] = def[k] or v
+			end
+		end
+		f:close()
+	end
+
+
 end
 
 

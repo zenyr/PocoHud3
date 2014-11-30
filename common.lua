@@ -322,11 +322,16 @@ function Poco:addBind(event,name,key,cbk)
 	end
 end
 
+function Poco:ignoreBind(t)
+	self._ignoreT = TimerManager:game():time() + (t or 0.2)
+end
+
 function Poco:_runBinds(t,dt)
 	if not (
 		(managers.menu_component._blackmarket_gui and managers.menu_component._blackmarket_gui._renaming_item) or
 		(managers.hud and managers.hud._chat_focus) or
-		(managers.menu_component._game_chat_gui and managers.menu_component._game_chat_gui:input_focus())
+		(managers.menu_component._game_chat_gui and managers.menu_component._game_chat_gui:input_focus()) or
+		(self._ignoreT and self._ignoreT > TimerManager:game():time())
 		) then
 		for event,events in pairs(self.binds) do
 			for __,obj in pairs(events) do
