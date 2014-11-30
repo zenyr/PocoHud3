@@ -50,8 +50,8 @@ PocoHud3Class.loadVar = function(_O,_me,_L)
 	clBad = O:get('root','colorNegative')
 end
 local _defaultLocaleData = {
-	_about_trans_fullList = '{Dansk(DA)|Tan}\nNickyFace, DanishDude93\n{Español(ES)|Tan}\nNiccy, BurnBabyBurn\n{Français(FR)|Tan}\nChopper385, Dewk Noukem, Lekouzin, Shendow\n{Italiano(IT)|Tan}\nOktober, Nitronik\n{Nederlands(NL)|Tan}\nNickolas Cat, Rezqual\n{Norsk(NO)|Tan}\nikoddn\n{Polski(PL_PL)|Tan}\nMartinz, Kuziz, gmaxpl3\n{Português(PT_PT)|Tan}\nBruno \"Personagem\" Tibério, John Ryder\n{Português(PT_BR)|Tan}\njkisten\n{Русский(RU)|Tan}\ncollboy, Hellsing, troskahtoh',
-	_about_trans_special_thanks_list = '{Overkill|White}\nfor a legendary game & not kicking my arse off\n{Harfatus|White}\nfor a cool injector\n{Olipro|White}\nfor keeping MOD community alive\n{gir489 & 90e|White}\nfor making me able to learn Lua from the ground\n{Arkkat|White}\nfor helping me out since alpha stage\n{You|Yellow}\nfor keeping me busy to go out at weekends {/notreally|Silver|0.5}',
+	_about_trans_fullList = '{Dansk (DA)|Tan}\nNickyFace, DanishDude93\n{Español (ES)|Tan}\nNiccy, BurnBabyBurn\n{Français (FR)|Tan}\nChopper385, Dewk Noukem, Lekouzin, Shendow\n{Italiano (IT)|Tan}\nOktober, Nitronik\n{Nederlands (NL)|Tan}\nNickolas Cat, Rezqual\n{Norsk (NO)|Tan}\nikoddn\n{Polski (PL_PL)|Tan}\nMartinz, Kuziz, gmaxpl3\n{Português (PT_PT)|Tan}\nBruno \"Personagem\" Tibério, John Ryder\n{Português (PT_BR)|Tan}\njkisten\n{Русский (RU)|Tan}\ncollboy, Hellsing, troskahtoh',
+	_about_trans_special_thanks_list = '{Overkill|White}\nfor a legendary game {& not kicking my arse off|Silver|0.5}\n{Harfatus|White}\nfor a cool injector\n{Olipro|White}\nfor keeping MOD community alive\n{v00d00 & gir489 & 90e|White}\nfor making me able to learn Lua from the humble ground\n{Arkkat|White}\nfor crashing the game for me at least 50 times since alpha stage\n{You|Yellow}\nfor keeping me way too busy to go out at weekends {/notreally|Silver|0.5}',
 	_kit_equip_btn_hint = '{_kit_equip_btn_hint1} {_kit_equip_btn_hint2|Tan}\n{_kit_equip_btn_hint3} {_kit_equip_btn_hint4|Red} {_kit_equip_btn_hint5}',
 	_kit_key_edit_hint = '{_kit_key_edit_hint1}  {_kit_key_edit_hint2|Yellow} {_kit_key_edit_hint3}\n{_kit_key_edit_hint4|Silver}\n{_kit_key_edit_hint5|Red}',
 	_kit_profiler_desc = '{_Chapter} {_kit_profiler_desc1} {_RC|White} {_kit_profiler_desc2|White}',
@@ -1483,7 +1483,7 @@ function PocoUIChooseValue:init(parent,config,inherited)
 end
 
 function PocoUIChooseValue:selection()
-	return {}
+	return self.config.selection or {}
 end
 
 function PocoUIChooseValue:go(delta)
@@ -1534,6 +1534,7 @@ PocoHud3Class.PocoUIReversedBooleanValue = PocoUIReversedBooleanValue
 function PocoUIReversedBooleanValue:selection()
 	return {YES=true,NO=false}
 end
+
 local PocoUIColorValue = class(PocoUIChooseValue)
 PocoHud3Class.PocoUIColorValue = PocoUIColorValue
 function PocoUIColorValue:init(parent,config,inherited)
@@ -1644,13 +1645,17 @@ local PocoUIStringValue = class(PocoUIValue)
 PocoHud3Class.PocoUIStringValue = PocoUIStringValue
 
 function PocoUIStringValue:init(parent,config,inherited)
-	config.noArrow = true
+	config.noArrow = not config.selection
 	self.super.init(self,parent,config,true)
 	self:_initLayout()
 	self:val(config.value or '')
 	self.box = self.pnl:rect{color = cl.White:with_alpha(0.3), visible = false}
 	self:_bind(PocoEvent.Pressed,function(self,x,y)
-		if not self._editing then
+		if self.arrowLeft and self.arrowLeft:inside(x,y) then
+			return
+		elseif self.arrowRight and self.arrowRight:inside(x,y) then
+			return
+		elseif not self._editing then
 			self:startEdit()
 			self:selectAll()
 		else
@@ -1674,6 +1679,32 @@ function PocoUIStringValue:init(parent,config,inherited)
 	end
 end
 
+function PocoUIStringValue:selection()
+	return self.config.selection or {}
+end
+
+function PocoUIStringValue:prev()
+	PocoUIChooseValue.go(self,-1)
+	self._lastClick = now()
+end
+
+function PocoUIStringValue:innerVal(set)
+	if set then
+		local key = table.get_key(self:selection(),set)
+		if key then
+			return self:val(key)
+		end
+	else
+		return self:selection()[self:val()] or self:val()
+	end
+end
+
+
+function PocoUIStringValue:next()
+	PocoUIChooseValue.go(self,1)
+	self._lastClick = now()
+end
+
 function PocoUIStringValue:_initLayout()
 	if not self.config.valX and self.config.text:gsub(' ','') == '' then
 		self.config.valX = self.config.w / 2
@@ -1686,6 +1717,14 @@ function PocoUIStringValue:val(set)
 	end
 	local result =  PocoUIValue.val(self,set)
 	self:repaint()
+	if set then
+		local text = self:selection()[result]
+		if text then
+			_.l(self.valLbl,text,true)
+			self.valLbl:set_center_x(self.config.valX or 12*self.config.w/16)
+			self.valLbl:set_x(math.floor(self.valLbl:x()))
+		end
+	end
 	return result
 end
 
@@ -2191,7 +2230,7 @@ function PocoTabs:repaint()
 				color = cl.White:with_alpha(isSelected and 1 or 0.1)
 			})
 			local lbl = hPnl:text({
-				x = 10, y = 0, w = 200, h = self.config.th,
+				x = 10, y = 0, w = 400, h = self.config.th,
 				name = 'tab_name', text = itm.name,
 				font = FONT,
 				font_size = self.config.fontSize,
@@ -2236,7 +2275,7 @@ function PocoMenu:init(ws,alternative)
 		self.gui = PocoTabs:new(ws,{name = 'PocoRose',x = 0, y = -1, w = ws:width(), th = 1, h = ws:height()+1, pTab = nil, alt = true})
 
 	else
-		self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = ws:height()-20, pTab = nil})
+		self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1200, th = 30, h = ws:height()-20, pTab = nil})
 
 		self.pnl = ws:panel():panel({ name = 'bg' })
 		self.pnl:rect{color = cl.Black:with_alpha(0.7),layer = Layers.Bg}
@@ -2934,7 +2973,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 	local oTab = oTabs:add(L('_about_recent_updates'))
 
 
-	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = oTab.pnl, x = 10, y = 10},L('_about_loading_rss'),true)
+	local __, rssLbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = oTab.pnl, x = 10, y = 10},L('_about_loading_rss'),true)
 	local _strip = function(s)
 		return s:gsub('&lt;','<'):gsub('&gt;','>'):gsub('<br>','\n'):gsub(string.char(13),''):gsub('<.->',''):gsub('&amp;','&'):gsub('&amp;','&')
 	end
@@ -2963,8 +3002,8 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 				end
 			end
 			Poco._rss = rss
-			if not alive(lbl) then return end
-			_.l(lbl,' ',true)
+			if not alive(rssLbl) then return end
+			_.l(rssLbl,' ',true)
 			local y = 10
 			for ind,obj in pairs(rss) do
 				local title = '   '..obj[1]
@@ -2974,6 +3013,18 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 				else
 					title = {title,cl.DeepSkyBlue}
 				end
+				local pos,line = 1,1
+				local hintText = obj[2]:gsub( "(%s+)()(%S+)()",function( sp, b, word, e )
+					if line < 8 then
+						if e-pos > 60 then
+							pos = b
+							line = line + 1
+							return "\n"..word
+						end
+					else
+						return ''
+					end
+				end) .. '...'
 				PocoUIButton:new(oTab,{
 					onClick = function(self)
 						PocoHud3Class._open(obj[4])
@@ -2981,7 +3032,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 					x = 10, y = y, w = 500, h=50,
 					fontSize = 20,align = 'left',
 					text=title,
-					hintText = {{obj[2]:sub(1,200)..'...'},'\n',L('_about_hold_shift')}
+					hintText = L('{'..hintText..'} \n {_about_hold_shift|DarkSeaGreen}')
 				})
 				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = oTab.pnl, x = 120, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
 
@@ -2998,29 +3049,30 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 	end
 	local oTab = oTabs:add(L('_about_trans_volunteers'))
 	local y = 10
-	__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_presented'),true)
+	local w = oTab.pnl:width()-20
+	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_presented'),true)
 	y = y + 20
-	lbl:set_w(600)
+	lbl:set_w(w)
 	__, lbl = _.l({font=FONT, color=cl.White, font_size=25, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_names'),true)
 	y = y + lbl:h()+20
-	lbl:set_w(600)
+	lbl:set_w(w)
 
 	__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_special_thanks'),true)
 	y = y + 20
-	lbl:set_w(600)
+	lbl:set_w(w)
 
 	__, lbl = _.l({font=FONT, color=cl.Silver, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_special_thanks_list'),true)
 	y = y + lbl:h()+20
-	lbl:set_w(600)
+	lbl:set_w(w)
 
 	__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_volunteers'),true)
 	y = y + lbl:h()
-	lbl:set_w(600)
+	lbl:set_w(w)
 	oTab:set_h(y)
 
 	__, lbl = _.l({font=FONT, color=cl.Silver, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_fullList'),true)
 	y = y + lbl:h()+20
-	lbl:set_w(600)
+	lbl:set_w(w)
 	oTab:set_h(y)
 
 	PocoUIButton:new(tab,{
@@ -3029,7 +3081,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		end,
 		x = 10, y = 120, w = 200,h=40,
 		text={'@zenyr',cl.OrangeRed},
-		hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki},'\n',L('_about_hold_shift')}
+		hintText = L('{Not in English but feel free to ask in English,\nas long as it is not a technical problem!|DarkSeaGreen|0.5} {:)|DarkKhaki}\n{_about_hold_shift}')
 	})
 
 	PocoUIButton:new(tab,{
@@ -3144,7 +3196,10 @@ function PocoHud3Class._drawOptions(tab)
 				local type = O:_type(category,name)
 				local value = O:get(category,name,true)
 				local hint = O:_hint(category,name)
-				hint = hint and L:parse(hint)
+				if hint:find('EN,') then
+					_(_.i( L(hint), {depth=2}))
+				end
+				hint = hint and L(hint)
 				local tName = L('_opt_'..name)
 				if type == 'bool' then
 					objs[#objs+1] = {PocoUIBoolean:new(oTab,{
@@ -3178,9 +3233,11 @@ function PocoHud3Class._drawOptions(tab)
 						hintText = hint
 					}),category,name}
 				elseif type == 'string' then
+					local selection = O:_vanity(category,name)
+
 					objs[#objs+1] = {PocoUIStringValue:new(oTab,{
 						x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
-						fontSize = 20, text=tName, value = value,
+						fontSize = 20, text=tName, value = value, selection = selection,
 						hintText = hint
 					}),category,name}
 				else
@@ -4035,10 +4092,11 @@ function Localizer:init()
 		end
 	}
 	self.data = {}
+	self._data = {}
 end
 
 function Localizer:get(key,context)
-	local val = _defaultLocaleData[key] or self.data[key] or PocoHud3Class.Icon[key:gsub('_','')]
+	local val = _defaultLocaleData[key] or self.data[key] or self._data[key] or PocoHud3Class.Icon[key:gsub('_','')]
 	if val and type(context)=='table' then
 		for k,v in pairs(context) do
 			val = val:gsub('%['..k..'%]',v)
@@ -4054,9 +4112,12 @@ function Localizer:load()
 		local t = f:read('*all')
 		local o = JSON:decode(t)
 		if type(o) == 'table' then
+			_('Locale',lang,'loaded')
 			self.data = o
 		end
 		f:close()
+	else
+			_('Locale',lang,'NOT loaded')
 	end
 
 	f,err = io.open(LocJSONFileName:gsub('%$','EN'), 'r')
@@ -4064,10 +4125,7 @@ function Localizer:load()
 		local t = f:read('*all')
 		local o = JSON:decode(t)
 		if type(o) == 'table' then
-			local def = _defaultLocaleData
-			for k,v in pairs(o) do
-				def[k] = def[k] or v
-			end
+			self._data = o
 		end
 		f:close()
 	end

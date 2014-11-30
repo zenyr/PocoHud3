@@ -9,7 +9,7 @@ local scheme = {
 		shuffleMusic = {'bool',FALSE,nil,'_opt_shuffleMusic_desc'},
 		silentKitShortcut = {'bool',TRUE,nil,'_opt_silentKitShortcut_desc'},
 		pocoRoseKey = {'key','b',nil,'_opt_pocoRoseKey_desc'},
-		language = {'string','EN',nil,'_opt_language_desc'},
+		language = {'string','EN',nil,'_opt_language_desc','language'},
 		colorPositive = {'color','YellowGreen','color','_opt_colorPositive_desc',nil,nil,2},
 		colorNegative = {'color','Gold','color','_opt_colorNegative_desc',nil,nil,2},
 		['24HourClock'] = {'bool',TRUE,nil,'_opt_24HourClock_desc'},
@@ -177,6 +177,7 @@ local _vanity = {
 	cantedSight = '_vanity_cantedsight',
 	truncateNames = '_vanity_truncatenames',
 	resizeCrimenet = '_vanity_resizeCrimenet',
+	language = {EN='English', DA='Dansk', ES='Español', FR='Français', IT='Italiano',NL='Nederlands',NO='Norsk',PL='Polski',PT='Português (PT)',PT_BR='Português (BR)', RU='Русский'},
 }
 ----------------------------------------------------
 local JSONFileName = 'poco\\hud3_config.json'
@@ -246,7 +247,7 @@ end
 function Option:_vanity(category,name)
 	local vanity = self:_get(true,category,name)[5]
 	if vanity then
-		vanity = _vanity[vanity] or '?'
+		vanity = _vanity[vanity] or vanity
 	end
 	return vanity
 end
