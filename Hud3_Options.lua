@@ -177,7 +177,7 @@ local _vanity = {
 	cantedSight = '_vanity_cantedsight',
 	truncateNames = '_vanity_truncatenames',
 	resizeCrimenet = '_vanity_resizeCrimenet',
-	language = {EN='English', DA='Dansk', ES='Español', FR='Français', IT='Italiano',NL='Nederlands',NO='Norsk',PL='Polski',PT='Português (PT)',PT_BR='Português (BR)', RU='Русский'},
+	language = {EN='English', DA='Dansk', DE='Deutsch', ES='Español', FR='Français', IT='Italiano',NL='Nederlands',NO='Norsk',PL='Polski',PT='Português (PT)',PT_BR='Português (BR)', RU='Русский'},
 }
 ----------------------------------------------------
 local JSONFileName = 'poco\\hud3_config.json'
