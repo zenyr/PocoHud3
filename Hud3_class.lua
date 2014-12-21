@@ -400,6 +400,7 @@ local _drillHosts = {
 	['d475830b4e6eda32'] = 'a vault door',
 	['b2928ed7d5b8797e'] = 'a cage door',
 	['43132b0a273df773'] = 'an office door',
+	['b8ebd1a5a8426e52'] = 'an artifact safe'
 }
 local __n = {}
 function TFloat:_getName()
