@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 298
-local TAG = 'v0.23 hotfix 2 (73f7348)'
+local REV = 299
+local TAG = 'v0.23 hotfix 3 (922edac)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -867,8 +867,9 @@ function TPocoHud3:_updatePlayers(t)
 			local avgDmg = _.f(dmg/hit,1)
 			local downs = self:Stat(i,'down')
 			local boost = self:Stat(i,'boost') > now()
-			local distance = unit and mvector3.distance(unit:position(),self.camPos) or 0
-			local dist_sq = unit and mvector3.distance_sq(unit:position(),self.camPos) or 0
+			local unitPos = unit and alive(unit) and unit:position()
+			local distance = unitPos and mvector3.distance(unitPos,self.camPos) or 0
+			local dist_sq = unitPos and mvector3.distance_sq(unitPos,self.camPos) or 0
 			local rally_skill_data = _.g('managers.player:player_unit():movement():rally_skill_data()')
 			local canBoost = rally_skill_data and rally_skill_data.long_dis_revive and rally_skill_data.range_sq > dist_sq
 			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
@@ -971,7 +972,7 @@ function TPocoHud3:_updatePlayers(t)
 			rank = ranks[rank] and (ranks[rank]..'Ї') or ''
 			local lvl = peer and peer:level() or '?'
 			local unit = nData and nData.movement._unit
-			local distance = unit and mvector3.distance(unit:position(),self.camPos) or 0
+			local distance = unit and alive(unit) and mvector3.distance(unit:position(),self.camPos) or 0
 			local boost = self:Stat(i,'boost') > now()
 			if nData._infamy ~= _show('Icon',true) then
 				local icon = nData.panel:child('infamy')
