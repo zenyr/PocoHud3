@@ -832,6 +832,9 @@ do -- JSON
 		 elseif type(value) == 'boolean' then
 				return tostring(value)
 
+		 elseif type(value) == 'userdata' then
+          return json_string_literal(tostring(value))
+
 		 elseif type(value) ~= 'table' then
 				self:onEncodeError("can't convert " .. type(value) .. " to JSON", etc)
 

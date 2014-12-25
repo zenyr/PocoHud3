@@ -7,6 +7,9 @@ local clBad =  cl.Gold
 local isNil = function(a) return a == nil end
 local inGame = CopDamage ~= nil
 local KitsJSONFileName = 'poco\\hud3_kits.json'
+local KarmaJSONFileName = 'poco\\hud3_karma.json'
+local LocJSONFileName = 'poco\\hud3_locale$.json'
+local LocationJSONFilename = 'poco\\hud3_rooms.json';
 
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
@@ -43,412 +46,49 @@ PocoHud3Class.loadVar = function(_O,_me,_L)
 	O = _O
 	L = _L
 	me = _me
+	clGood = O:get('root','colorPositive')
+	clBad = O:get('root','colorNegative')
 end
 local _defaultLocaleData = {
-	_opt_root = 'Root',
-	_enable = 'ENABLE',
-	_detailedModeKey = 'DETAILED MODE KEY',
-	_detailedModeToggle = 'DETAILED MODE TOGGLE',
-	_showMusicTitlePrefix = 'SHOW MUSIC TITLE PREFIX',
-	_showMusicTitle = 'SHOW MUSIC TITLE',
-	_silentKitShortcut = 'SILENT KIT SHORTCUT',
-	_pocoRoseKey = 'POCO ROSE KEY',
-	_language = 'LANGUAGE',
-	_24HourClock = '24HOUR CLOCK',
-	_opt_corner = 'Corner',
-	_color = 'COLOR',
-	_opacity = 'OPACITY',
-	_size = 'SIZE',
-	_defaultFont = 'DEFAULT FONT',
-	_detailedOnly = 'DETAILED ONLY',
-	_showFPS = 'SHOW FPS',
-	_showClockIngame = 'SHOW CLOCK INGAME',
-	_showClockOutgame = 'SHOW CLOCK OUTGAME',
-	_opt_buff = 'Buff',
-	_xPosition = 'X POSITION',
-	_yPosition = 'Y POSITION',
-	_maxFPS = 'MAX FPS',
-	_buffSize = 'BUFF SIZE',
-	_gap = 'GAP',
-	_justify = 'JUSTIFY',
-	_style = 'STYLE',
-	_showBerserker = 'SHOW BERSERKER',
-	_showStamina = 'SHOW STAMINA',
-	_showCharge = 'SHOW CHARGE',
-	_showTransition = 'SHOW TRANSITION',
-	_showCarryDrop = 'SHOW CARRY DROP',
-	_showInteract = 'SHOW INTERACT',
-	_showInteraction = 'SHOW INTERACTION',
-	_showInspire = 'SHOW INSPIRE',
-	_showBoost = 'SHOW BOOST',
-	_showShield = 'SHOW SHIELD',
-	_showECM = 'SHOW ECM',
-	_showFeedback = 'SHOW FEEDBACK',
-	_showTapeLoop = 'SHOW TAPE LOOP',
-	_showOverkill = 'SHOW OVERKILL',
-	_showCombatMedic = 'SHOW COMBAT MEDIC',
-	_showUnderdog = 'SHOW UNDERDOG',
-	_showBulletstorm = 'SHOW BULLETSTORM',
-	_showSuppressed = 'SHOW SUPPRESSED',
-	_showReload = 'SHOW RELOAD',
-	_noSprintDelay = 'NO SPRINT DELAY',
-	_hideInteractionCircle = 'HIDE INTERACTION CIRCLE',
-	_simpleBusyIndicator = 'SIMPLE BUSY INDICATOR',
-	_simpleBusySize = 'SIMPLE BUSY SIZE',
-	_opt_playerFloat = '',
-	_uppercaseNames = 'UPPERCASE NAMES',
-	_showIcon = 'SHOW ICON',
-	_showRank = 'SHOW RANK',
-	_showDistance = 'SHOW DISTANCE',
-	_opt_playerBottom = '',
-	_offset = 'OFFSET',
-	_underneath = 'UNDERNEATH',
-	_showClock = 'SHOW CLOCK',
-	_showInteractionTime = 'SHOW INTERACTION TIME',
-	_showKill = 'SHOW KILL',
-	_showPosition = 'SHOW POSITION',
-	_showSpecial = 'SHOW SPECIAL',
-	_showAverageDamage = 'SHOW AVERAGE DAMAGE',
-	_showDowns = 'SHOW DOWNS',
-	_showPing = 'SHOW PING',
-	_showConvertedEnemy = 'SHOW CONVERTED ENEMY',
-	_showArrow = 'SHOW ARROW',
-	_opt_popup = '',
-	_damageDecay = 'DAMAGE DECAY',
-	_myDamage = 'MY DAMAGE',
-	_crewDamage = 'CREW DAMAGE',
-	_AiDamage = 'AI DAMAGE',
-	_handsUp = 'HANDS UP',
-	_dominated = 'DOMINATED',
-	_opt_chat = '',
-	_fallbackToMe = 'FALLBACK TO ME',
-	_includeLocation = 'INCLUDE LOCATION',
-	_midstatAnnounce = 'MIDSTAT ANNOUNCE',
-	_midStat = 'MID STAT',
-	_endStat = 'END STAT',
-	_endStatCredit = 'END STAT CREDIT',
-	_converted = 'CONVERTED',
-	_minionLost = 'MINION LOST',
-	_minionShot = 'MINION SHOT',
-	_hostageChanged = 'HOSTAGE CHANGED',
-	_custody = 'CUSTODY',
-	_downed = 'DOWNED',
-	_downedWarning = 'DOWNED WARNING',
-	_replenished = 'REPLENISHED',
-	_messiah = 'MESSIAH',
-	_drillDone = 'DRILL DONE',
-	_drillAlmostDone = 'DRILL ALMOST DONE',
-	_opt_hit = '',
-	_duration = 'DURATION',
-	_number = 'NUMBER',
-	_numberSize = 'NUMBER SIZE',
-	_numberDefaultFont = 'NUMBER DEFAULT FONT',
-	_sizeStart = 'SIZE START',
-	_sizeEnd = 'SIZE END',
-	_shieldColor = 'SHIELD COLOR',
-	_healthColor = 'HEALTH COLOR',
-	_shieldColorDepleted = 'SHIELD COLOR DEPLETED',
-	_healthColorDepleted = 'HEALTH COLOR DEPLETED',
-	_opt_float = '',
-	_frame = 'FRAME',
-	_margin = 'MARGIN',
-	_keepOnScreen = 'KEEP ON SCREEN',
-	_keepOnScreenMarginX = 'KEEP ON SCREEN MARGIN X',
-	_keepOnScreenMarginY = 'KEEP ON SCREEN MARGIN Y',
-	_showTargets = 'SHOW TARGETS',
-	_showDrills = 'SHOW DRILLS',
-	_showHighlighted = 'SHOW HIGHLIGHTED',
-	_showBags = 'SHOW BAGS',
-	_opt_game = '',
-	_fasterDesyncResolve = 'FASTER DESYNC RESOLVE',
-	_ingameJoinRemaining = 'INGAME JOIN REMAINING',
-	_showRankInKickMenu = 'SHOW RANK IN KICK MENU',
-	_corpseLimit = 'CORPSE LIMIT',
-	_corpseRagdollTimeout = 'CORPSE RAGDOLL TIMEOUT',
-	_cantedSightCrook = 'CANTED SIGHT CROOK',
-	_rememberGadgetState = 'REMEMBER GADGET STATE',
-	_subtitleFontSize = 'SUBTITLE FONT SIZE',
-	_subtitleFontColor = 'SUBTITLE FONT COLOR',
-	_subtitleOpacity = 'SUBTITLE OPACITY',
-	_truncateNames = 'TRUNCATE NAMES',
-	_truncateTags = 'TRUNCATE TAGS',
-	_opt_root_desc = 'PocoHud3 Main configuration',
-	_enable_desc = 'Enable this feature',
-	_detailedModeKey_desc = 'Keybind for detailed(verbose) mode.\nDefault: ` (tilde key)',
-	_detailedModeToggle_desc = 'Make detailed mode key toggles mode.',
-	_showMusicTitlePrefix_desc = 'Prefix for music titles',
-	_showMusicTitle_desc = 'Show title of the music when it is being set',
-	_silentKitShortcut_desc = 'Ignore Kit Profiler shortcuts success message',
-	_pocoRoseKey_desc = 'Keybind for PocoRose.\nDefault: B',
-	_language_desc = 'PocoHud3 Language\n* Not implemented',
-	_24HourClock_desc = 'Use 24 hour clock instead of 12 hours clock at the corner and bottom player infobox',
-	_opt_corner_desc = 'Static text ticker which works as FPS counter / Outgame clock',
-	_color_desc = 'Font color',
-	_opacity_desc = 'Font opacity',
-	_size_desc = 'Font size',
-	_defaultFont_desc = 'Use sans-serif font',
-	_detailedOnly_desc = 'Hide corner text while \'Detailed\' mode is not activated',
-	_showFPS_desc = 'Show FPS',
-	_showClockIngame_desc = 'Show in-game clock',
-	_showClockOutgame_desc = 'Show out-game clock',
-	_opt_buff_desc = 'Shows realtime buff status',
-	_xPosition_desc = 'Origin point X (% from left of screen)',
-	_yPosition_desc = 'Origin point Y (% from top of screen)',
-	_maxFPS_desc = 'FPS cap to reduce performance hit',
-	_buffSize_desc = 'Icon size (ignored with Vanilla style)',
-	_gap_desc = 'Icon gap',
-	_justify_desc = 'Icon alignment (vertical for Vanilla style)',
-	_style_desc = 'Buff icon style',
-	_showBerserker_desc = 'Berserker indicator',
-	_showStamina_desc = 'Stamina indicator',
-	_showCharge_desc = 'Melee charge indicator',
-	_showTransition_desc = 'Transitions like weapon swap, melee cooldown',
-	_showCarryDrop_desc = 'Bag interaction cooldown',
-	_showInteract_desc = 'Shout cooldown',
-	_showInteraction_desc = 'Interaction timer that involves holding USE key',
-	_showInspire_desc = 'Inspire cooldown (giving end)',
-	_showBoost_desc = 'Inspire duration (receiving end)',
-	_showShield_desc = 'Shield recovery cooldown',
-	_showECM_desc = 'ECM duration',
-	_showFeedback_desc = 'ECM Feedback duration',
-	_showTapeLoop_desc = 'Tapeloop duration',
-	_showOverkill_desc = 'Overkill duration',
-	_showCombatMedic_desc = 'Combat medic duration',
-	_showUnderdog_desc = 'Underdog duration',
-	_showBulletstorm_desc = 'Bulletstorm duration',
-	_showSuppressed_desc = 'Suppression that prevents shield recovery and increases bullet deviation.\n(Bullet deviation not in effect)',
-	_showReload_desc = 'Show Reload indicator',
-	_noSprintDelay_desc = 'Ignore after-sprint delay',
-	_hideInteractionCircle_desc = 'Hide vanilla game\'s interaction circle',
-	_simpleBusyIndicator_desc = 'Replace \'busy\' icons with simple red circle at the crosshair\nSuch as: Reloading, Weapon-swap, melee',
-	_simpleBusySize_desc = 'Set size of SimpleBusy indicator if simpleBusy is used',
-	_opt_playerFloat_desc = 'Floating info panel above crew members\' head',
-	_uppercaseNames_desc = 'Name as uppercase',
-	_showIcon_desc = 'Infamy Spade icon',
-	_showRank_desc = 'e.g) V-100',
-	_showDistance_desc = 'e.g) 25m',
-	_showInspire_desc2 = 'Inspire speed-boost',
-	_opt_playerBottom_desc = 'Info text at the bottom of the HUD',
-	_offset_desc = 'Vertical offset if you REALLY want to move it around',
-	_underneath_desc = 'Put PlayerBottom infobox at the very bottom of the screen',
-	_showClock_desc = 'Put a clock after local player info',
-	_showInteractionTime_desc = 'How much time left',
-	_showKill_desc = 'Kill counter',
-	_showPosition_desc = 'Show player\'s position.\n* BETA',
-	_showSpecial_desc = 'Special kill counter',
-	_showAverageDamage_desc = 'Average Damage per bullet',
-	_showDowns_desc = 'Downs counter',
-	_showPing_desc = 'Latency as miliseconds',
-	_showConvertedEnemy_desc = 'Minion health as percent if one has any',
-	_showArrow_desc = 'Arrow pointing at players\' position',
-	_opt_popup_desc = 'Shows damages in 3D space',
-	_damageDecay_desc = 'Decay time',
-	_myDamage_desc = 'Show local player\'s damage',
-	_crewDamage_desc = 'Show other player\'s damage',
-	_AiDamage_desc = 'Show AI\'s damage',
-	_handsUp_desc = 'Show when an AI is going to surrender',
-	_dominated_desc = 'Show when an AI has cuffed himself',
-	_opt_chat_desc = {'_opt_chat_desc_1',{'_opt_chat_desc_2',cl.White:with_alpha(0.5)},{'_opt_chat_desc_3',cl.White:with_alpha(0.6)},{'_opt_chat_desc_4',cl.White:with_alpha(0.7)},{'_opt_chat_desc_5',cl.White:with_alpha(0.8)},{'_opt_chat_desc_6',cl.White:with_alpha(0.9)},{'_opt_chat_desc_7',cl.White:with_alpha(1)}},
-	_fallbackToMe_desc = 'If an event is set to be sent to everyone but the condition is not fulfilled, show it to myself instead.',
-	_includeLocation_desc = 'If location data is available, include it in chat message.',
-	_midstatAnnounce_desc = 'Announce stats on every X kills. Considered as \'Midgame stat\'',
-	_midStat_desc = 'Midgame stat. (limited to ServerSend)',
-	_endStat_desc = 'Endgame stat',
-	_endStatCredit_desc = 'PocoMods group plug after endgame stat ;)',
-	_converted_desc = 'Someone converted a police enforcer',
-	_minionLost_desc = 'Someone lost a minion',
-	_minionShot_desc = 'Someone shot a minion',
-	_hostageChanged_desc = 'Hostage count has been changed\n* Not implemented',
-	_custody_desc = 'Someone is in custody',
-	_downed_desc = 'Someone is downed',
-	_downedWarning_desc = 'Someone is downed more than twice in a row',
-	_replenished_desc = 'Someone replenished health(usually by Med kit)',
-	_messiah_desc = 'You consumed a pistol messiah shot',
-	_drillDone_desc = 'A drill is done.\n* Requires Float-ShowDrills option enabled',
-	_drillAlmostDone_desc = 'A drill has less than 10 seconds left.\n* Requires Float-ShowDrills option enabled',
-	_opt_hit_desc = 'Hit indicator that shows where you\'ve been shot from',
-	_duration_desc = 'Seconds. 0 means auto (follows shield recovery time)',
-	_number_desc = 'Show the exact amount you lost',
-	_numberSize_desc = 'Number size',
-	_numberDefaultFont_desc = 'Number uses default font',
-	_sizeStart_desc = 'Size at the beginning',
-	_sizeEnd_desc = 'Size at the end',
-	_shieldColor_desc = 'Shield lost color, full amount',
-	_healthColor_desc = 'Health lost color, full amount',
-	_shieldColorDepleted_desc = 'Shield lost color, depleted',
-	_healthColorDepleted_desc = 'Health lost color, depleted',
-	_opt_float_desc = 'Floating infobox in 3D position',
-	_frame_desc = 'Alternative box frame',
-	_margin_desc = 'Box inner padding',
-	_keepOnScreen_desc = 'Keep floating boxes on screen',
-	_keepOnScreenMarginX_desc = 'Margin for Left and Right',
-	_keepOnScreenMarginY_desc = 'Margin for Top and Bottom',
-	_showTargets_desc = 'Show pointed mobs',
-	_showDrills_desc = 'Show active drills',
-	_showHighlighted_desc = 'Show floating infobox while highlighted.\nPager answering timer also depends on this.',
-	_showConvertedEnemy_desc2 = 'Try to color-code them to the master.',
-	_showBags_desc = 'Show pointed bags.\n* Requires \'Show Targets\' enabled',
-	_opt_game_desc = 'Game specific enhancements',
-	_fasterDesyncResolve_desc = 'In-game Player husks will catch up severe desync faster and represent more accurate position.',
-	_ingameJoinRemaining_desc = 'In-game SOMEONE IS JOINING dialog will show you how many seconds left',
-	_showRankInKickMenu_desc = 'In-game Kick menu will display player levels with their name',
-	_corpseLimit_desc = 'In-game corpse limit\nDefault is 8.\nEach step multiplies/divides result by 2.',
-	_corpseRagdollTimeout_desc = 'Corpse ragdoll timeout in loud game.\nDefault is 3 seconds. Each step increase/decrease the time by 1 second.',
-	_cantedSightCrook_desc = 'In-game canted sight(as gadget) indicator',
-	_rememberGadgetState_desc = 'Remembers gadget(laser, flashlight, angled sight) status between weapon swaps',
-	_subtitleFontSize_desc = 'Subtitle font size',
-	_subtitleFontColor_desc = 'Subtitle font color',
-	_subtitleOpacity_desc = 'Subtitle opacity',
-	_truncateNames_desc = 'Truncate Player names by length, if required.',
-	_truncateTags_desc = {'_truncateTags_desc_1',{'[Poco]Hud',cl.Tan},' > ', {PocoHud3Class.Icon.Dot..'Hud',cl.Tan}},
-	_truncateTags_desc_1 = 'Truncate Player tags with square brakets.\ne.g)',
-	_opt_chat_desc_1 = 'If an event listed below happens and fulfill set condition, PocoHud will tell others via chat. Possible targets are:\n',
-	_opt_chat_desc_2 = '* No one: No One\n',
-	_opt_chat_desc_3 = '* Only me: Only me\n',
-	_opt_chat_desc_4 = '* Everyone-Host: Everyone if I am host\n',
-	_opt_chat_desc_5 = '* Everyone-EM: Everyone if I have attended the entire match\n',
-	_opt_chat_desc_6 = '* Everyone-Alone: Everyone if I am the only one who has PocoHud\n',
-	_opt_chat_desc_7 = '* Everyone-Always: Everyone, regardless of someone else already broadcasted with PocoHud or not',
-	_city_swat = 'a Gensec Elite',
-	_cop = 'a cop',
-	_fbi = 'an FBI agent',
-	_fbi_heavy_swat = 'an FBI heavy SWAT',
-	_fbi_swat = 'an FBI SWAT',
-	_gangster = 'a gangster',
-	_gensec = 'a Gensec guard',
-	_heavy_swat = 'a heavy SWAT',
-	_security = 'a guard',
-	_shield = 'a shield',
-	_sniper = 'a sniper',
-	_spooc = 'a cloaker',
-	_swat = 'a SWAT',
-	_tank = 'a bulldozer',
-	_taser = 'a taser',
-	_msg_minionShot = '[1] damaged [2] minion for [3]',
-	_vanity_chatsend = 'No one,Only me,Everyone-Host,Everyone-EM,Everyone-Alone,Everyone-Always',
-	_vanity_verbose = 'Never,Detailed mode only,Always',
-	_vanity_midstat = 'Never,50,100',
-	_vanity_align = 'none,Start,Middle,End',
-	_vanity_style = 'N/A,PocoHud,Vanilla',
-	_vanity_auto = 'Auto',
-	_vanity_desyncresolve = 'N/A,Off,Faster,Aggressive',
-	_vanity_corpse = 'N/A,Minimum,Less,Default,More,a Lot,Considerable,Massive,Mammoth,Colossal,Ridiculous',
-	_vanity_cantedsight = 'N/A,Off,Subtle,Obvious,Maximum',
-	_vanity_truncatenames = 'N/A,Off,3,6,9,12,15,18,21',
-	_tab_about = 'About',
-	_tab_options = 'Options',
-	_tab_statistics = 'Statistics',
-	_tab_heistStatus = 'Heist Status',
-	_tab_upgradeSkills = 'Upgrade Skills',
-	_upgr_crewBonusFrom = 'Crew bonus from [1]',
-	_yourPerks = 'Perks that you have acquired',
-	_youAndCrewsPerks = 'Perks that you and your crew will benefit from',
-	_tab_tools = 'Tools',
-	_tab_kitProfiler = 'Kit Profiler',
-	_tab_Inspect = 'Inspect Players',
-	_tab_jukebox = 'Jukebox',
-	_stat_crewKills = '[1]Crew: [2]',
-	_msg_converted = '[1] converted [2] [3]',
-	_buff_exhausted = 'Exhausted',
-	_msg_minionLost = '[1] lost a minion to [2] [3].',
+	_about_trans_fullList = '{Dansk (DA)|Tan}\nNickyFace, DanishDude93\n{Deutsch (DE)|Tan}\nfallenpenguin, Raxdor, GIider, Hoffy,\nNowRiseAgain, Pixelpille, Sithryl,\nValkein, Zee_, baddog_11\n{Español (ES)|Tan}\nNiccy, BurnBabyBurn\n{Français (FR)|Tan}\nChopper385, Dewk Noukem, Lekousin, Shendow\n{Italiano (IT)|Tan}\nOktober, Nitronik\n{Bahasa Indonesia (ID)|Tan}\nPapin Faizal(papin97)\n{Nederlands (NL)|Tan}\nNickolas Cat, Rezqual\n{Norsk (NO)|Tan}\nikoddn\n{Polski (PL_PL)|Tan}\nMartinz, Kuziz, gmaxpl3\n{Português (PT_PT)|Tan}\nBruno \"Personagem\" Tibério, John Ryder\n{Português (PT_BR)|Tan}\njkisten\n{Русский (RU)|Tan}\ncollboy, Hellsing, troskahtoh',
+	_about_trans_special_thanks_list = '{Overkill|White}\nfor a legendary game {& not kicking my arse off|Silver|0.5}\n{Harfatus|White}\nfor a cool injector\n{Olipro|White}\nfor keeping MOD community alive\n{v00d00 & gir489 & 90e|White}\nfor making me able to learn Lua from the humble ground\n{Arkkat|White}\nfor crashing the game for me at least 50 times since alpha stage\n{Tatsuto|White}\nfor PD2Stats.com API\n{You|Yellow}\nfor keeping me way too busy to go out at weekends {/notreally|Silver|0.5}',
+	_kit_equip_btn_hint = '{_kit_equip_btn_hint1} {_kit_equip_btn_hint2|Tan}\n{_kit_equip_btn_hint3} {_kit_equip_btn_hint4|Red} {_kit_equip_btn_hint5}',
+	_kit_key_edit_hint = '{_kit_key_edit_hint1}  {_kit_key_edit_hint2|Yellow} {_kit_key_edit_hint3}\n{_kit_key_edit_hint4|Silver}\n{_kit_key_edit_hint5|Red}',
+	_kit_profiler_desc = '{_Chapter} {_kit_profiler_desc1} {_RC|White} {_kit_profiler_desc2|White}',
+	_kit_save_desc = '{_Chapter} {_kit_save_desc1} {_RC|White} {_kit_save_desc2|White}',
+	_kit_save_hint = '{_kit_save_hint1|Tan} / {_kit_save_hint2|Tomato} {_kit_save_hint3}',
+	_kit_saved_kits_title = '{_Chapter} {_kit_saved_kits_title1} {_RC|White} {_kit_saved_kits_title2|White}',
+	_mob_city_swat = 'a Gensec Elite',
+	_mob_cop = 'a cop',
+	_mob_fbi = 'an FBI agent',
+	_mob_fbi_heavy_swat = 'an FBI heavy SWAT',
+	_mob_fbi_swat = 'an FBI SWAT',
+	_mob_gangster = 'a gangster',
+	_mob_gensec = 'a Gensec guard',
+	_mob_heavy_swat = 'a heavy SWAT',
+	_mob_security = 'a guard',
+	_mob_shield = 'a shield',
+	_mob_sniper = 'a sniper',
+	_mob_spooc = 'a cloaker',
+	_mob_swat = 'a SWAT',
+	_mob_tank = 'a bulldozer',
+	_mob_taser = 'a taser',
 	_msg_around = 'around [1]',
-	_buff_combatMedicDamageShort = 'Dmg+',
-	_buff_bulletStormShort = 'BS',
-	_buff_underdogShort = 'Dmg+',
-	_buff_overkillShort = 'Dmg+',
-	_msg_usedPistolMessiah = 'Used Pistol messiah, [1] left.',
-	_msg_usedPistolMessiahCharges = '[1] charge',
-	_msg_usedPistolMessiahChargesPlu = '[1] charges',
 	_msg_captured = '[1] has been captured [2]',
+	_msg_converted = '[1] converted [2] [3]',
+	_msg_downed = '[1] was downed',
+	_msg_downedWarning = 'Warning: [1] has been downed [2] times',
+	_msg_minionLost = '[1] lost a minion to [2] [3].',
+	_msg_minionShot = '[1] damaged [2] minion for [3]',
+	_msg_not_implemented = 'Not Implemented for now',
 	_msg_repenished = '[1] replenished health by [2]% [3]',
 	_msg_replenishedDown = '(+[1] down)',
 	_msg_replenishedDownPlu = '(+[1] downs)',
-	_msg_downedWarning = 'Warning: [1] has been downed [2] times',
-	_msg_downed = '[1] was downed',
-	_tab_stat_perheist = 'Per Heist',
-	_word_broker = 'Broker',
-	_word_job = 'Job',
-	_word_heat = 'Heat',
-	_word_na = 'N/A',
-	_tab_stat_perday = 'Per Day',
-	_word_heist = 'Heist',
-	_word_day = 'Day',
-	_word_started = 'Started',
-	_word_completed = 'Completed',
-	_word_time = 'Time',
-	_desc_heist_count_started_1 = 'From Beginning: ',
-	_desc_heist_count_started_2 = '\nDropped in: ',
-	_desc_heist_count_completed = 'Quit: ',
-	_desc_heist_time_hm = '[1]h [2]m',
-	_desc_heist_time_m = '[1]m',
-	_desc_heist_time_ms = '[1]m [1]s',
-	_desc_heist_time_average = 'Average: ',
-	_desc_heist_day = 'day [1]',
-	_desc_heist_dayalt = 'day [1] alt [2]',
-	_desc_heist_unlisted = '-- Not listed heists --',
-	_desc_heist_may_not_match = '* Numbers may not match between heists and days.',
-	_word_yes = 'Yes',
-	_word_no = 'No',
-	_desc_not_in_effect = 'Not in effect',
-	_desc_no_upgrades_acquired = 'No upgrades acquired\n',
-	_btn_apply_and_reload = 'APPLY & RELOAD',
-	_btn_discard = 'DISCARD CHANGES',
-	_btn_reset = 'RESET TO DEFAULT',
-	_btn_reset_category = 'RESET THIS CATEGORY',
-	_desc_apply_and_reload = 'Some options will be applied on the next session.',
-	_desc_discard = 'Discard temporary changes and revert to previous settings',
-	_desc_reset = 'Revert to the default setting.',
-	_desc_reset_category = 'Revert this category to the default setting.',
-	_desc_reset_ask = '\nContinue?',
-	_tab_buff = 'Buff',
-	_tab_chat = 'Chat',
-	_tab_corner = 'Corner Text',
-	_tab_float = 'Floating Labels',
-	_tab_game = 'Game mechanisms',
-	_tab_hit = 'Hit indicator',
-	_tab_playerBottom = 'Bottom Infobox',
-	_tab_playerFloat = 'Overhead infobox',
-	_tab_popup = 'Popup Labels',
-	_tab_root = 'PocoHud3',
-	_msg_not_implemented = 'Not Implemented for now',
-	_rose_whistle = 'whistle',
-	_rose_cable = 'use cableties',
-	_rose_medbag = 'need medbag',
-	_rose_shoot = 'shoot em',
-	_rose_drill = 'i got the drill',
-	_rose_overrun = 'we\'re overrun',
-	_rose_timetogo = 'time to go',
-	_rose_thisway = 'this way',
-	_rose_straight = 'straight ahead',
-	_rose_cantstay = 'can\'t stay here',
-	_rose_almost = 'almost there',
-	_rose_getout = 'get out',
-	_rose_upstairs = 'upstairs',
-	_rose_hurry = 'hurry',
-	_rose_alright = 'alright',
-	_rose_letsgo = 'let\'s go',
-	_rose_left = 'Left',
-	_rose_right = 'Right',
-	_rose_thanks = 'thanks',
-	_rose_halfway = 'halfway done',
-	_rose_careful = 'careful',
-	_rose_downstairs = 'downstairs',
-	_rose_inside = 'inside',
-	_rose_anysecond = 'ANY second',
-	_rose_fewminutes = 'few more minutes',
-	_rose_down = 'down here',
-	_rose_wrong = 'wrong way',
-	_rose_defended = 'keep defended',
-	_rose_cams = 'take cams',
-	_rose_shit = 'shit',
-	_rose_ammo = 'need ammo',
-	_rose_fuck = 'oh fuck',
-	_kit_categories = 'SET NAME,PRIMARY,SECONDARY,ARMOR,GADGET,MELEE',
-	_buff_painkillerShort = 'PK',
-	_showPainkiller_desc = 'Show received Painkiller duration',
-	_buff_swanSongShort = 'SS',
-	_showSwanSong_desc = 'Show Swansong-bulletstorm duration',
-
+	_msg_usedPistolMessiah = 'Used Pistol messiah, [1] left.',
+	_msg_usedPistolMessiahCharges = '[1] charge',
+	_msg_usedPistolMessiahChargesPlu = '[1] charges',
+	_opt_chat_desc = '{_opt_chat_desc_1}\n{_opt_chat_desc_2|White|0.5}\n{_opt_chat_desc_3|White|0.6}\n{_opt_chat_desc_4|White|0.7}\n{_opt_chat_desc_5|White|0.8}\n{_opt_chat_desc_6|White|0.9}\n{_opt_chat_desc_7|White}',
+	_opt_truncateTags_desc = '{_opt_truncateTags_desc_1} {[Poco]Hud|Tan} > {_Dot|Tan}{Hud|Tan}',
 }
 --- miniClass start ---
 local TBuff = class()
@@ -469,6 +109,9 @@ end
 function TBuff:_make()
 	local buffO = O:get('buff')
 	local style = buffO.style
+	local vanilla = style == 2
+	local glowy = style == 3
+
 	local size = style==2 and 40 or buffO.buffSize
 	local data = self.data
 	local simple = self.owner:_isSimple(data.key)
@@ -479,19 +122,16 @@ function TBuff:_make()
 		self.pnl = pnl
 		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
 		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = simpleRadius, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
-	elseif style == 2 then
+	elseif vanilla then
 		local pnl = self.ppnl:panel({x = 0,y=0, w=100,h=100})
 		self.pnl = pnl
 		self.lbl = pnl:text{text='', font=FONT, align='center', font_size = size/2, color = data.color or data.good and clGood or clBad, x=1,y=1, layer=2, blend_mode = 'normal'}
 		self.bg = HUDBGBox_create( pnl, { w = size, h = size, x = 0, y = 0 }, { color = cl.White, blend_mode = 'normal' } )
 		self.bmp = data.icon and pnl:bitmap( { name='icon', texture=data.icon, texture_rect=data.iconRect, blend_mode = 'add', layer=1, x=0,y=0, color=style==2 and cl.White or data.good and clGood or clBad } ) or nil
 		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
-		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
-		self.pie:set_position( -size, 0)
 		if self.bmp then
-			local mul = style==2 and 1 or 0.7
-			if self.bmp:width() > mul*size then
-				self.bmp:set_size(mul*size,mul*size)
+			if self.bmp:width() > size then
+				self.bmp:set_size(size,size)
 			end
 			self.bmp:set_center(5+size + size/2,size/2)
 		end
@@ -503,9 +143,15 @@ function TBuff:_make()
 		self.lbl = pnl:text{text='', font=FONT, font_size = size/4, color = data.color or data.good and clGood or clBad, x=1,y=1, layer=2, blend_mode = 'normal'}
 		self.bg = pnl:bitmap( { name='bg', texture= 'guis/textures/pd2/hud_tabs',texture_rect=  { 105, 34, 19, 19 }, color= cl.Black:with_alpha(0.2), layer=0, x=0,y=0 } )
 		self.bmp = data.icon and pnl:bitmap( { name='icon', texture=data.icon, texture_rect=data.iconRect, blend_mode = 'add', layer=1, x=0,y=0, color=data.good and clGood or clBad } ) or nil
-		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
-		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
-		self.pie:set_position( 0, 0)
+		if glowy then
+			self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = 'guis/textures/pd2/specialization/progress_ring',
+			radius = size/2*1.2, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
+			self.pie:set_position( -size*0.1, -size*0.1)
+		else
+			local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
+			self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = size/2, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
+			self.pie:set_position( 0, 0)
+		end
 		if self.bmp then
 			if self.bmp:width() > 0.7*size then
 				self.bmp:set_size(0.7*size,0.7*size)
@@ -527,6 +173,7 @@ function TBuff:draw(t,x,y)
 		local prog = (now()-st)/(et-st)
 		local style = O:get('buff','style')
 		local vanilla = style == 2
+		local glowy = style == 3
 		local simple = self.owner:_isSimple(data.key)
 		if (prog >= 1 or prog < 0) and et ~= 1 then
 			self.dead = true
@@ -572,7 +219,12 @@ function TBuff:draw(t,x,y)
 					self.lbl:set_center(ww/2,hh-h/2)
 				end
 			end
-			self.pie:set_current(1-prog)
+			if self.pie then
+				if O:get('buff','mirrorDirection') then
+					self.pie._circle:set_rotation(-(1-prog)*360)
+				end
+				self.pie:set_current(1-prog)
+			end
 			if not self.dying then
 				self.pnl:set_alpha(1)
 			end
@@ -748,6 +400,7 @@ local _drillHosts = {
 	['d475830b4e6eda32'] = 'a vault door',
 	['b2928ed7d5b8797e'] = 'a cage door',
 	['43132b0a273df773'] = 'an office door',
+	['b8ebd1a5a8426e52'] = 'an artifact safe'
 }
 local __n = {}
 function TFloat:_getName()
@@ -1113,6 +766,9 @@ end
 function PocoLocation:endRoom()
 	local lvl = managers.job:current_level_id() or ''
 	local currentRooms = self.rooms[lvl] or {}
+	if type(currentRooms) == 'string' then
+		currentRooms = self.rooms[currentRooms] or {}
+	end
 	self.rooms[lvl] = currentRooms
 	self.currentRooms = currentRooms
 	local parsedRoom -- {x,y,z,x,y,z}
@@ -1197,8 +853,9 @@ function PocoLocation:update(t,dt)
 		self._loaded = true
 		self:load()
 	end
-	local ff = _.g('setup:freeflight()')
+	local ff = Poco.ff or _.g('setup:freeflight()')
 	if ff then
+		Poco.ff = ff
 		ff:update(t, dt)
 	end
 	if not Poco.roomOn then return end
@@ -1259,7 +916,6 @@ end
 
 --- End of Location2
 
-local LocationJSONFilename = 'poco\\hud3_rooms.json';
 function PocoLocation:load()
 	local f,err = io.open(LocationJSONFilename, 'r')
 	local result = false
@@ -1368,7 +1024,9 @@ end
 
 function PocoUIElem:hide()
 	self._hide = true
-	self.pnl:set_visible(false)
+	if alive(self.pnl) then
+		self.pnl:set_visible(false)
+	end
 end
 
 function PocoUIElem:setLabel(text)
@@ -1826,13 +1484,13 @@ function PocoUIChooseValue:init(parent,config,inherited)
 end
 
 function PocoUIChooseValue:selection()
-	return {}
+	return self.config.selection or {}
 end
 
 function PocoUIChooseValue:go(delta)
 	local val = self:val()
 	local sel = self:selection()
-	local keys = table.sorted_keys(sel)
+	local keys = table.map_keys(sel)
 	local ind = table.index_of(keys,val)
 	self:val(keys[ind+delta] or delta>0 and keys[1] or keys[#keys] )
 end
@@ -1877,6 +1535,7 @@ PocoHud3Class.PocoUIReversedBooleanValue = PocoUIReversedBooleanValue
 function PocoUIReversedBooleanValue:selection()
 	return {YES=true,NO=false}
 end
+
 local PocoUIColorValue = class(PocoUIChooseValue)
 PocoHud3Class.PocoUIColorValue = PocoUIColorValue
 function PocoUIColorValue:init(parent,config,inherited)
@@ -1952,6 +1611,7 @@ function PocoUIKeyValue:setup()
 				return
 			end
 		end
+		Poco:ignoreBind()
 		self:sound('menu_skill_investment')
 		self:val(keyName)
 		self:cancel()
@@ -1986,13 +1646,17 @@ local PocoUIStringValue = class(PocoUIValue)
 PocoHud3Class.PocoUIStringValue = PocoUIStringValue
 
 function PocoUIStringValue:init(parent,config,inherited)
-	config.noArrow = true
+	config.noArrow = not config.selection
 	self.super.init(self,parent,config,true)
 	self:_initLayout()
 	self:val(config.value or '')
 	self.box = self.pnl:rect{color = cl.White:with_alpha(0.3), visible = false}
 	self:_bind(PocoEvent.Pressed,function(self,x,y)
-		if not self._editing then
+		if self.arrowLeft and self.arrowLeft:inside(x,y) then
+			return
+		elseif self.arrowRight and self.arrowRight:inside(x,y) then
+			return
+		elseif not self._editing then
 			self:startEdit()
 			self:selectAll()
 		else
@@ -2016,6 +1680,32 @@ function PocoUIStringValue:init(parent,config,inherited)
 	end
 end
 
+function PocoUIStringValue:selection()
+	return self.config.selection or {}
+end
+
+function PocoUIStringValue:prev()
+	PocoUIChooseValue.go(self,-1)
+	self._lastClick = now()
+end
+
+function PocoUIStringValue:innerVal(set)
+	if set then
+		local key = table.get_key(self:selection(),set)
+		if key then
+			return self:val(key)
+		end
+	else
+		return self:selection()[self:val()] or self:val()
+	end
+end
+
+
+function PocoUIStringValue:next()
+	PocoUIChooseValue.go(self,1)
+	self._lastClick = now()
+end
+
 function PocoUIStringValue:_initLayout()
 	if not self.config.valX and self.config.text:gsub(' ','') == '' then
 		self.config.valX = self.config.w / 2
@@ -2028,6 +1718,14 @@ function PocoUIStringValue:val(set)
 	end
 	local result =  PocoUIValue.val(self,set)
 	self:repaint()
+	if set then
+		local text = self:selection()[result]
+		if text then
+			_.l(self.valLbl,text,true)
+			self.valLbl:set_center_x(self.config.valX or 12*self.config.w/16)
+			self.valLbl:set_x(math.floor(self.valLbl:x()))
+		end
+	end
 	return result
 end
 
@@ -2533,7 +2231,7 @@ function PocoTabs:repaint()
 				color = cl.White:with_alpha(isSelected and 1 or 0.1)
 			})
 			local lbl = hPnl:text({
-				x = 10, y = 0, w = 200, h = self.config.th,
+				x = 10, y = 0, w = 400, h = self.config.th,
 				name = 'tab_name', text = itm.name,
 				font = FONT,
 				font_size = self.config.fontSize,
@@ -2578,7 +2276,7 @@ function PocoMenu:init(ws,alternative)
 		self.gui = PocoTabs:new(ws,{name = 'PocoRose',x = 0, y = -1, w = ws:width(), th = 1, h = ws:height()+1, pTab = nil, alt = true})
 
 	else
-		self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1000, th = 30, h = ws:height()-20, pTab = nil})
+		self.gui = PocoTabs:new(ws,{name = 'PocoMenu',x = 10, y = 10, w = 1200, th = 30, h = ws:height()-20, pTab = nil})
 
 		self.pnl = ws:panel():panel({ name = 'bg' })
 		self.pnl:rect{color = cl.Black:with_alpha(0.7),layer = Layers.Bg}
@@ -2874,7 +2572,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		local rowObj = {host:upper(),job_string}
 		for i, name in ipairs( risks ) do
 			local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
-			local f = managers.statistics._global.sessions.jobs[heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'] or 0
+			local f = managers.statistics._global.sessions.jobs[(heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'):gsub('_wrapper','')] or 0
 			if i > 1 or not pro then
 				table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
 			else
@@ -2883,7 +2581,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		end
 		local multi = managers.job:get_job_heat_multipliers(heist)
 		local color = multi >= 1 and math.lerp( cl.Khaki, cl.Chartreuse, 6*(multi - 1) ) or math.lerp( cl.Crimson, cl.OrangeRed, 3*(multi - 0.7) )
-		table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..managers.job:get_job_heat(heist)..')',color:with_alpha(0.3)}})
+		table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..(managers.job:get_job_heat(heist) or '?')..')',color:with_alpha(0.3)}})
 		tbl[#tbl+1] = rowObj
 	end
 	for host,jobs in _.p(host_list) do
@@ -2925,10 +2623,12 @@ function PocoHud3Class._drawHeistStats (tab)
 		end
 		local level = levels[val]
 		if not level then return end
+		local isAlt = val:match('_night$') or val:match('_day$')
 		local name = managers.localization:to_upper_text(tweak_data.levels[val].name_id)
 		if name == prefix then
 			prefix = {Icon.Ghost,cl.Gray}
 		end
+		name = name .. (isAlt and ' '..L('_tab_stat'..isAlt) or '')
 		local _c = function(n,color)
 			return {n,n and n>0 and (color or cl.Lime) or cl.Gray }
 		end
@@ -2946,22 +2646,25 @@ function PocoHud3Class._drawHeistStats (tab)
 			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,align='left',text=name,hintText=suffix}),
 			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text=level.started,hintText={
 				L('_desc_heist_count_started_1'),
-				_c(level.from_beginning),
+				_c(level.from_beginning),'\n',
 				L('_desc_heist_count_started_2'),
 				_c(level.drop_in)
 			}}),
 			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text=level.completed,hintText={L('_desc_heist_count_completed'), _c(level.quited,cl.Red)}}),
 			PocoUIHintLabel:new(oTab,{x=0,y=0,w=200,h=fontSize,text={
 				t>0 and (
-					t > 60 and L('_desc_heist_time_hm',{math.floor(t/60),math.floor(t%60)}) or L('_desc_heist_time_m',{t} )
+					t > 60 and L('_desc_heist_time_hm',{math.floor(t/60),math.floor(t%60)}) or L('_desc_heist_time_m',{_.f(t)} )
 				) or {L('_word_na'),cl.Gray}
 			},hintText={
 				L('_desc_heist_time_average'),L('_desc_heist_time_ms',{math.floor(avg),math.floor(avg*60%60)})
 			},avg>0 and cl.Lime or cl.Gray})
 		}
 	end
-	for host,jobs in _.p(host_list) do
-		for no,heist in _.p(jobs) do
+	for host,_jobs in _.p(host_list) do
+		local jobs = table.deepcopy(_jobs)
+
+		while table.size(jobs) > 0 do
+			local heist = table.remove(jobs,1)
 			local jobData = tweak_data.narrative.jobs[heist]
 			local jobName
 			if jobData.wrapped_to_job then
@@ -2969,10 +2672,16 @@ function PocoHud3Class._drawHeistStats (tab)
 			else
 				jobName = jobData.name_id
 			end
+			if jobData and jobData.job_wrapper then
+				for k,realJobs in pairs(jobData.job_wrapper) do
+					table.insert(jobs,realJobs)
+				end
+			end
 			if jobData.chain then
 				for day,level in pairs(jobData.chain) do
-					if level.level_id then
-						addDay(level.level_id,managers.localization:to_upper_text(jobName),L('_desc_heist_day',{day}))
+					local lID = level.level_id
+					if lID then
+						addDay(lID,managers.localization:to_upper_text(jobName),L('_desc_heist_day',{day}))
 					else -- alt Days
 						for alt,_level in pairs(level) do
 							addDay(_level.level_id,managers.localization:to_upper_text(jobName),L('_desc_heist_dayalt',{day,alt}))
@@ -3031,7 +2740,7 @@ function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
 					if isMulti and type(val) == 'number' then
 						val = _.s(val*100) .. '%'
 					elseif type(val) == 'table' then
-						val = _.s( type(val[1]) == 'number' and _.s(val[1]*100) .. '%' or _.s(val[1]==true and 'Yes' or val[1]), _.s(val[2],'sec') )
+						val = _.s( type(val[1]) == 'number' and _.s(val[1]*100) .. '%' or _.s(val[1]==true and L('_word_yes') or val[1]), _.s(val[2],'sec') )
 					elseif val == true then
 						val = L('_word_yes')
 					else
@@ -3063,7 +2772,7 @@ function PocoHud3Class._drawUpgrades (tab, data, isTeam, desc, offsetY)
 		end
 		tab:set_h(y)
 	else
-		y = me:_drawRow(pnl,fontSize,{{L('_desc_no_upgrades_acquired'),cl.White:with_alpha(0.5)}},0,y,w)
+		y = me:_drawRow(pnl,fontSize,{{L('_desc_no_upgrades_acquired'),cl.White:with_alpha(0.5)},'\n'},0,y,w)
 	end
 	return y
 end
@@ -3077,7 +2786,7 @@ function PocoHud3Class._drawPlayer(tab)
 		local peer = member and member:peer()
 		if peer then
 			local uid, __ = peer._user_id
-			local oTab = oTabs:add(_.s('Player',i,':',peer._name))
+			local oTab = oTabs:add(L('_insp_player',{i,peer._name}))
 			local isMe = i==me.pid
 
 			local objs = {} -- stores UIelems & cbks
@@ -3085,14 +2794,14 @@ function PocoHud3Class._drawPlayer(tab)
 			local ooTabs = PocoTabs:new(me._ws,{name = 'Player'..i,x = 10, y = 10, w = oTab.pnl:width()-20, th = 30, fontSize = 18, h = oTab.pnl:height()-20, pTab = oTab})
 
 			-- Inner - Basic
-			local ooTab = ooTabs:add('Basic')
-			local tbl = {{'Key','Value'}}
+			local ooTab = ooTabs:add(L('_insp_basic'))
+			local tbl = {{L('_insp_key'),L('_insp_value')}}
 			y = 10
 			objs.btnProfile = PocoUIButton:new(ooTab,{
 				onClick = function()
 					PocoHud3Class._open('http://steamcommunity.com/profiles/'..uid)
 				end,
-				x = 10, y = 10, w = 200,h=26, text=_.s(uid), hintText='Hold Shift to open in out-game browser.'
+				x = 10, y = 10, w = 200,h=26, text=_.s(uid), hintText=L('_about_hold_shift')
 			})
 
 			objs.btnSteam = PocoUIButton:new(ooTab,{
@@ -3108,12 +2817,12 @@ function PocoHud3Class._drawPlayer(tab)
 										local lbl2 = objs['lblGameTime'..i]
 										if lbl and alive(lbl) then
 											lbl:set_text(_.s(obj.name))
-											lbl2:set_text(_.s('Total',obj.playtime_forever/60,'h,',obj.playtime_2weeks/60,'h lately'))
+											lbl2:set_text(L('_insp_total_lately',{_.f(obj.playtime_forever/60),_.f(obj.playtime_2weeks/60)}))
 										end
 									end
-									self:setLabel(_.s('Successfully received',#result.games,'games from Steam profile.'))
+									self:setLabel(L('_insp_profile_success',{#result.games}))
 								else
-									self:setLabel('Denied: Private/Member-only profile?')
+									self:setLabel(L('_insp_profile_denied'))
 								end
 								self:disable()
 							else
@@ -3123,11 +2832,11 @@ function PocoHud3Class._drawPlayer(tab)
 					end)
 				end,
 				x = 10, y = 10, w = 370,h=26,
-				text='Fetch Recent Games'
+				text=L('_insp_fetch_recent')
 			})
-			__, objs.lblGame1 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'Game1')
-			__, objs.lblGame2 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'Game2')
-			__, objs.lblGame3 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'Game3')
+			__, objs.lblGame1 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},L('_insp_game',{1}))
+			__, objs.lblGame2 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},L('_insp_game',{2}))
+			__, objs.lblGame3 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},L('_insp_game',{3}))
 			__, objs.lblGameTime1 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
 			__, objs.lblGameTime2 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
 			__, objs.lblGameTime3 = _.l({pnl = ooTab.pnl, x=0,y=0,w=200, h=26,align='center',vertical='center',font = FONT, font_size = 20},'-')
@@ -3141,10 +2850,10 @@ function PocoHud3Class._drawPlayer(tab)
 							if r then
 								if result.error_code == 0 then
 									self:disable()
-									self:setLabel('Successfully received from PD2Stats.com')
-									objs.btnPD2Cheater:setLabel(result.cheater and 'Suspicious.' or 'Seems legit.')
+									self:setLabel(L('_insp_pd2_success'))
+									objs.btnPD2Cheater:setLabel(L('_insp_pd2_'..(result.cheater and 'susp' or 'legit')))
 								else
-									self:setLabel(result.error_string or 'Failed.')
+									self:setLabel(result.error_string or L('_insp_pd2_failed'))
 								end
 							else
 								me:err(result)
@@ -3153,13 +2862,13 @@ function PocoHud3Class._drawPlayer(tab)
 					end)
 				end,
 				x = 10, y = 10, w = 370,h=26,
-				text='Fetch PD2Stats.com data'
+				text=L('_insp_fetch_pd2_btn')
 			})
 			objs.btnPD2Cheater = PocoUIButton:new(ooTab,{
 				onClick = function()
 					PocoHud3Class._open('http://pd2stats.com/profiles/'..uid)
 				end,
-				x = 10, y = 10, w = 200,h=26, text='Unknown', hintText='Hold Shift to open in out-game browser.'
+				x = 10, y = 10, w = 200,h=26, text=L('_word_unknown'), hintText=L('_about_hold_shift')
 			})
 
 --[[ Check Skills
@@ -3167,16 +2876,16 @@ function PocoHud3Class._drawPlayer(tab)
 			local upg = _.g('Global.player_manager.synced_team_upgrades')
 			upg = upg and
 --]]
-			tbl[#tbl+1] = {{'Level',cl.Tan},_.s(isMe and managers.experience:current_rank() or peer:rank() or 0,Icon.Dot,isMe and managers.experience:current_level() or peer:level())}
-			tbl[#tbl+1] = {{'Sync',cl.Tan},peer._synced and 'Completed' or 'Not completed'}
-			tbl[#tbl+1] = {{'UID',cl.Tan},objs.btnProfile}
+			tbl[#tbl+1] = {{L('_word_level'),cl.Tan},_.s(isMe and managers.experience:current_rank() or peer:rank() or 0,Icon.Dot,isMe and managers.experience:current_level() or peer:level())}
+			tbl[#tbl+1] = {{L('_word_sync'),cl.Tan},L(peer._synced and '_word_synced' or '_word_not_completed')}
+			tbl[#tbl+1] = {{L('_word_uid'),cl.Tan},objs.btnProfile}
 			tbl[#tbl+1] = {objs.btnSteam}
 			tbl[#tbl+1] = {objs.lblGame1,objs.lblGameTime1}
 			tbl[#tbl+1] = {objs.lblGame2,objs.lblGameTime2}
 			tbl[#tbl+1] = {objs.lblGame3,objs.lblGameTime3}
 			tbl[#tbl+1] = {objs.btnAchievement}
 			tbl[#tbl+1] = {objs.btnPD2Stats}
-			tbl[#tbl+1] = {{'PD2Stats Verdict',cl.Tan},objs.btnPD2Cheater}
+			tbl[#tbl+1] = {{L('_insp_pd2_verdict'),cl.Tan},objs.btnPD2Cheater}
 			for k,row in pairs(tbl) do
 				y = me:_drawRow(ooTab.pnl,20,row,10,y,600,k % 2 ~= 0,true,1.3)
 			end
@@ -3185,7 +2894,7 @@ function PocoHud3Class._drawPlayer(tab)
 			----
 
 			-- CheckAchievement
-			local ooTab = ooTabs:add('Achievements')
+			local ooTab = ooTabs:add(L('_insp_achievements'))
 			PocoUIButton:new(ooTab,{
 				onClick = function(self)
 					PocoHud3Class._get(self,'http://steamcommunity.com/profiles/'..uid..'/stats/PAYDAY2', function(success, body)
@@ -3195,7 +2904,7 @@ function PocoHud3Class._drawPlayer(tab)
 							tbl = {{
 								PocoUIButton:new(ooTab,{
 									onClick=function() PocoHud3Class._open('http://steamcommunity.com/profiles/'..uid..'/stats/PAYDAY2') end,
-									x=0,y=0,w=450,h=26,font_size=20,align='center',text={'Achievements',cl.Moccasin},hintText='Hold SHIFT to open in out-game browser'}),
+									x=0,y=0,w=450,h=26,font_size=20,align='center',text={L('_insp_achievements'),cl.Moccasin},hintText=L('_about_hold_shift')}),
 								{'Date',cl.Moccasin}
 							}}
 							y = 10
@@ -3210,6 +2919,10 @@ function PocoHud3Class._drawPlayer(tab)
 									}
 								end
 								cnt = cnt + 1
+								if cnt > 500 then
+									-- something went wrong I guess??
+									break
+								end
 							end
 							if cnt == 0 then
 									tbl[#tbl+1] = {'Not found.'}
@@ -3224,7 +2937,7 @@ function PocoHud3Class._drawPlayer(tab)
 					end)
 				end,
 				x = 10, y = 10, w = 400,h=50,
-				text='Fetch Achievements data'
+				text=L('_insp_fetch_achievements_btn')
 			})
 
 --
@@ -3240,10 +2953,9 @@ function PocoHud3Class._drawPlayer(tab)
 			----
 		end
 	end
-	if not y then
-		oTabs:add('N/A')
-		y = 0
-	end
+	local oTab = oTabs:add(L('_tab_karma'))
+	PocoHud3Class._drawKarma(oTab)
+
 	return y
 end
 
@@ -3254,10 +2966,15 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		end,
 		x = 10, y = 10, w = 200,h=100,
 		text={{'PocoHud3 r'},{REV,cl.Gray},{' by ',cl.White},{'Zenyr',cl.MediumTurquoise},{'\n'..TAG,cl.Silver}},
-		hintText = {{'Discuss/suggest at PocoMods steam group!',cl.LightSkyBlue},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
+		hintText = {{L('_about_group_btn'),cl.LightSkyBlue},'\n',L('_about_hold_shift')}
 	})
 
-	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = tab.pnl, x = 220, y = 10},'Loading RSS...',true)
+	local self = me
+	local oTabs = PocoTabs:new(self._ws,{name = 'abouts',x = 220, y = 10, w = tab.pnl:width()-230, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
+	local oTab = oTabs:add(L('_about_recent_updates'))
+
+
+	local __, rssLbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=25, pnl = oTab.pnl, x = 10, y = 10},L('_about_loading_rss'),true)
 	local _strip = function(s)
 		return s:gsub('&lt;','<'):gsub('&gt;','>'):gsub('<br>','\n'):gsub(string.char(13),''):gsub('<.->',''):gsub('&amp;','&'):gsub('&amp;','&')
 	end
@@ -3276,19 +2993,19 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 					local diffS = - _.t(false,d)
 					if diffS < 3600*24 then
 						local h = math.max(0,math.floor(diffS/3600))
-						date = _.s( h==1 and 'an' or h,h>1 and 'hrs' or 'hr','ago')
+						date = _.s( h==1 and L('_word_an') or h,h>1 and L('_word_hrs') or L('_word_hr'),L('_word_ago'))
 					else
 						local d = math.floor(diffS/3600/24)
-						date = _.s( d==1 and 'a' or d,d>1 and 'days' or 'day','ago')
+						date = _.s( d==1 and L('_word_a') or d,d>1 and L('_word_days') or L('_word_day'),L('_word_ago'))
 					end
 					rss[#rss+1] = {_strip(title),_strip(desc),date,link}
 
 				end
 			end
 			Poco._rss = rss
-			if not alive(lbl) then return end
-			_.l(lbl,'Recent PocoMod Updates',true)
-			local y = 35
+			if not alive(rssLbl) then return end
+			_.l(rssLbl,' ',true)
+			local y = 10
 			for ind,obj in pairs(rss) do
 				local title = '   '..obj[1]
 				local bef,name,rev,rest=title:match('^(.-)(PocoHud3 r)(%d-)( .-)$')
@@ -3297,19 +3014,31 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 				else
 					title = {title,cl.DeepSkyBlue}
 				end
-				PocoUIButton:new(tab,{
+				local pos,line = 1,1
+				local hintText = obj[2]:gsub( "(%s+)()(%S+)()",function( sp, b, word, e )
+					if line < 8 then
+						if e-pos > 60 then
+							pos = b
+							line = line + 1
+							return "\n"..word
+						end
+					else
+						return ''
+					end
+				end) .. '...'
+				PocoUIButton:new(oTab,{
 					onClick = function(self)
 						PocoHud3Class._open(obj[4])
 					end,
-					x = 220, y = y, w = 500, h=50,
-					fontSize = 22,align = 'left',
+					x = 10, y = y, w = 500, h=50,
+					fontSize = 20,align = 'left',
 					text=title,
-					hintText = {{obj[2]:sub(1,200)..'...'},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
+					hintText = L('{'..hintText..'} \n {_about_hold_shift|DarkSeaGreen}')
 				})
-				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = tab.pnl, x = 340, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
+				local __, lbl = _.l({font=FONT, color=cl.Tan, alpha=0.9, font_size=18, pnl = oTab.pnl, x = 120, y = y+25, w = 350, h=20, vertical = 'center',align='right'},obj[3])
 
 				y = y + 60
-				tab:set_h(y)
+				oTab:set_h(y)
 				--_.l(lbl,obj[1]..'\n'..obj[2],true)
 			end
 		end
@@ -3319,6 +3048,33 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 	else
 		PocoHud3Class._get(nil,'http://steamcommunity.com/groups/pocomods/rss', _onRSS)
 	end
+	local oTab = oTabs:add(L('_about_trans_volunteers'))
+	local y = 10
+	local w = oTab.pnl:width()-20
+	local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_presented'),true)
+	y = y + 20
+	lbl:set_w(w)
+	__, lbl = _.l({font=FONT, color=cl.White, font_size=25, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_names'),true)
+	y = y + lbl:h()+20
+	lbl:set_w(w)
+
+	__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, alpha=0.9, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_special_thanks'),true)
+	y = y + 20
+	lbl:set_w(w)
+
+	__, lbl = _.l({font=FONT, color=cl.Silver, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_special_thanks_list'),true)
+	y = y + lbl:h()+20
+	lbl:set_w(w)
+
+	__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_volunteers'),true)
+	y = y + lbl:h()
+	lbl:set_w(w)
+	oTab:set_h(y)
+
+	__, lbl = _.l({font=FONT, color=cl.Silver, font_size=18, pnl = oTab.pnl, x = 10, y = y, align='center'},L('_about_trans_fullList'),true)
+	y = y + lbl:h()+20
+	lbl:set_w(w)
+	oTab:set_h(y)
 
 	PocoUIButton:new(tab,{
 		onClick = function(self)
@@ -3326,7 +3082,7 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 		end,
 		x = 10, y = 120, w = 200,h=40,
 		text={'@zenyr',cl.OrangeRed},
-		hintText = {'Not in English but feel free to ask in English\nas long as it is not a technical problem!',{' :)',cl.DarkKhaki},'\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
+		hintText = L('{Not in English but feel free to ask in English,\nas long as it is not a technical problem!|DarkSeaGreen|0.5} {:)|DarkKhaki}\n{_about_hold_shift}')
 	})
 
 	PocoUIButton:new(tab,{
@@ -3334,8 +3090,8 @@ function PocoHud3Class._drawAbout(tab,REV,TAG)
 			PocoHud3Class._open('http://msdn.microsoft.com/en-us/library/ie/aa358803(v=vs.85).aspx')
 		end,
 		x = 10, y = 170, w = 200,h=40,
-		text={'Color codes reference page', cl.Silver},-- no moar fun tho
-		hintText = {'Shows MSDN reference page that shows every possible color codes in PocoHud3 preset\nHold ',{'SHIFT',cl.Tan},' key to open in out-game browser.'}
+		text={L('_about_colors'), cl.Silver},-- no moar fun tho
+		hintText = {L('_about_colors_hint'),'\n',L('_about_hold_shift')}
 	})
 
 end
@@ -3379,7 +3135,7 @@ function PocoHud3Class._drawOptions(tab)
 	PocoUIButton:new(tab,{
 		onClick = function()
 			managers.menu:show_default_option_dialog({
-				text =  L('_desc_reset')..L('_desc_reset_ask'),
+				text =  L('_desc_reset')..'\n'..L('_desc_reset_ask'),
 				callback = function()
 					for __,obj in pairs(objs) do
 						obj[1]:val(O:_default(obj[2],obj[3]))
@@ -3441,8 +3197,11 @@ function PocoHud3Class._drawOptions(tab)
 				local type = O:_type(category,name)
 				local value = O:get(category,name,true)
 				local hint = O:_hint(category,name)
-				hint = hint and L:parse(hint)
-				local tName = name:gsub('(%U)(%u)','%1 %2'):upper()
+				if hint:find('EN,') then
+					_(_.i( L(hint), {depth=2}))
+				end
+				hint = hint and L(hint)
+				local tName = L('_opt_'..name)
 				if type == 'bool' then
 					objs[#objs+1] = {PocoUIBoolean:new(oTab,{
 						x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
@@ -3475,9 +3234,11 @@ function PocoHud3Class._drawOptions(tab)
 						hintText = hint
 					}),category,name}
 				elseif type == 'string' then
+					local selection = O:_vanity(category,name)
+
 					objs[#objs+1] = {PocoUIStringValue:new(oTab,{
 						x = x()+10, y = y(30), w=390, h=30, category = category, name = name,
-						fontSize = 20, text=tName, value = value,
+						fontSize = 20, text=tName, value = value, selection = selection,
 						hintText = hint
 					}),category,name}
 				else
@@ -3498,7 +3259,7 @@ function PocoHud3Class._drawRose(tab)
 	local layout = {
 		{	{'_rose_whistle','whistling_attention'},	{'_rose_cable','g26'},	{'_rose_medbag','g80x_plu'},	{'_rose_shoot','g23'},	{'_rose_drill','g61'},	},
 		{	{'_rose_overrun','g68'},	{'_rose_timetogo','g17'},	{'_rose_thisway','g12'},	{'_rose_straight','g19'},	{'_rose_cantstay','g69'},	},
-		{	{'_rose_almost','g28'},	{'_rose_getout','g07'},	{'_rose_upstairs','g02'},	{'_rose_hurry','g09'},	{'alright','g92'},	},
+		{	{'_rose_almost','g28'},	{'_rose_getout','g07'},	{'_rose_upstairs','g02'},	{'_rose_hurry','g09'},	{'_rose_alright','g92'},	},
 		{	{'_rose_letsgo','g13'},	{'_rose_left','g03'},	false,	{'_rose_right','g04'},	{'_rose_thanks','s05x_sin'},	},
 		{	{'_rose_halfway','t02x_sin'},	{'_rose_careful','g10'},	{'_rose_downstairs','g01'},	{'_rose_inside','g08'},	{'_rose_anysecond','t03x_sin'},	},
 		{	{'_rose_fewminutes','t01x_sin'},	{'_rose_down','g20'},	{'_rose_wrong','g11'},	{'_rose_defended','g16'},	{'_rose_cams','g25'},	},
@@ -3591,13 +3352,13 @@ function PocoHud3Class._drawKit(tab)
 	local categories_vanity = L('_kit_categories'):split(',')
 	local categories = ('name,primaries,secondaries,armor,gadget,melee'):split(',')
 	local __, lbl = _.l({font=FONT, color=cl.Gray, font_size=20, pnl = tab.pnl, x = 10, y = 10},
-		'* Kit profiler is dependant on your inventory setup. Any changes in your inventory(mods, sell) will be applied to the result.',true)
+		L('_kit_desc'),true)
 
 	local draw, _Current
 	local oTabs = PocoTabs:new(me._ws,{name = 'kits',x = 10, y = 40, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-60, pTab = tab})
 
-	local tabBtn = oTabs:add('USE KIT')
-	local tabEdt =oTabs:add('EDIT')
+	local tabBtn = oTabs:add(L('_kit_tab_use_kit'))
+	local tabEdt =oTabs:add(L('_kit_tab_edit_kit'))
 	draw = function()
 		y(10,true)
 		if _kitPnl and alive(_kitPnl) then
@@ -3607,7 +3368,7 @@ function PocoHud3Class._drawKit(tab)
 		_kitPnl = pnl
 		local cnt,row = 0
 		local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = y(0)},
-			{PocoHud3Class.Icon.Chapter ..' Current Kit',{' '..PocoHud3Class.Icon.RC..' Save to the profiler. Unchecked items will be removed.',cl.White}},true)
+			L('_kit_save_desc'),true)
 		y(lbl:h())
 		-- New Header with OpenIcon
 		local mcm = _.g('managers.menu_component._mission_briefing_gui')
@@ -3666,7 +3427,7 @@ function PocoHud3Class._drawKit(tab)
 				end
 				local elem = PocoUIStringValue:new(tabEdt,{ pnl = pnl,
 					x = 0, y = 0, w=150, h=20, category = false, name = false,
-					fontSize = 18, text=' ' , value = s..sNum , max = 20, hintText = 'Set this kit\'s Vanity name for yourself.'
+					fontSize = 18, text=' ' , value = s..sNum , max = 20, hintText = L('_kit_name_edit_hint')
 				})
 				_Current[category] = {elem}
 				row[#row+1] = elem
@@ -3674,18 +3435,14 @@ function PocoHud3Class._drawKit(tab)
 		end
 		local elem = PocoUIColorValue:new(tabEdt,{ pnl = pnl,
 			x = 330, y = 110, w = 300, h=30, category = false, name = false,
-			fontSize = 18, text=('Button Color'):upper() , value = 'White', hintText = 'Set this kit\'s Vanity color for yourself.'
+			fontSize = 18, text=('Button Color'):upper() , value = 'White', hintText = L('_kit_color_edit_hint')
 		})
 		_Current['color'] = {elem}
 
 		elem = PocoUIKeyValue:new(tabEdt,{ pnl = pnl,
 			x = 120, y = 110, w = 200, h=30, category = false, name = false,
 			fontSize = 18, text=('Key Bind'):upper() , value = '',
-			hintText = {
-				'If set, press ',{'Ctrl + ALT + THIS',cl.Yellow},' key while out-game to equip this kit.',
-				{'\nCustom key-combination not available.\nDuplicated keybind can result unexpected result.\n(Only one kit can/will be equipped)',cl.Silver},
-				{'\nBackspace to Remove bound key.',cl.Red}
-			}
+			hintText = L('_kit_key_edit_hint')
 		})
 		_Current['key'] = {elem}
 
@@ -3693,7 +3450,7 @@ function PocoHud3Class._drawKit(tab)
 		y(lH,true)
 		y(50)
 		__, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = y(0)},
-			{PocoHud3Class.Icon.Chapter ..' Saved Kits',{' '..PocoHud3Class.Icon.RC ..' Edit or remove saved kits',cl.White}},true)
+			L('_kit_saved_kits_title'),true)
 		y(lbl:h())
 		lH = me:_drawRow(pnl,20,categories_vanity,20,y(),pnl:w()-40,true,true,1.3)
 		y(lH,true)
@@ -3705,7 +3462,7 @@ function PocoHud3Class._drawKit(tab)
 			for col,category in pairs(categories) do
 				if col ~= 1 then
 					local val = K:get(ind,category,true)
-					row[#row+1] = val and {val,K:locked(ind,category) and cl.Red:with_alpha(0.6) or cl.White} or {'LEAVE AS IS',cl.Gray}
+					row[#row+1] = val and {val,K:locked(ind,category) and cl.Red:with_alpha(0.6) or cl.White} or {L('_kit_leave_as_is'),cl.Gray}
 				else
 					row[#row+1] = PocoUIButton:new(tabEdt,{ pnl = pnl,
 						onClick = function(self)
@@ -3736,7 +3493,7 @@ function PocoHud3Class._drawKit(tab)
 							end
 						end,
 						x = 0, y = 0, w=150, h=22,
-						fontSize = 22, text={ind,cl[K:get(ind,'color') or 'White']}, hintText = {'Click to ',{'copy',cl.Tan},'\nDoubleClick to ',{'Remove',cl.Red},' this item'}
+						fontSize = 22, text={ind,cl[K:get(ind,'color') or 'White']}, hintText = L('_kit_equip_btn_hint')
 					})
 				end
 			end
@@ -3754,11 +3511,16 @@ function PocoHud3Class._drawKit(tab)
 		_kitPnlBtn = pnl
 
 		local c,x,y,m,ww,w,h = 0,0,0,10,pnl:w()-20,300,100
+		local titles = L('_kit_profiler_desc')
+		if me.inGameDeep then
+			table.insert(titles,{' '..PocoHud3Class.Icon.BigDot..' ',cl.Red})
+			table.insert(titles,{L('_kit_profiler_disabled_ingame'),cl.Red})
+		end
 		local __, lbl = _.l({font=FONT, color=cl.LightSteelBlue, font_size=20, pnl = pnl, x = 20, y = 15},
-			{PocoHud3Class.Icon.Chapter ..' Profiler',{' '..PocoHud3Class.Icon.RC ..' Double click to equip a kit setup',cl.White},me.inGameDeep and {' '..PocoHud3Class.Icon.BigDot..' Disabled in game.',cl.Red} or false},true)
+			titles,true)
 
 		if table.size(K.items) == 0 then
-			_.l({font=FONT, color=cl.Silver, font_size=25, pnl = pnl, x = m, y=m*2+lbl:h()},'No Kit profiles available',true)
+			_.l({font=FONT, color=cl.Silver, font_size=25, pnl = pnl, x = m, y=m*2+lbl:h()},L('_kit_not_available'),true)
 		end
 		for ind,obj in _.p(K.items,function(a,b)return tostring(a)<tostring(b) end) do
 			x = m+(c % 3) * (w+m)
@@ -3771,7 +3533,7 @@ function PocoHud3Class._drawKit(tab)
 					local val = K:get(ind,category,true)
 					local locked = K:get(ind,category) and K:locked(ind,category)
 					local enabled = val and not locked
-					row[#row+1] = {categories_vanity[col]..' : ',enabled and cl.Tan or cl.Gray}
+					row[#row+1] = {(categories_vanity[col] or '?')..' : ',enabled and cl.Tan or cl.Gray}
 					if locked then
 						row[#row+1] = {_.s(locked)..'\n',cl.Red:with_alpha(0.8)}
 					else
@@ -3781,10 +3543,10 @@ function PocoHud3Class._drawKit(tab)
 			end
 			local boundKey = K:get(ind,'key')
 			if not inGameDeep and boundKey and boundKey ~= '' then
-				row[#row+1] = {'KeyBind : ',cl.Tan}
-				row[#row+1] = {'CTRL + ALT + '..boundKey..'\n',cl.Lime}
+				row[#row+1] = {L('_kit_keybind')..' : ',cl.Tan}
+				row[#row+1] = {L('_kit_key_combination',{boundKey})..'\n',cl.Lime}
 			end
-			row[#row+1] = inGameDeep and 'N/A in game' or '* DoubleClick to Equip this item'
+			row[#row+1] = inGameDeep and L('_kit_na_in_game') or L('_kit_dblclick_to_equip')
 			PocoUIButton:new(tabBtn,{ pnl = pnl,
 				onPressed = function(self)
 					self.mute = true
@@ -3828,7 +3590,7 @@ function PocoHud3Class._drawKit(tab)
 			end
 		end,
 		x = 640, y = 105, w = 300, h=40,
-		text={'SAVE',cl.CornFlowerBlue},hintText = {{'Add',cl.Tan},' or ',{'overwrite',cl.Tomato},' depending on the SET NAME'}
+		text={L('_word_save'),cl.CornFlowerBlue},hintText = L('_kit_save_hint')
 	})
 	tabEdt.pnl:bitmap({
 		texture = 'guis/textures/pd2/shared_lines',	wrap_mode = 'wrap',
@@ -4118,11 +3880,159 @@ function Kits:current(category,raw)
 	return '??'
 end
 
-function PocoHud3Class._drawJukebox(tab)
-	local __, lbl = _.l({font=FONT, color=cl.Gray, font_size=20, pnl = tab.pnl, x = 10, y = 10},
-		'* To be announced',true)
 
-	--managers.music:post_event(managers.music:jukebox_menu_track("mainmenu"))
+----------------------------------
+-- Karma : Player tagger
+----------------------------------
+local Karma = class()
+Karma.VERDICT_NIL = 0
+Karma.VERDICT_NEU = 1
+Karma.VERDICT_POS = 2
+Karma.VERDICT_NEG = 3
+
+PocoHud3Class.Karma = Karma
+
+function Karma:init()
+	self.items = {}
+	self:load()
+end
+
+function Karma:load()
+	local f,err = io.open(KarmaJSONFileName, 'r')
+	local result = false
+	if f then
+		local t = f:read('*all')
+		local o = JSON:decode(t)
+		if type(o) == 'table' then
+			self.items = o
+		end
+		f:close()
+	end
+	self.items = self.items or {}
+	self.items.uids = self.items.uids or {}
+end
+
+function Karma:save()
+	local f = io.open(KarmaJSONFileName, 'w')
+	if f then
+		f:write(JSON:encode_pretty(self.items))
+		f:close()
+	end
+end
+
+function Karma:get(uid)
+	return self.items.uids[uid] or false
+end
+
+function Karma:verdict(uid)
+	local data = self:get(uid)
+	if data then
+		return unpack(data)
+	else
+		return self.VERDICT_NIL
+	end
+end
+
+
+function PocoHud3Class._drawKarma(tab)
+	local __, lbl = _.l({pnl = tab.pnl, x=10, y= 10, font = FONT, font_size = 20, color = cl.Green},'To be announced',true)
+end
+
+function PocoHud3Class._drawJukebox(tab)
+	-- revised old code I made. also thx to PierreDjays for basic idea.
+	local music
+	music = {
+		play = function(num)
+			music.stop()
+			Global.music_manager.source:set_switch( "music_randomizer", num )
+			music.set(managers.music._last or 'setup')
+		end,
+		set = function(mode)
+			managers.music._last = type(mode)~='table' and mode
+			managers.music._skip_play = nil
+			managers.music:post_event( type(mode)=='table' and mode[1] or "music_heist_"..mode )
+		end,
+		stop = function()
+			managers.music:stop()
+		end
+	}
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+				music.stop()
+		end,
+		x = 440, y = 40, w = 200,h=40,
+		text=L('_tab_juke_stop')
+	})
+
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+			music.set('setup')
+		end,
+		x = 440, y = 90, w = 200,h=40,
+		text=L('_tab_juke_stealth')
+	})
+
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+			music.set('control')
+		end,
+		x = 440, y = 140, w = 200,h=40,
+		text=L('_tab_juke_control')
+	})
+
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+			music.set('anticipation')
+		end,
+		x = 440, y = 190, w = 200,h=40,
+		text=L('_tab_juke_anticipation')
+	})
+
+	PocoUIButton:new(tab,{
+		onClick = function(self)
+			music.set('assault')
+		end,
+		x = 440, y = 240, w = 200,h=40,
+		text=L('_tab_juke_assault')
+	})
+
+	local __, lbl = _.l({pnl = tab.pnl, x=440, y= 290, font = FONT, font_size = 20, color = cl.Gray},L('_tab_juke_shuffle_tip'),true)
+
+
+	local _addItems = function(oTab,inGame)
+		local y = 10;
+		local track_list,track_locked
+		if inGame then
+			track_list,track_locked = managers.music:jukebox_music_tracks()
+		else
+			track_list,track_locked = managers.music:jukebox_menu_tracks()
+		end
+		for __, track_name in pairs(track_list or {}) do
+			local text = managers.localization:text((inGame and 'menu_jukebox_' or 'menu_jukebox_screen_')..track_name)
+			local listed = inGame and managers.music:playlist_contains(track_name) or managers.music:playlist_menu_contains(track_name)
+			local locked = track_locked[track_name]
+			local hint = locked and managers.localization:text("menu_jukebox_locked_" .. locked) or nil
+			PocoUIButton:new(oTab,{
+				onClick = function(self)
+					if not locked then
+						music[inGame and 'play' or 'set'](inGame and track_name or {track_name})
+					end
+				end,
+				x = 10, y = y, w = 400,h=30,
+				text={text,locked and cl.Red or listed and cl.White or cl.Gray},
+				hintText = hint
+			})
+			y = y + 35
+		end
+		oTab:set_h(y)
+	end
+
+	local oTabs = PocoTabs:new(me._ws,{name = 'jukeboxes',x = 10, y = 10, w = 420, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
+	-- [1] Heist musics
+	_addItems(oTabs:add(L('_tab_juke_heist')), true)
+	-- [2] Menu musics
+	_addItems(oTabs:add(L('_tab_juke_menu')), false)
+
 
 
 end
@@ -4143,7 +4053,36 @@ function Localizer:init()
 
 	self.parser = {
 		string = function(str,context)
-			return str:find('^[_!]') and self:parse(self:get(str,context),context) or str
+			if str == '##' then -- Special case: omit string instructor
+				return ''
+			end
+			-- parse 'something {color|key|alpha} something'
+			local p,exploded = 1,{}
+			for s,tag,e in str:gmatch('(){(.-)}()') do
+					table.insert(exploded,str:sub(p,s-1))
+					if tag:find('|') then
+						local key,color = tag:match('^(.-)|(.+)$')
+						local alpha
+						if color:find('|') then
+							color, alpha = color:match('(.+)|(.+)')
+							alpha = tonumber(alpha)
+						end
+						color = cl[color] or cl.White
+						if alpha then
+							color = color:with_alpha(alpha)
+						end
+						table.insert(exploded,{key,color})
+					else
+						table.insert(exploded,tag)
+					end
+					p = e
+			end
+			table.insert(exploded,str:sub(p,str:len()))
+			if exploded[2] then
+				return self:parse(exploded,context)
+			else
+				return str:find('^[_!]') and self:parse(self:get(str,context),context) or str
+			end
 		end,
 		table = function(tbl,context)
 			local r = {}
@@ -4154,13 +4093,11 @@ function Localizer:init()
 		end
 	}
 	self.data = {}
+	self._data = {}
 end
 
 function Localizer:get(key,context)
-	local val = self.data[key]
-	if not val then
-		val = _defaultLocaleData[key]
-	end
+	local val = _defaultLocaleData[key] or self.data[key] or self._data[key] or PocoHud3Class.Icon[key:gsub('_','')]
 	if val and type(context)=='table' then
 		for k,v in pairs(context) do
 			val = val:gsub('%['..k..'%]',v)
@@ -4168,6 +4105,36 @@ function Localizer:get(key,context)
 	end
 	return val or _.s('?:',key)
 end
+
+function Localizer:load()
+	local lang = PocoHud3Class.O('root','language')
+	local f,err = io.open(LocJSONFileName:gsub('%$',lang), 'r')
+	if f then
+		local t = f:read('*all')
+		local o = JSON:decode(t)
+		if type(o) == 'table' then
+			_('Locale',lang,'loaded')
+			self.data = o
+		end
+		f:close()
+	else
+			_('Locale',lang,'NOT loaded')
+	end
+
+	f,err = io.open(LocJSONFileName:gsub('%$','EN'), 'r')
+	if f then
+		local t = f:read('*all')
+		local o = JSON:decode(t)
+		if type(o) == 'table' then
+			self._data = o
+		end
+		f:close()
+	end
+
+
+end
+
+
 
 function Localizer:parse(object,context)
 	local t = type(object)

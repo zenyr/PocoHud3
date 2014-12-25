@@ -4,10 +4,10 @@ local disclaimer = [[
 feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 
-
+-- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 268
-local TAG = '0.202 hotfix 2 (1c50a57)'
+local REV = 302
+local TAG = 'v0.23 hotfix 6 (9532b48)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -17,12 +17,12 @@ if not PocoHud3Class then return end
 Poco._req ('poco/Hud3_Options.lua')
 if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
-local K = PocoHud3Class.Kits:new()
-local L = PocoHud3Class.Localizer:new()
-
 PocoHud3Class.O = O
+local K = PocoHud3Class.Kits:new()
 PocoHud3Class.K = K
+local L = PocoHud3Class.Localizer:new()
 PocoHud3Class.L = L
+
 --- Options ---
 local YES,NO,yes,no = true,false,true,false
 local ALTFONT= PocoHud3Class.ALTFONT
@@ -44,21 +44,21 @@ local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = Icon.Div,Icon.Ghost
 local skillIcon = 'guis/textures/pd2/skilltree/icons_atlas'
 local now = function (type) return type and TimerManager:game():time() or managers.player:player_timer():time() end
 local _conv = {
-	city_swat	=	L('_city_swat'),
-	cop	=	L('_cop'),
-	fbi	=	L('_fbi'),
-	fbi_heavy_swat	=	L('_fbi_heavy_swat'),
-	fbi_swat	=	L('_fbi_swat'),
-	gangster	=	L('_gangster'),
-	gensec	=	L('_gensec'),
-	heavy_swat	=	L('_heavy_swat'),
-	security	=	L('_security'),
-	shield	=	L('_shield'),
-	sniper	=	L('_sniper'),
-	spooc	=	L('_spooc'),
-	swat	=	L('_swat'),
-	tank	=	L('_tank'),
-	taser	=	L('_taser'),
+	city_swat	=	L('_mob_city_swat'),
+	cop	=	L('_mob_cop'),
+	fbi	=	L('_mob_fbi'),
+	fbi_heavy_swat	=	L('_mob_fbi_heavy_swat'),
+	fbi_swat	=	L('_mob_fbi_swat'),
+	gangster	=	L('_mob_gangster'),
+	gensec	=	L('_mob_gensec'),
+	heavy_swat	=	L('_mob_heavy_swat'),
+	security	=	L('_mob_security'),
+	shield	=	L('_mob_shield'),
+	sniper	=	L('_mob_sniper'),
+	spooc	=	L('_mob_spooc'),
+	swat	=	L('_mob_swat'),
+	tank	=	L('_mob_tank'),
+	taser	=	L('_mob_taser'),
 }
 --- Class Start ---
 local TPocoHud3 = class(TPocoBase)
@@ -69,7 +69,9 @@ TPocoHud3.classVersion = 3
 function TPocoHud3:onInit() -- ★설정
 --	Poco:LoadOptions(self:name(1),O)
 	O:load()
-
+	L:load()
+	clGood = O:get('root','colorPositive')
+	clBad = O:get('root','colorNegative')
 	self._ws = managers.gui_data:create_fullscreen_workspace()
 	error = function(msg)
 		if self.dead then
@@ -341,7 +343,8 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 			do
 				local oTabs = C.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 				local oTab = oTabs:add(L('_tab_heistStatus'))
-				C._drawHeistStats(oTab)
+				local r,err = pcall(C._drawHeistStats,oTab) -- yeaaaah just in case. I know. I'm cheap
+				if not r then me:err('DHS:',err) end
 
 				oTab = oTabs:add(L('_tab_upgradeSkills'))
 				if inGame then
@@ -351,8 +354,8 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 						end
 					end
 				end
-				y = _drawUpgrades(oTab,_.g('Global.player_manager.team_upgrades'),true,L('_youAndCrewsPerks'),y)
-				y = _drawUpgrades(oTab,_.g('Global.player_manager.upgrades'),false,L('_yourPerks'),y)
+				y = _drawUpgrades(oTab,_.g('Global.player_manager.team_upgrades'),true,L('_line_youAndCrewsPerks'),y)
+				y = _drawUpgrades(oTab,_.g('Global.player_manager.upgrades'),false,L('_line_yourPerks'),y)
 			end
 
 			tab = gui:add(L('_tab_tools'))
@@ -367,7 +370,6 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 
 				local oTab = oTabs:add(L('_tab_jukebox'))
 				PocoHud3Class._drawJukebox(oTab)
-
 			end
 		end
 	end)
@@ -709,7 +711,7 @@ function TPocoHud3:_checkBuff(t)
 		self:Buff({
 			key= 'charge', good=true,
 			icon=skillIcon,
-			iconRect = { 1*64, 3*64,64,64 },
+			iconRect = { 4*64, 12*64,64,64 },
 			text='',
 			st=melee, et=1
 		})
@@ -865,8 +867,9 @@ function TPocoHud3:_updatePlayers(t)
 			local avgDmg = _.f(dmg/hit,1)
 			local downs = self:Stat(i,'down')
 			local boost = self:Stat(i,'boost') > now()
-			local distance = unit and mvector3.distance(unit:position(),self.camPos) or 0
-			local dist_sq = unit and mvector3.distance_sq(unit:position(),self.camPos) or 0
+			local unitPos = unit and alive(unit) and unit:position()
+			local distance = unitPos and mvector3.distance(unitPos,self.camPos) or 0
+			local dist_sq = unitPos and mvector3.distance_sq(unitPos,self.camPos) or 0
 			local rally_skill_data = _.g('managers.player:player_unit():movement():rally_skill_data()')
 			local canBoost = rally_skill_data and rally_skill_data.long_dis_revive and rally_skill_data.range_sq > dist_sq
 			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
@@ -969,7 +972,7 @@ function TPocoHud3:_updatePlayers(t)
 			rank = ranks[rank] and (ranks[rank]..'Ї') or ''
 			local lvl = peer and peer:level() or '?'
 			local unit = nData and nData.movement._unit
-			local distance = unit and mvector3.distance(unit:position(),self.camPos) or 0
+			local distance = unit and alive(unit) and mvector3.distance(unit:position(),self.camPos) or 0
 			local boost = self:Stat(i,'boost') > now()
 			if nData._infamy ~= _show('Icon',true) then
 				local icon = nData.panel:child('infamy')
@@ -992,11 +995,18 @@ function TPocoHud3:_updatePlayers(t)
 		end
 	end
 end
-function TPocoHud3:_processMsg(channel,name,message)
+function TPocoHud3:_processMsg(channel,name,message,color)
 	-- ToDo : better priority balancing, transmit more info etc
-	local isMine = name == self:_name(self.pid)
+	local pid = 0
+	for i = 1,4 do
+		if color == self:_color(i) then
+			pid = i
+		end
+	end
+	local isMine = pid == self.pid
+	local isPrioritized = pid < (self.pid or 0)
 	local isPoco = channel == 8
-	if not self._muted and (not isMine) and not Network:is_server() and message and message:find(_BROADCASTHDR) then
+	if not self._muted and isPrioritized and message and message:find(_BROADCASTHDR) then
 		_.c(_BROADCASTHDR_HIDDEN,'PocoHud broadcast Muted.')
 		self._muted = true
 	end
@@ -1431,6 +1441,28 @@ function TPocoHud3:_hook()
 				end
 			end
 		end)
+		hook( PlayerStandard, '_check_action_primary_attack', function( self, t, ... )
+			local result = Run('_check_action_primary_attack', self, t, ...)
+				-- capture TriggerHappy
+				local weap_base = self._equipped_unit:base()
+				local weapon_category = weap_base:weapon_tweak_data().category
+				if managers.player:has_category_upgrade(weapon_category, "stacking_hit_damage_multiplier") then
+					local stack = self._state_data and self._state_data.stacking_dmg_mul and self._state_data.stacking_dmg_mul[weapon_category]
+					if stack and stack[1] and t < stack[1] then
+						local mul = 1 + managers.player:upgrade_value(weapon_category, "stacking_hit_damage_multiplier") * stack[2]
+						me:Buff({
+							key='triggerHappy', good=true,
+							icon=skillIcon, iconRect = {7*64, 11*64, 64, 64},
+							text=_.f(mul)..'x',
+							st=t, et=stack[1]
+						})
+					else
+						me:RemoveBuff('triggerHappy')
+					end
+				end
+			return result
+		end)
+
 		hook( FPCameraPlayerBase, 'clbk_stance_entered', function( ... )
 			local self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration = unpack{...}
 			local r,err = pcall(function()
@@ -1474,7 +1506,7 @@ function TPocoHud3:_hook()
 			}) )
 		end)
 		local rectDict = {}
-		rectDict.combat_medic_damage_multiplier = {L('_buff_combatMedicShort'), { 5, 7 }}
+		rectDict.combat_medic_damage_multiplier = {L('_buff_combatMedicDamageShort'), { 5, 7 }}
 		rectDict.no_ammo_cost = {L('_buff_bulletStormShort'),{ 4, 5 }}
 		rectDict.berserker_damage_multiplier = {L('_buff_swanSongShort'),{ 5, 12 }}
 
@@ -1493,6 +1525,7 @@ function TPocoHud3:_hook()
 				local _keys = { -- Better names for Option pnls
 					BerserkerDamageMultiplier = 'SwanSong',
 					PassiveReviveDamageReduction = 'Painkiller',
+					FirstAidDamageReduction = 'FirstAid',
 					DmgMultiplierOutnumbered = 'Underdog',
 					CombatMedicDamageMultiplier = 'CombatMedic',
 					OverkillDamageMultiplier = 'Overkill',
@@ -1918,7 +1951,7 @@ function TPocoHud3:_hook()
 		end)
 		hook( ChatManager, '_receive_message', function( self, ... )
 			local channel_id, name, message, color, icon = unpack{...}
-			me:_processMsg(channel_id,name,message)
+			me:_processMsg(channel_id,name,message,color)
 			return Run('_receive_message', self,  ...)
 		end)
 		-- CriminalDown
@@ -1950,7 +1983,77 @@ function TPocoHud3:_hook()
 			return Run('add_teammate_panel', self, ... )
 		end)
 
-		local OnCriminalHealth = function(pid,data)
+
+		local onReplenish = function(pid,noReset)
+			if (now()-(self._startGameT or now()) < 1) then return end
+			local bHealth = self:Stat(pid,'bHealth')
+			self:Stat(pid,'bHealth',-1)
+			local bPercent = bHealth > 0 and bHealth or self:Stat(pid,'health') or 0
+			local down = not noReset and self:Stat(pid,'down') or 0
+			local downStr = down>0 and L('_msg_replenishedDown'..(down>1 and 'Plu' or ''),{down}) or ''
+			self:Chat('replenished',L('_msg_repenished',{self:_name(pid),_.f(100-bPercent), downStr}))
+			if not noReset then -- reset down cnt
+				self:Stat(pid,'downAll',self:Stat(pid,'down'),true)
+				self:Stat(pid,'down',0)
+			end
+		end
+
+		hook( HUDManager, 'set_teammate_health', function( ... ) -- stash health
+			local self, i, data = unpack{...}
+			local pid
+			if i == 4 then
+				pid = me.pid
+			else
+				for __, data in pairs( managers.criminals._characters ) do
+					if data.taken and i == data.data.panel_id then
+						pid = data.peer_id
+					end
+				end
+			end
+			if pid then
+				local bPercent = me:Stat(pid,'health')
+				local percent = (pid==me.pid and data.current/data.total or data.current)*100 or 0
+				if percent ~= 0 and bPercent == 0 then
+					me:Stat(pid,'custody',0)
+					me:Stat(pid,'_refreshBtm',1) -- Refresh btm when out of custody
+				elseif bPercent < percent then
+					me:Stat(pid,'bHealth',bPercent)
+				end
+				me:Stat(pid,'health',percent)
+			end
+			return Run('set_teammate_health', ...)
+		end)
+
+		-- 1. Kit
+		hook( FirstAidKitBase, 'take', function( self, ... )
+			onReplenish(me.pid,true)
+			return Run('take',self,...)
+		end)
+		hook( FirstAidKitBase, 'sync_net_event', function( self, ... )
+			local event_id, peer = unpack{...}
+			if event_id == 2 and peer then
+				onReplenish(peer:id(),true)
+			end
+			return Run('sync_net_event',self,...)
+		end)
+
+		-- 2. Med
+		hook( DoctorBagBase, 'take*', function( self, ... )
+			onReplenish(me.pid)
+			return Run('take*',self,...)
+		end)
+		hook( UnitNetworkHandler, 'sync_doctor_bag_taken', function( self, ... )
+			local unit, amount, sender = unpack{...}
+			local peer = self._verify_sender(sender)
+			local pid = peer and peer:id()
+			if pid then
+				onReplenish(pid)
+			end
+			return Run('sync_doctor_bag_taken',self,...)
+		end)
+
+
+		--[[local OnCriminalHealth = function(pid,data)
 			local percent = (pid==self.pid and data.current/data.total or data.current)*100 or 0
 			local bPercent = self:Stat(pid,'health') or 0
 			local down = self:Stat(pid,'down') or 0
@@ -1982,7 +2085,7 @@ function TPocoHud3:_hook()
 				OnCriminalHealth(pid,data)
 			end
 			return Run('set_teammate_health', ...)
-		end)
+		end)]]
 		local OnCriminalDowned = function(pid)
 			self:Stat(pid,'down',1,true)
 			if (self:Stat(pid,'down') or 0) >= 3 then
@@ -2284,6 +2387,8 @@ function TPocoHud3:_hook()
 			end
 			--
 		end)
+	else -- if outGame
+
 	end -- End of if inGame
 	-- Kick menu
 	if O:get('game','showRankInKickMenu') then
@@ -2378,9 +2483,95 @@ function TPocoHud3:_hook()
 		end
 		return result
 	end)
+	--function LevelsTweakData:get_music_event(stage)
+	hook( LevelsTweakData, 'get_music_event', function( ... )
+		local result = Run('get_music_event', ...)
+		if result and O('root','shuffleMusic') then
+			local self,stage = unpack{...}
+			if stage == 'control' then
+				if self._poco_can_shuffle then
+					_.g('managers.music:check_music_switch()')
+				else
+					self._poco_can_shuffle = 1
+				end
+			end
+		end
+		return result
+	end)
 
 --- DEBUG ONLY
 --------------
+
+	if not inGame then
+		--function CrimeNetGui:_create_job_gui(data, type, fixed_x, fixed_y, fixed_location)
+		hook( CrimeNetGui, '_create_job_gui', function( ... ) -- Hook crimenet font size & color
+			local sizeMul = O('game','resizeCrimenet')
+			local colorize = O('game','colorizeCrimenet')
+
+			sizeMul = sizeMul and sizeMul / 10 + 0.5 or 1
+			local size = tweak_data.menu.pd2_small_font_size
+			tweak_data.menu.pd2_small_font_size = size * sizeMul
+			local result = Run('_create_job_gui',...)
+			tweak_data.menu.pd2_small_font_size = size
+			local self,data = unpack{...}
+			if colorize and result.side_panel and result.side_panel:child('job_name') then
+				local colors = {cl.Red,cl.PaleGreen,cl.PaleGoldenrod,cl.LavenderBlush,cl.Wheat,cl.Tomato}
+				result.side_panel:child('job_name'):set_color(colors[data.difficulty_id] or cl.White)
+			end
+			if colorize and result.heat_glow then
+				result.heat_glow:set_alpha(result.heat_glow:alpha()*0.5)
+			end
+			return result
+		end)
+
+		hook( CrimeNetGui, '_create_locations', function( ... ) -- Hook locations[1]
+			local result = Run('_create_locations', ...)
+			if O('game','gridCrimenet') then
+				local self = unpack{...}
+				local newDots = {}
+				local xx,yy = 10,10
+				for i=1,xx do -- 224~1666 1442
+					for j=1,yy do -- 165~945 780
+						table.insert(newDots,{ 100+1642*i/xx, 100+680*(i % 2 == 0 and j or j - 0.5)/yy })
+					end
+				end
+				self._locations[1][1].dots = newDots
+			end
+		end);
+
+		hook( CrimeNetGui, '_get_job_location', function( ... ) -- Hook locations[2]
+			if O('game','sortCrimenet') then
+				local self,data = unpack{...}
+				local diff = (data and data.difficulty_id or 2) - 2
+				local diffX = 1800 / 10 * (diff * 2)
+				local locations = self:_get_contact_locations()
+				local sorted = {}
+				for k,dot in pairs(locations[1].dots) do
+					if not dot[3] then
+						table.insert(sorted,dot)
+					end
+				end
+				if #sorted > 0 then
+					local abs = math.abs
+					table.sort(sorted,function(a,b)
+						return abs(diffX-a[1]) < abs(diffX-b[1])
+					end)
+					local dot = sorted[1]
+					local x,y = dot[1],dot[2]
+					local tw = math.max(self._map_panel:child("map"):texture_width(), 1)
+					local th = math.max(self._map_panel:child("map"):texture_height(), 1)
+					x = math.round(x / tw * self._map_size_w)
+					y = math.round(y / th * self._map_size_h)
+
+					return x,y,dot
+				else
+					return self:_get_random_location() -- just in case of failure
+				end
+			else
+				return Run('_get_job_location', ...)
+			end
+		end)
+	end
 end
 --- Utility functions ---
 function TPocoHud3:toggleVerbose(state)
