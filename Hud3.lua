@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 302
-local TAG = 'v0.23 hotfix 6 (9532b48)'
+local REV = 303
+local TAG = 'v0.23 hotfix 7 (1d90187)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -142,7 +142,7 @@ end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 	if unit and alive(unit) then
 		local uType = unit:base()._tweak_table or 0
-		local _arr = {russian=1,german=1,spanish=1,american=1}
+		local _arr = {russian=1,german=1,spanish=1,american=1,female_1=1,old_hoxton=1,jowi=1}
 		if not _arr[uType] then -- this filters PlayerDrama related events out when hosting a game
 			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
 		end
@@ -531,7 +531,7 @@ function TPocoHud3:Chat(category,text,system)
 	if canRead or canSend then
 		_.c(tStr..(canSend and '' or _BROADCASTHDR_HIDDEN), text , canSend and self:_color(self.pid) or nil)
 		if canSend then
-			managers.network:session():send_to_peers_ip_verified( 'send_chat_message', system and 8 or 1, tStr.._BROADCASTHDR..text )
+			managers.network:session():send_to_peers_ip_verified( 'send_chat_message', system and 8 or 1, tStr.._BROADCASTHDR.._.s(text) )
 		end
 	end
 end
@@ -2213,7 +2213,7 @@ function TPocoHud3:_hook()
 				local unit = self._unit -- TODO: compare this to filter Floats as Config
 				local tweak = unit and unit:interaction() and unit:interaction().tweak_data
 				local isPager = tweak == 'corpse_alarm_pager'
-				me:Float(unit,0,result.fadeout_t or now()+(isPager and 12 or 4))
+				me:Float(unit,0,result and result.fadeout_t or now()+(isPager and 12 or 4))
 			end
 			return result
 		end)
