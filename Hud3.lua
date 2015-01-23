@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 305
-local TAG = 'v0.23 hotfix 9 (92c4485)'
+local REV = 306
+local TAG = 'v0.23 hotfix 10 (e3f0a79)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -872,7 +872,7 @@ function TPocoHud3:_updatePlayers(t)
 			local dist_sq = unitPos and mvector3.distance_sq(unitPos,self.camPos) or 0
 			local rally_skill_data = _.g('managers.player:player_unit():movement():rally_skill_data()')
 			local canBoost = rally_skill_data and rally_skill_data.long_dis_revive and rally_skill_data.range_sq > dist_sq
-			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
+			local ping = ' '..(self:Stat(i,'ping')>0 and self:Stat(i,'ping')..'ms' or '')
 			local lives =	isMe and managers.player:upgrade_value( 'player', 'additional_lives', 0) or 0
 			local interT = self:Stat(i,'interactET')
 			local room = self:Stat(i,'room')
@@ -1378,6 +1378,14 @@ function TPocoHud3:_hook()
 		hook( PlayerStandard, '_get_input', function( self ,...)
 			return me.menuGui and {} or Run('_get_input', self,... )
 		end)
+		hook( PlayerStandard, '_determine_move_direction', function( self ,...)
+			Run('_determine_move_direction', self,... )
+			if me.menuGui then
+				self._move_dir = nil
+				self._normal_move_dir = nil
+			end
+		end)
+
 		--[[hook( PlayerStandard, '_update_check_actions', function( self ,...)
 			if not me.menuGui then
 				Run('_update_check_actions', self,... )
@@ -2254,7 +2262,7 @@ function TPocoHud3:_hook()
 			local self, id, clbk, execute_t = unpack{...}
 			local isWhisper = managers.groupai:state():whisper_mode()
 
-			if id:find('freeze_rag') and not isWhisper then
+			if id and id:find('freeze_rag') and not isWhisper then
 				local t = (O:get('game','corpseRagdollTimeout') or 3) - 3
 				execute_t = execute_t + t
 			end
@@ -2458,7 +2466,9 @@ function TPocoHud3:_hook()
 	if inGame then
 		hook( FPCameraPlayerBase, '_update_rot', function( ... )
 			if me.menuGui then
-				return true
+				local self, axis = unpack{...}
+				local new_axis = Vector3()
+				return Run('_update_rot', self, new_axis)
 			else
 				return Run('_update_rot', ...)
 			end
