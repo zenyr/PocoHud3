@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 308
-local TAG = 'v0.23 hotfix 12 (c01441e)'
+local REV = 309
+local TAG = '0.24 hotfix 1 (a240444)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -142,7 +142,7 @@ end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 	if unit and alive(unit) then
 		local uType = unit:base()._tweak_table or 0
-		local _arr = {russian=1,german=1,spanish=1,american=1,female_1=1,old_hoxton=1,jowi=1}
+		local _arr = {russian=1,german=1,spanish=1,american=1,female_1=1,old_hoxton=1,jowi=1,dragan=1}
 		if not _arr[uType] then -- this filters PlayerDrama related events out when hosting a game
 			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
 		end
