@@ -18,6 +18,7 @@
     "_buff_bulletStormShort": "BS",
     "_buff_combatMedicDamageShort": "Dmg+",
     "_buff_exhausted": "Exhausted",
+	"_buff_first_aid_damage_reduction_upgrade": "-Dmg",
     "_buff_overkillShort": "Dmg+",
     "_buff_painkillerShort": "PK",
     "_buff_swanSongShort": "SS",

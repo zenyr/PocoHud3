@@ -1522,6 +1522,8 @@ function TPocoHud3:_hook()
 		rectDict.dmg_dampener_outnumbered = ''-- {'Def+',{2,1}} -- Dupe
 		rectDict.overkill_damage_multiplier = {L('_buff_overkillShort'),{3,2}}
 		rectDict.passive_revive_damage_reduction = {L('_buff_painkillerShort'), { 0, 10 }}
+		
+		rectDict.first_aid_damage_reduction = {L('_buff_first_aid_damage_reduction_upgrade'),{1,11}}
 
 		hook( PlayerManager, 'activate_temporary_upgrade', function( self, category, upgrade )
 			Run('activate_temporary_upgrade',  self, category, upgrade )
