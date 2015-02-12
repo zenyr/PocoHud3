@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 319
-local TAG = '0.25'
+local REV = 327
+local TAG = '0.25 hotfix 5 (b492ccf)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1522,7 +1522,7 @@ function TPocoHud3:_hook()
 		rectDict.dmg_dampener_outnumbered = ''-- {'Def+',{2,1}} -- Dupe
 		rectDict.overkill_damage_multiplier = {L('_buff_overkillShort'),{3,2}}
 		rectDict.passive_revive_damage_reduction = {L('_buff_painkillerShort'), { 0, 10 }}
-		
+
 		rectDict.first_aid_damage_reduction = {L('_buff_first_aid_damage_reduction_upgrade'),{1,11}}
 
 		hook( PlayerManager, 'activate_temporary_upgrade', function( self, category, upgrade )
@@ -1877,9 +1877,9 @@ function TPocoHud3:_hook()
 		hook( CopMovement, 'action_request', function( ...  )
 			local self, action_desc = unpack{...}
 			local dmgTime = O:get('popup','damageDecay')
-			if action_desc.variant == 'hands_up' and O:get('popup','handsUp') then
+			if action_desc.variant == 'hands_up' and O:get('popup','handsUp') and O:get('popup','enable') then
 				me:Popup({pos=me:_pos(self._unit),text={{'Hands-Up',cl.White}},stay=false,et=now()+dmgTime})
-			elseif action_desc.variant == 'tied' and O:get('popup','dominated') then
+			elseif action_desc.variant == 'tied' and O:get('popup','dominated') and O:get('popup','enable') then
 				if not managers.enemy:is_civilian( self._unit ) then
 					me:Popup({pos=me:_pos(self._unit),text={{'Intimidated',cl.White}},stay=false,et=now()+dmgTime})
 					me:Chat('dominated',L('_msg_captured',{me:_name(self._unit),me:_name(me:_pos(self._unit))}))
@@ -2553,7 +2553,7 @@ function TPocoHud3:_hook()
 			if O('game','sortCrimenet') then
 				local self,data = unpack{...}
 				local diff = (data and data.difficulty_id or 2) - 2
-				local diffX = 1800 / 10 * (diff * 2)
+				local diffX = 1800 / 10 * (diff * 2) + 200
 				local locations = self:_get_contact_locations()
 				local sorted = {}
 				for k,dot in pairs(locations[1].dots) do
