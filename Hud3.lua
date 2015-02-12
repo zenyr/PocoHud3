@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 309
-local TAG = '0.24 hotfix 1 (a240444)'
+local REV = 319
+local TAG = '0.25'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -2468,9 +2468,7 @@ function TPocoHud3:_hook()
 	if inGame then
 		hook( FPCameraPlayerBase, '_update_rot', function( ... )
 			if me.menuGui then
-				local self, axis = unpack{...}
-				local new_axis = Vector3()
-				return Run('_update_rot', self, new_axis)
+				return false
 			else
 				return Run('_update_rot', ...)
 			end
