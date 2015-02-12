@@ -1,11 +1,27 @@
---RegisterScript("poco/common.luac", 1, "UNDERSCORE")
---RegisterScript("poco/common.luac", 1, "PocoHud3")
-if not GetPersistScript("UNDERSCORE") then AddPersistScript("UNDERSCORE", "poco/common.luac") end
-if not GetPersistScript("PocoHud3") then AddPersistScript("PocoHud3", "poco/Hud3.luac") end
+-- PocoHud EntryPoint v1
 
---[[
-Commented lines are how it is supposed to work as documented, however both keybind and persist modes seem to
-not currently function when using RegisterScript, while post-requires do work. As a workaround the two
-uncommented lines are in use, which provide identical functionality for minimal (possibly no) additional
-overhead.
---]]
+if io and not PocoEntryRun then
+	PocoEntryRun = true
+	local getEither = function (name) -- get either .lua or .luac
+		local __req = function(name)
+			local f= io.open(name,"r")
+			if f~=nil then
+				io.close(f)
+				io.stdout:write('Found:'..name..'\n');
+				return name
+			end
+			last = name
+		end
+		return __req(name) or __req(name..'c');
+	end
+	if not GetPersistScript("UNDERSCORE") then
+		local filename = getEither("lib/lua/poco/common.lua")
+		if filename then AddPersistScript("UNDERSCORE", filename) end
+		--if filename then RegisterScript(filename, 1, "UNDERSCORE") end -- LE glitch
+	end
+	if not GetPersistScript("PocoHud3") then
+		local filename = getEither("lib/lua/poco/Hud3.lua")
+		if filename then AddPersistScript("PocoHud3", filename) end
+		--if filename then RegisterScript(filename, 1, "PocoHud3") end -- LE glitch
+	end
+end

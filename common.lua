@@ -200,7 +200,7 @@ _ = {
 			return compare - t
 		end
 	end,
-	W = function(...)io.stderr:write(_.S(...)..'\n')end,
+	W = function(...)io.stdout:write(_.S(...)..'\n')end,
 	P = function (t, f) -- pairs but sorted
 		local a = {}
 		for n in pairs(t or {}) do table.insert(a, n) end
@@ -329,6 +329,7 @@ end
 function Poco:_runBinds(t,dt)
 	if not (
 		(managers.menu_component._blackmarket_gui and managers.menu_component._blackmarket_gui._renaming_item) or
+		(managers.menu_component._skilltree_gui and managers.menu_component._skilltree_gui._renaming_skill_switch) or
 		(managers.hud and managers.hud._chat_focus) or
 		(managers.menu_component._game_chat_gui and managers.menu_component._game_chat_gui:input_focus()) or
 		(self._ignoreT and self._ignoreT > TimerManager:game():time())
