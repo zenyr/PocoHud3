@@ -159,6 +159,7 @@ local scheme = {
 		subtitleFontSize = {'num',20,{10,30},'_opt_subtitleFontSize_desc',nil,nil,2},
 		subtitleFontColor = {'color','White',nil,'_opt_subtitleFontColor_desc',nil,nil,2},
 		subtitleOpacity = {'num',100,{10,100},'_opt_subtitleOpacity_desc',nil,10,2},
+		romanInfamy = {'bool',TRUE,nil,'_opt_romanInfamy_desc','truncateNames',nil,4},
 		truncateNames = {'num',1,{1,8},'_opt_truncateNames_desc','truncateNames',nil,4},
 		truncateTags = {'bool',TRUE,nil,'_opt_truncateTags_desc',nil,nil,4},
 		sortCrimenet = {'bool',TRUE,nil,'_opt_sortCrimenet_desc',nil,nil,5},

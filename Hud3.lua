@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 328
-local TAG = '0.25 hotfix 6 (ca8115b)'
+local REV = 329
+local TAG = '0.25 hotfix 7 (22bf496)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -720,13 +720,33 @@ function TPocoHud3:_checkBuff(t)
 	end
 end
 
+local _roman = {
+	{'M',1000}, {'CM',900}, {'D',500}, {'CD',400}, {'C',100}, {'XC',90}, {'L',50}, {'XL',40}, {'X',10}, {'IX',9}, {'V',5}, {'IV',4}, {'I',1}
+}
+function TPocoHud3:_romanic_number(num)
+	local result = '';
+	if O:get('game','romanInfamy') then
+		while(num > 0) do
+			for i, val in pairs(_roman) do
+				if(num >= val[2]) then
+					num = num - val[2];
+					result = result .. val[1];
+					break;
+				end
+			end
+		end
+	else
+		result = tostring(num)
+	end
+	return result;
+end
+
 function TPocoHud3:_updatePlayers(t)
 	if t-(self._lastUP or 0) > 0.05 and inGameDeep then
 		self._lastUP = t
 	else
 		return
 	end
-	local ranks = {'I','II','III','IV','V','VI','VII','VIII','IX','X','X+'}
 	for i = 1,4 do
 		local name = self:_name(i)
 		name = name ~= self:_name(-1) and name
@@ -757,8 +777,8 @@ function TPocoHud3:_updatePlayers(t)
 							if member and alive(member:unit()) then
 								if btmO.showRank then
 									local peer = member and member:peer()
-									local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or ''
-									rank = ranks[rank] and (ranks[rank]..'Ї') or ''
+									local rank = isMe and managers.experience:current_rank() or peer and peer:rank()
+									rank = rank and (self:_romanic_number(rank)..'Ї') or ''
 									local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
 									local defaultLbl = bPnl._panel:child( 'name' )
 									local nameBg =  bPnl._panel:child( 'name_bg' )
@@ -969,7 +989,7 @@ function TPocoHud3:_updatePlayers(t)
 			local member = self:_member(i)
 			local peer = member and member:peer()
 			local rank = peer and peer:rank() or ''
-			rank = ranks[rank] and (ranks[rank]..'Ї') or ''
+			rank = rank and (self:_romanic_number(rank)..'Ї') or ''
 			local lvl = peer and peer:level() or '?'
 			local unit = nData and nData.movement._unit
 			local distance = unit and alive(unit) and mvector3.distance(unit:position(),self.camPos) or 0
@@ -1471,6 +1491,28 @@ function TPocoHud3:_hook()
 			return result
 		end)
 
+		hook( PlayerStandard, '_do_melee_damage', function( self, t, ... )
+			local result = Run('_do_melee_damage', self, t, ...)
+
+			-- capture Close Combat
+			if managers.player:has_category_upgrade("melee", "stacking_hit_damage_multiplier") then
+				local stack = self._state_data.stacking_dmg_mul.melee
+				if stack and stack[1] and t < stack[1] then
+					local mul = 1 + managers.player:upgrade_value("melee", "stacking_hit_damage_multiplier") * stack[2]
+					me:Buff({
+						key='triggerHappy', good=true,
+						icon=skillIcon, iconRect = {4*64, 0*64, 64, 64},
+						text=_.f(mul)..'x',
+						st=t, et=stack[1]
+					})
+				else
+					me:RemoveBuff('triggerHappy')
+				end
+
+			end
+		end)
+
+
 		hook( FPCameraPlayerBase, 'clbk_stance_entered', function( ... )
 			local self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration = unpack{...}
 			local r,err = pcall(function()
@@ -1514,16 +1556,20 @@ function TPocoHud3:_hook()
 			}) )
 		end)
 		local rectDict = {}
+		-- rectDict.inner-skill-name = {Label, {iconX,iconY}, isPerkIcon, isDebuff }
 		rectDict.combat_medic_damage_multiplier = {L('_buff_combatMedicDamageShort'), { 5, 7 }}
 		rectDict.no_ammo_cost = {L('_buff_bulletStormShort'),{ 4, 5 }}
 		rectDict.berserker_damage_multiplier = {L('_buff_swanSongShort'),{ 5, 12 }}
 
 		rectDict.dmg_multiplier_outnumbered = {L('_buff_underdogShort'),{2,1}}
 		rectDict.dmg_dampener_outnumbered = ''-- {'Def+',{2,1}} -- Dupe
+		rectDict.dmg_dampener_outnumbered_strong = ''-- {'Def+',{2,1}} -- Dupe
 		rectDict.overkill_damage_multiplier = {L('_buff_overkillShort'),{3,2}}
 		rectDict.passive_revive_damage_reduction = {L('_buff_painkillerShort'), { 0, 10 }}
 
 		rectDict.first_aid_damage_reduction = {L('_buff_first_aid_damage_reduction_upgrade'),{1,11}}
+		rectDict.melee_life_leech = {L('_buff_lifeLeechShort'),{7,4},true,true}
+		rectDict.dmg_dampener_close_contact = {L('_buff_first_aid_damage_reduction_upgrade'),{5,4},true}
 
 		hook( PlayerManager, 'activate_temporary_upgrade', function( self, category, upgrade )
 			Run('activate_temporary_upgrade',  self, category, upgrade )
@@ -1546,8 +1592,8 @@ function TPocoHud3:_hook()
 				local key = ('_'..upgrade):gsub('_(%U)',function(a) return a:upper() end)
 				key = _keys[key] or key
 				pcall(me.Buff,me,({
-					key=key, good=true,
-					icon=rect2 and skillIcon or 'guis/textures/pd2/lock_incompatible', iconRect = rect2,
+					key=key, good=not rect[4],
+					icon=(rect2 and (rect[3] and 'guis/textures/pd2/specialization/icons_atlas' or skillIcon)) or 'guis/textures/pd2/lock_incompatible', iconRect = rect2,
 					text=rect and rect[1] or upgrade,
 					st=now(), et=et
 				}) )
