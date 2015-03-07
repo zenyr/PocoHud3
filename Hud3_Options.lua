@@ -57,6 +57,8 @@ local scheme = {
 		showReload = {'bool',TRUE,nil,'_opt_showReload_desc'},
 		showTriggerHappy = {'bool',TRUE,nil,'_opt_showTriggerHappy_desc'},
 		showFirstAid = {'bool',TRUE,nil,'_opt_showFirstAid_desc'},
+		showLifeLeech = {'bool',TRUE,nil,'_opt_showLifeLeech_desc'},
+		showCloseCombat = {'bool',TRUE,nil,'_opt_showCloseCombat_desc'},
 
 		noSprintDelay  = {'bool',TRUE,nil,'_opt_noSprintDelay_desc',nil,nil,4},
 		hideInteractionCircle  = {'bool',FALSE,nil,'_opt_hideInteractionCircle_desc',nil,nil,4},

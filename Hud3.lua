@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 327
-local TAG = '0.25 hotfix 5 (b492ccf)'
+local REV = 328
+local TAG = '0.25 hotfix 6 (ca8115b)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1540,6 +1540,8 @@ function TPocoHud3:_hook()
 					CombatMedicDamageMultiplier = 'CombatMedic',
 					OverkillDamageMultiplier = 'Overkill',
 					NoAmmoCost = 'Bulletstorm',
+					MeleeLifeLeech = 'LifeLeech',
+					DmgDampenerCloseContact = 'CloseCombat',
 				}
 				local key = ('_'..upgrade):gsub('_(%U)',function(a) return a:upper() end)
 				key = _keys[key] or key
