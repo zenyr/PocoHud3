@@ -9,6 +9,7 @@ local scheme = {
 		shuffleMusic = {'bool',FALSE,nil,'_opt_shuffleMusic_desc'},
 		silentKitShortcut = {'bool',TRUE,nil,'_opt_silentKitShortcut_desc'},
 		pocoRoseKey = {'key','b',nil,'_opt_pocoRoseKey_desc'},
+		pocoRoseHalt = {'bool',FALSE,nil,'_opt_pocoRoseHalt_desc'},
 		language = {'string','EN',nil,'_opt_language_desc','language'},
 		colorPositive = {'color','YellowGreen','color','_opt_colorPositive_desc',nil,nil,2},
 		colorNegative = {'color','Gold','color','_opt_colorNegative_desc',nil,nil,2},
@@ -183,7 +184,7 @@ local _vanity = {
 	language = {EN='English', DA='Dansk', DE='Deutsch', ES='Español', FR='Français',ID = 'Bahasa Indonesia', IT='Italiano',NL='Nederlands',NO='Norsk',PL='Polski',PT='Português (PT)',PT_BR='Português (BR)', RU='Русский', SV_SE='Svenska'},
 }
 ----------------------------------------------------
-local JSONFileName = 'poco\\hud3_config.json'
+local JSONFileName = Poco.currDir..'hud3_config.json'
 local isNil = function(a)
 	return a == nil
 end

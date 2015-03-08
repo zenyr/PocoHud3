@@ -6,15 +6,17 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 332
-local TAG = '0.26 hotfix 1 (89b32d6)'
+local REV = 333
+local TAG = '0.26 hotfix 2 (2741f3f)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
+local currDir = string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")
+Poco.currDir = currDir
 PocoHud3Class = nil
-Poco._req ('poco/Hud3_class.lua')
+Poco._req (currDir..'Hud3_class.lua')
 if not PocoHud3Class then return end
-Poco._req ('poco/Hud3_Options.lua')
+Poco._req (currDir..'Hud3_Options.lua')
 if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
 PocoHud3Class.O = O
@@ -778,7 +780,7 @@ function TPocoHud3:_updatePlayers(t)
 								if btmO.showRank then
 									local peer = member and member:peer()
 									local rank = isMe and managers.experience:current_rank() or peer and peer:rank()
-									rank = rank and (self:_romanic_number(rank)..'Ї') or ''
+									rank = rank and (rank > 0) and (self:_romanic_number(rank)..'Ї') or ''
 									local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
 									local defaultLbl = bPnl._panel:child( 'name' )
 									local nameBg =  bPnl._panel:child( 'name_bg' )
@@ -989,7 +991,7 @@ function TPocoHud3:_updatePlayers(t)
 			local member = self:_member(i)
 			local peer = member and member:peer()
 			local rank = peer and peer:rank() or ''
-			rank = rank and (self:_romanic_number(rank)..'Ї') or ''
+			rank = rank and (rank > 0) and (self:_romanic_number(rank)..'Ї') or ''
 			local lvl = peer and peer:level() or '?'
 			local unit = nData and nData.movement._unit
 			local distance = unit and alive(unit) and mvector3.distance(unit:position(),self.camPos) or 0
@@ -1400,7 +1402,7 @@ function TPocoHud3:_hook()
 		end)
 		hook( PlayerStandard, '_determine_move_direction', function( self ,...)
 			Run('_determine_move_direction', self,... )
-			if me.menuGui then
+			if O:get('root','pocoRoseHalt') and me.menuGui then
 				self._move_dir = nil
 				self._normal_move_dir = nil
 			end
