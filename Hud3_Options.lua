@@ -151,6 +151,7 @@ local scheme = {
 		showBags = {'bool',TRUE,nil,'_opt_showBags_desc'},
 	}, game = {	'_opt_game_desc',
 		fasterDesyncResolve = {'num',2,{1,3},'_opt_fasterDesyncResolve_desc','DesyncResolve',nil,1},
+		interactionClickStick = {'bool',TRUE,nil,'_opt_interactionClickStick_desc',nil,nil,1},
 		ingameJoinRemaining = {'bool',TRUE,nil,'_opt_ingameJoinRemaining_desc',nil,nil,1},
 		showRankInKickMenu = {'bool',TRUE,nil,'_opt_showRankInKickMenu_desc',nil,nil,1},
 		corpseLimit = {'num',3,{1,10},'_opt_corpseLimit_desc','corpse',nil,3},

@@ -185,6 +185,8 @@
     "_opt_includeLocation_desc": "If location data is available, include it in chat message.",
     "_opt_ingameJoinRemaining": "INGAME JOIN REMAINING",
     "_opt_ingameJoinRemaining_desc": "In-game SOMEONE IS JOINING dialog will show you how many seconds left",
+    "_opt_interactionClickStick": "STICKY INTERACTION",
+    "_opt_interactionClickStick_desc": "Aim down sight while interacting to initiate STICKY INTERACTION. ADS again to stop interacting.",
     "_opt_justify": "JUSTIFY",
     "_opt_justify_desc": "Icon alignment (vertical for Vanilla style)",
     "_opt_keepOnScreen": "KEEP ON SCREEN",
@@ -479,6 +481,5 @@
     "_word_synced": "Synced",
     "_word_time": "Time",
     "_word_uid": "UID",
-    "_word_unknown": "Unknown",
-    "_word_yes": "Yes"
+    "_word_unknown": "Unknown"
 }

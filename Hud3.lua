@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 333
-local TAG = '0.26 hotfix 2 (2741f3f)'
+local REV = 334
+local TAG = '0.26 hotfix 3 (f5b1182)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -262,7 +262,7 @@ end
 function TPocoHud3:toggleRose(show)
 	if self._noRose then return end
 	local C = PocoHud3Class
-	local canOpen = inGameDeep and (not self._lastSay or now()-self._lastSay > tweak_data.player.movement_state.interaction_delay)
+	local canOpen = inGameDeep and (not self._lastSay or now()-self._lastSay > tweak_data.player.movement_state.interaction_delay / 2)
 	local r,err = pcall(function()
 		local menu = self.menuGui
 		if menu and not self._guiFading then -- hide
@@ -285,7 +285,7 @@ function TPocoHud3:toggleRose(show)
 			local tab = gui:add('Rose')
 			C._drawRose(tab)
 		elseif not canOpen and show then
-			managers.menu:post_event('menu_error')
+			-- managers.menu:post_event('menu_error')
 		end
 	end)
 	if not r then
@@ -1472,6 +1472,19 @@ function TPocoHud3:_hook()
 			end
 		end)
 		hook( PlayerStandard, '_check_action_primary_attack', function( self, t, ... )
+			local input = unpack{...}
+
+			-- StickyInteraction trigger
+			local lastInteractionStart, lastClick = me._lastInteractStart or 0, me._lastClick or 0
+			if input.btn_steelsight_press and O:get('game','interactionClickStick') and self:_interacting() then
+				if lastInteractionStart < lastClick then
+					me._lastClick = 0
+					self:_interupt_action_interact()
+				else
+					me._lastClick = t
+				end
+			end
+
 			local result = Run('_check_action_primary_attack', self, t, ...)
 				-- capture TriggerHappy
 				local weap_base = self._equipped_unit:base()
@@ -1641,18 +1654,29 @@ function TPocoHud3:_hook()
 			end
 			return r
 		end)
-		hook( PlayerStandard, '_interupt_action_interact', function( self,t, input, complete  )
-			Run('_interupt_action_interact', self, t, input, complete )
-			local et = self._equip_weapon_expire_t
-			if et then
-				me:RemoveBuff('interaction')
-				pcall(me.Buff,me,({
-					key='transition', good=false,
-					icon=skillIcon,
-					iconRect = { 4*64, 3*64,64,64 },
-					text='',
-					st=now(), et=et
-				}) )
+
+
+
+
+		hook( PlayerStandard, '_interupt_action_interact', function( self, t, input, complete  )
+
+			-- StickyInteraction Execution
+			local lastInteractionStart, lastClick = me._lastInteractStart or 0, me._lastClick or 0
+			if not t and O:get('game','interactionClickStick') and not complete and (lastInteractionStart < lastClick) then
+				-- ignore interupt
+			else
+				Run('_interupt_action_interact', self, t, input, complete )
+				local et = self._equip_weapon_expire_t
+				if et then
+					me:RemoveBuff('interaction')
+					pcall(me.Buff,me,({
+						key='transition', good=false,
+						icon=skillIcon,
+						iconRect = { 4*64, 3*64,64,64 },
+						text='',
+						st=now(), et=et
+					}) )
+				end
 			end
 		end)
 		hook( PlayerStandard, 'set_running', function( ... )
@@ -1693,6 +1717,13 @@ function TPocoHud3:_hook()
 				}) )
 			end
 		end)
+
+		hook( PlayerStandard, '_start_action_interact', function( self, ...  )
+			Run('_start_action_interact', self, ...)
+			local t, input, timer, interact_object = unpack{...}
+			me._lastInteractStart = t
+		end)
+
 		hook( PlayerStandard, '_start_action_reload', function( self,t  )
 			Run('_start_action_reload', self, t )
 			_matchStance(true)
@@ -1936,7 +1967,7 @@ function TPocoHud3:_hook()
 				end
 			end
 			if action_desc.type=='act' and action_desc.variant then
---				me:Popup({pos=me:_pos(self._unit),text={{action_desc.variant,Color.white}},stay=true,et=now()+dmgTime})
+				--me:Popup({pos=me:_pos(self._unit),text={{action_desc.variant,Color.white}},stay=true,et=now()+dmgTime})
 			end
 			return Run('action_request', ... )
 		end)
@@ -2341,6 +2372,26 @@ function TPocoHud3:_hook()
 				me:Stat(me.pid,'interactST',now())
 				me:Stat(me.pid,'interactET',now()+total)
 			end
+
+			local lastInteractionStart, lastClick = me._lastInteractStart or 0, me._lastClick or 0
+			local sticky = O:get('game','interactionClickStick') and (lastInteractionStart < lastClick)
+			if self._interact_circle and self.__lastSticky ~= sticky then
+				local img = sticky and 'guis/textures/pd2/hud_progress_invalid' or 'guis/textures/pd2/hud_progress_bg'
+
+				local anim_func = function(o)
+					while sticky do
+						over(0.75, function(p)
+							o:set_alpha(math.sin(p * 180) * 0.5 )
+						end)
+					end
+				end
+
+				self._interact_circle._bg_circle:animate(anim_func)
+
+				self.__lastSticky = sticky
+				self._interact_circle._bg_circle:set_image(img)
+			end
+
 			Run('set_interaction_bar_width',...)
 		end)
 		hook( HUDInteraction, 'hide_interaction_bar', function( ... ) -- Local
@@ -2450,6 +2501,17 @@ function TPocoHud3:_hook()
 	else -- if outGame
 
 	end -- End of if inGame
+
+	-- Global Romanic Rank
+	hook( ExperienceManager , 'rank_string', function( ... )
+		local self, rank = unpack{...}
+		if O:get('game','romanInfamy') then
+			return me:_romanic_number(rank)
+		else
+			return rank
+		end
+	end)
+
 	-- Kick menu
 	if O:get('game','showRankInKickMenu') then
 		hook( KickPlayer, 'modify_node', function( ... )
