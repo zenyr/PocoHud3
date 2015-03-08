@@ -118,7 +118,7 @@ function TBuff:_make()
 	self.created = true
 	if simple then
 		local simpleRadius = buffO.simpleBusySize
-		local pnl = self.ppnl:panel({x = self.owner.ww/2-simpleRadius,y=self.owner.hh/2-simpleRadius, w=simpleRadius*2,h=simpleRadius*2})
+		local pnl = self.ppnl:panel({x = (self.owner.ww or 0)/2-simpleRadius,y=(self.owner.hh or 0)/2-simpleRadius, w=simpleRadius*2,h=simpleRadius*2})
 		self.pnl = pnl
 		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
 		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = simpleRadius, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
@@ -233,10 +233,11 @@ function TBuff:draw(t,x,y)
 end
 function TBuff:_fade(pnl, done_cb, seconds)
 	local pnl = self.pnl
+	if not pnl then return end
 	pnl:set_visible( true )
 	pnl:set_alpha( 1 )
 	local t = seconds
-	while t > 0 do
+	while alive(pnl) and t > 0 do
 		if not self.dead then
 			self.dying = false
 			break
@@ -720,7 +721,7 @@ function THitDirection:draw(pnl, done_cb, seconds)
 	pnl:set_visible( true )
 	self.bmp:set_alpha( 1 )
 	local t = seconds
-	while t > 0 do
+	while alive(pnl) and t > 0 do
 		if self.owner.dead then
 			break
 		end
@@ -2311,7 +2312,7 @@ function PocoMenu:_fade(pnl, out, done_cb, seconds)
 	if self.alt and not out then
 		managers.mouse_pointer:set_mouse_world_position(pnl:w()/2, pnl:h()/2)
 	end
-	while t > 0 do
+	while alive(pnl) and t > 0 do
 		local dt = coroutine.yield()
 		t = t - dt
 		local r = t/seconds

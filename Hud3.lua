@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 334
-local TAG = '0.26 hotfix 3 (f5b1182)'
+local REV = 335
+local TAG = '0.26 hotfix 4 (e9b2989)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -468,10 +468,13 @@ function TPocoHud3:_update(t,dt)
 	if inGameDeep and now() - (self._lastRoom or 0) > 1 then
 		self._lastRoom = now()
 		local room = _.g('Poco.room')
-		for pid=1,4 do
-			local unit = self:Stat(pid,'custody') == 0 and room and managers.network:game():unit_from_peer_id(pid)
-			if unit and alive(unit) then
-				self:Stat(pid,'room',room:get(unit:movement():m_pos(),true))
+		local game = managers.network:game()
+		if game then
+			for pid=1,4 do
+				local unit = self:Stat(pid,'custody') == 0 and room and game:unit_from_peer_id(pid)
+				if unit and alive(unit) then
+					self:Stat(pid,'room',room:get(unit:movement():m_pos(),true))
+				end
 			end
 		end
 	end
@@ -2379,7 +2382,7 @@ function TPocoHud3:_hook()
 				local img = sticky and 'guis/textures/pd2/hud_progress_invalid' or 'guis/textures/pd2/hud_progress_bg'
 
 				local anim_func = function(o)
-					while sticky do
+					while alive(o) and sticky do
 						over(0.75, function(p)
 							o:set_alpha(math.sin(p * 180) * 0.5 )
 						end)
