@@ -6,12 +6,12 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 335
-local TAG = '0.26 hotfix 4 (e9b2989)'
+local REV = 336
+local TAG = '0.26 hotfix 5 (e997d86)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
-local currDir = string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")
+local currDir = PocoDir
 Poco.currDir = currDir
 PocoHud3Class = nil
 Poco._req (currDir..'Hud3_class.lua')
@@ -136,9 +136,6 @@ function TPocoHud3:onDestroy(gameEnd)
 	self:Menu(true,true) -- Force dismiss menu
 	if( alive( self._ws ) ) then
 		managers.gui_data:destroy_workspace(self._ws)
-	end
-	if( alive( self._worldws ) ) then
-		World:newgui():destroy_workspace( self._worldws )
 	end
 end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
@@ -435,7 +432,7 @@ function TPocoHud3:_slowUpdate(t,dt)
 	end
 end
 function TPocoHud3:_update(t,dt)
-	if not PocoHud3Class then return end;
+	if not (PocoHud3Class and not self.dead) then return end
 	inGameDeep = inGame and BaseNetworkHandler._verify_gamestate(BaseNetworkHandler._gamestate_filter.any_ingame_playing)
 	if self.inGameDeep ~= inGameDeep then
 		if inGameDeep then
@@ -507,7 +504,7 @@ function TPocoHud3:HitDirection(col_ray,data)
 		end
 	end
 	if not mobPos then -- still no?... set to player position
-		mobPos = managers.player:player_unit():position()
+		mobPos = _.g('managers.player:player_unit():position()')
 	end
 	if mobPos then
 		table.insert(self.hits,PocoHud3Class.THitDirection:new(self,{mobPos=mobPos,shield=data.shield,dmg=data.dmg,time=data.time,rate=data.rate}))
@@ -571,7 +568,7 @@ function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
 	end
 end
 
-function TPocoHud3:SimpleFloat(data) -- {key,x,y,time,text,size,val,anim,offset,icon}
+function TPocoHud3:SimpleFloat(data) -- {key,x,y,time,text,size,val,anim,offset,icon,rect}
 	local key = data.key
 	if key and self.sFloats[key] then
 		self.sFloats[key]:hide()
@@ -581,7 +578,7 @@ function TPocoHud3:SimpleFloat(data) -- {key,x,y,time,text,size,val,anim,offset,
 	if key then
 		self.sFloats[key] = pnl
 	end
-	pnl:rect{color=cl.Black,layer=-1,alpha=0.9}
+	pnl:rect{color=cl.Black,layer=-1,alpha=data.rect or 0.9}
 	local offset = data.offset or {0,0}
 	local anim = data.anim
 	local __, lbl = _.l({pnl=pnl,x=5,y=5, font=FONT, color=cl.White, font_size=data.size},data.text,true)
@@ -973,7 +970,7 @@ function TPocoHud3:_updatePlayers(t)
 				end
 			end
 			txts[#txts+1] = {' ',cl.White}
-			local btm = self.hh - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
+			local btm = (self.hh or 0) - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
 			if alive(pnl) then
 				pnl:set_bottom(btm)
 			end
@@ -1399,6 +1396,13 @@ function TPocoHud3:_hook()
 	end
 	--
 	if inGame then
+		-- Kill PocoHud on restart
+		hook( GamePlayCentralManager, 'restart_the_game', function( self ,...)
+			me:onDestroy(gameEnd)
+			me.Toggle()
+			Run('restart_the_game', self,... )
+		end)
+
 		--PlayerStandard
 		hook( PlayerStandard, '_get_input', function( self ,...)
 			return me.menuGui and {} or Run('_get_input', self,... )
@@ -1589,6 +1593,17 @@ function TPocoHud3:_hook()
 		rectDict.melee_life_leech = {L('_buff_lifeLeechShort'),{7,4},true,true}
 		rectDict.dmg_dampener_close_contact = {L('_buff_first_aid_damage_reduction_upgrade'),{5,4},true}
 
+		local _keys = { -- Better names for Option pnls
+			BerserkerDamageMultiplier = 'SwanSong',
+			PassiveReviveDamageReduction = 'Painkiller',
+			FirstAidDamageReduction = 'FirstAid',
+			DmgMultiplierOutnumbered = 'Underdog',
+			CombatMedicDamageMultiplier = 'CombatMedic',
+			OverkillDamageMultiplier = 'Overkill',
+			NoAmmoCost = 'Bulletstorm',
+			MeleeLifeLeech = 'LifeLeech',
+			DmgDampenerCloseContact = 'CloseCombat'
+		}
 		hook( PlayerManager, 'activate_temporary_upgrade', function( self, category, upgrade )
 			Run('activate_temporary_upgrade',  self, category, upgrade )
 			local et = _.g('managers.player._temporary_upgrades.'..category ..'.'..upgrade..'.expire_time')
@@ -1596,17 +1611,6 @@ function TPocoHud3:_hook()
 			local rect = rectDict[upgrade]
 			if rect ~= '' then
 				local rect2 = rect and ({64*rect[2][1],64*rect[2][2],64,64})
-				local _keys = { -- Better names for Option pnls
-					BerserkerDamageMultiplier = 'SwanSong',
-					PassiveReviveDamageReduction = 'Painkiller',
-					FirstAidDamageReduction = 'FirstAid',
-					DmgMultiplierOutnumbered = 'Underdog',
-					CombatMedicDamageMultiplier = 'CombatMedic',
-					OverkillDamageMultiplier = 'Overkill',
-					NoAmmoCost = 'Bulletstorm',
-					MeleeLifeLeech = 'LifeLeech',
-					DmgDampenerCloseContact = 'CloseCombat',
-				}
 				local key = ('_'..upgrade):gsub('_(%U)',function(a) return a:upper() end)
 				key = _keys[key] or key
 				pcall(me.Buff,me,({
@@ -1625,6 +1629,7 @@ function TPocoHud3:_hook()
 			if rect ~= '' then
 				local rect2 = rect and ({64*rect[2][1],64*rect[2][2],64,64})
 				local key = ('_'..upgrade):gsub('_(%U)',function(a) return a:upper() end)
+				key = _keys[key] or key
 				pcall(me.Buff,me,({
 					key=key, good=true,
 					icon=rect2 and skillIcon or 'guis/textures/pd2/lock_incompatible', iconRect = rect2,
@@ -1657,9 +1662,6 @@ function TPocoHud3:_hook()
 			end
 			return r
 		end)
-
-
-
 
 		hook( PlayerStandard, '_interupt_action_interact', function( self, t, input, complete  )
 
@@ -1850,6 +1852,40 @@ function TPocoHud3:_hook()
 			me._lastAttkUnit = attacker_unit
 			return Run('_look_for_friendly_fire', self, attacker_unit)
 		end)
+
+		hook( PlayerDamage, 'change_health', function( self, change_of_health, ... )
+			local before = self:get_real_health()
+			Run('change_health', self, change_of_health, ... )
+			if O:get('hit','enable') then
+				-- Skill-originated Health regen
+				local after = self:get_real_health()
+				local delta = after - before
+				if delta > 0 then
+					managers.menu_component:post_event("menu_skill_investment")
+					me:SimpleFloat{key='health',x=(me.ww or 800)/5*2,y=(me.hh or 600)/4*3,time=3,anim=1,offset={0,-1 * (me.hh or 600)/2},
+						text={{'+',cl.White:with_alpha(0.6)},{_.f(delta*10),clGood}},
+						size=18, rect=0.5
+					}
+				end
+			end
+		end)
+		hook( PlayerDamage, 'restore_armor', function( self, regen_armor_bonus, ... )
+			local before = self:get_real_armor()
+			Run('restore_armor', self, regen_armor_bonus, ... )
+			if O:get('hit','enable') then
+				-- Skill-originated Shield regen
+				local after = self:get_real_armor()
+				local delta = after - before
+				if delta > 0 then
+					managers.menu_component:post_event("menu_skill_investment")
+					me:SimpleFloat{key='armor',x=(me.ww or 800)/5*3,y=(me.hh or 600)/4*3,time=3,anim=1,offset={0,-1 * (me.hh or 600)/2},
+						text={{'+',cl.White:with_alpha(0.6)},{_.f(delta*10),clGood}},
+						size=18, rect=0.5
+					}
+				end
+			end
+		end)
+
 		if O:get('hit','enable') then
 			hook( PlayerDamage, '_hit_direction', function( self, col_ray )
 				managers.environment_controller._hit_some = math.min(managers.environment_controller._hit_some + managers.environment_controller._hit_amount, 1)

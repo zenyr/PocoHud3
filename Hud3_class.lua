@@ -544,7 +544,7 @@ function TFloat:draw(t)
 				end
 			elseif dGUI then
 				dGUI._maxx = math.max( dGUI._maxx or 0, dGUI._timer or 0)
-				if not (dGUI._ws and dGUI._ws:visible()) or dGUI._floored_last_timer <= 0 then
+				if not (dGUI._ws and dGUI._ws:visible()) or (dGUI._floored_last_timer <= 0) or (dGUI.is_visible and not dGUI:is_visible()) then
 					return self:destroy(1)
 				else
 					self:renew()
@@ -674,12 +674,13 @@ function THitDirection:init(owner,data)
 	self.bmp = bmp
 	bmp:set_center(100,100)
 	if Opt.number then
+		local text = _.f(data.dmg*-10)
 		local nSize = Opt.numberSize
 		local font = Opt.numberDefaultFont and FONT or ALTFONT
 		local lbl = pnl:text{
 			x = 1,y = 1,font = font, font_size = nSize,
 			w = nSize*3, h = nSize,
-			text = '-'.._.f(data.dmg*10),
+			text = text,
 			color = color,
 			align = 'center',
 			layer = 1
@@ -689,7 +690,7 @@ function THitDirection:init(owner,data)
 		lbl = pnl:text{
 			x = 1,y = 1,font = font, font_size = nSize,
 			w = nSize*3, h = nSize,
-			text = '-'.._.f(data.dmg*10),
+			text = text,
 			color = cl.Black:with_alpha(0.2),
 			align = 'center',
 			layer = 1
@@ -699,7 +700,7 @@ function THitDirection:init(owner,data)
 		lbl = pnl:text{
 			x = 1,y = 1,font = font, font_size = nSize,
 			w = nSize*3, h = nSize,
-			text = '-'.._.f(data.dmg*10),
+			text = text,
 			color = cl.Black:with_alpha(0.2),
 			align = 'center',
 			layer = 1
@@ -2561,6 +2562,7 @@ function PocoHud3Class._drawHeistStats (tab)
 	local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size*0.98
 	local _rowCnt = 0
 	tbl[#tbl+1] = {{L('_word_broker'),cl.BlanchedAlmond},L('_word_job'),{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},L('_word_heat')}
+	--[[ OLD
 	local addJob = function(host,heist)
 		local jobData = tweak_data.narrative.jobs[heist]
 		if jobData.wrapped_to_job then
@@ -2592,6 +2594,47 @@ function PocoHud3Class._drawHeistStats (tab)
 				job_list[table.get_key(job_list,heist)] = nil
 			end
 			addJob(host,heist)
+		end
+	end]]
+	local addJob = function(host,heist)
+		local jobData = tweak_data.narrative:job_data(heist)
+		if jobData.wrapped_to_job then
+			jobData = tweak_data.narrative.jobs[jobData.wrapped_to_job]
+		end
+		local job_string =managers.localization:to_upper_text(jobData.name_id or heist) or heist
+		if string.find(heist, '_night') then
+			job_string = job_string..' NIGHT'
+		end
+		local pro = jobData.professional
+		if pro then
+			job_string = {job_string, cl.Red}
+		end
+		local rowObj = {host:upper(),job_string}
+		for i, name in ipairs( risks ) do
+			--local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
+			local c = managers.statistics._global.sessions.jobs[(heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_completed'):gsub('_wrapper','')] or 0
+			local f = managers.statistics._global.sessions.jobs[(heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'):gsub('_wrapper','')] or 0
+			if i > 1 or not pro then
+				table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
+			else
+				table.insert(rowObj, {c > 0 and c or L('_word_na'), cl.Tan:with_alpha(0.4)})
+			end
+		end
+		local multi = managers.job:get_job_heat_multipliers(heist)
+		local color = multi >= 1 and math.lerp( cl.Khaki, cl.Chartreuse, 6*(multi - 1) ) or math.lerp( cl.Crimson, cl.OrangeRed, 3*(multi - 0.7) )
+		table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..(managers.job:get_job_heat(heist) or '?')..')',color:with_alpha(0.3)}})
+		tbl[#tbl+1] = rowObj
+	end
+	for host,jobs in _.p(host_list) do
+		for no,heist in _.p(job_list) do
+			if tweak_data.narrative:job_data(heist).contact:gsub('the_','') == host:gsub('the_','') then
+				--[[if table.get_key(job_list,heist) then
+					job_list[table.get_key(job_list,heist)] = nil
+				end]]
+				job_list[table.get_key(job_list,heist)] = nil
+				addJob(host:gsub('the_',''),heist)
+			end
+
 		end
 	end
 	for no,heist in pairs(job_list) do
