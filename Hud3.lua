@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 336
-local TAG = '0.26 hotfix 5 (e997d86)'
+local REV = 338
+local TAG = '0.26 hotfix 7 (b89a113)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -426,7 +426,9 @@ function TPocoHud3:_slowUpdate(t,dt)
 	if inGame then
 		local peers = _.g('managers.network:session():peers()',{})
 		for pid,peer in pairs( peers ) do
-			self:Stat(pid,'ping',math.floor(Network:qos( peer:rpc() ).ping))
+			if peer and peer:rpc() then
+				self:Stat(pid,'ping',math.floor(Network:qos( peer:rpc() ).ping))
+			end
 		end
 		self.pid = _.g('managers.network:session():local_peer():id()')
 	end
@@ -779,7 +781,7 @@ function TPocoHud3:_updatePlayers(t)
 							if member and alive(member:unit()) then
 								if btmO.showRank then
 									local peer = member and member:peer()
-									local rank = isMe and managers.experience:current_rank() or peer and peer:rank()
+									local rank = isMe and managers.experience:current_rank() or (peer and peer:rank())
 									rank = rank and (rank > 0) and (self:_romanic_number(rank)..'Ї') or ''
 									local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
 									local defaultLbl = bPnl._panel:child( 'name' )
@@ -990,7 +992,7 @@ function TPocoHud3:_updatePlayers(t)
 		if alive(nLbl) and fltO.enable then
 			local member = self:_member(i)
 			local peer = member and member:peer()
-			local rank = peer and peer:rank() or ''
+			local rank = peer and peer:rank()
 			rank = rank and (rank > 0) and (self:_romanic_number(rank)..'Ї') or ''
 			local lvl = peer and peer:level() or '?'
 			local unit = nData and nData.movement._unit
