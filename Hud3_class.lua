@@ -2562,49 +2562,13 @@ function PocoHud3Class._drawHeistStats (tab)
 	local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size*0.98
 	local _rowCnt = 0
 	tbl[#tbl+1] = {{L('_word_broker'),cl.BlanchedAlmond},L('_word_job'),{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},L('_word_heat')}
-	--[[ OLD
-	local addJob = function(host,heist)
-		local jobData = tweak_data.narrative.jobs[heist]
-		if jobData.wrapped_to_job then
-			jobData = tweak_data.narrative.jobs[jobData.wrapped_to_job]
-		end
-		local job_string =managers.localization:to_upper_text(jobData.name_id or heist) or heist
-		local pro = jobData.professional
-		if pro then
-			job_string = {job_string, cl.Red}
-		end
-		local rowObj = {host:upper(),job_string}
-		for i, name in ipairs( risks ) do
-			local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
-			local f = managers.statistics._global.sessions.jobs[(heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'):gsub('_wrapper','')] or 0
-			if i > 1 or not pro then
-				table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
-			else
-				table.insert(rowObj, {c > 0 and c or L('_word_na'), cl.Tan:with_alpha(0.4)})
-			end
-		end
-		local multi = managers.job:get_job_heat_multipliers(heist)
-		local color = multi >= 1 and math.lerp( cl.Khaki, cl.Chartreuse, 6*(multi - 1) ) or math.lerp( cl.Crimson, cl.OrangeRed, 3*(multi - 0.7) )
-		table.insert(rowObj,{{_.f(multi*100,5)..'%',color},{' ('..(managers.job:get_job_heat(heist) or '?')..')',color:with_alpha(0.3)}})
-		tbl[#tbl+1] = rowObj
-	end
-	for host,jobs in _.p(host_list) do
-		for no,heist in _.p(jobs) do
-			if table.get_key(job_list,heist) then
-				job_list[table.get_key(job_list,heist)] = nil
-			end
-			addJob(host,heist)
-		end
-	end]]
 	local addJob = function(host,heist)
 		local jobData = tweak_data.narrative:job_data(heist)
 		if jobData.wrapped_to_job then
 			jobData = tweak_data.narrative.jobs[jobData.wrapped_to_job]
 		end
 		local job_string =managers.localization:to_upper_text(jobData.name_id or heist) or heist
-		if string.find(heist, '_night') then
-			job_string = job_string..' NIGHT'
-		end
+		job_string = job_string .. (string.find(heist, '_night') and ' '..L('_tab_stat_night') or '')
 		local pro = jobData.professional
 		if pro then
 			job_string = {job_string, cl.Red}
@@ -2634,7 +2598,6 @@ function PocoHud3Class._drawHeistStats (tab)
 				job_list[table.get_key(job_list,heist)] = nil
 				addJob(host:gsub('the_',''),heist)
 			end
-
 		end
 	end
 	for no,heist in pairs(job_list) do
@@ -2653,6 +2616,7 @@ function PocoHud3Class._drawHeistStats (tab)
 	oTab:set_h(y)
 
 	-- [2] Per day
+	level_list, job_list, mask_list, weapon_list = managers.statistics:_get_stat_tables()
 	oTab = oTabs:add(L('_tab_stat_perday'))
 	pnl = oTab.pnl
 	y = 10
@@ -2670,8 +2634,12 @@ function PocoHud3Class._drawHeistStats (tab)
 		if not level then return end
 		local isAlt = val:match('_night$') or val:match('_day$')
 		local name = managers.localization:to_upper_text(tweak_data.levels[val].name_id)
-		if name == prefix then
-			prefix = {Icon.Ghost,cl.Gray}
+		if type(prefix) == 'string' then
+			if (prefix:find(val) or managers.localization:to_upper_text(prefix) == name ) and not val:find('_%d') then
+				prefix = {Icon.Ghost,cl.Gray}
+			else
+				prefix = managers.localization:to_upper_text(prefix)
+			end
 		end
 		name = name .. (isAlt and ' '..L('_tab_stat'..isAlt) or '')
 		local _c = function(n,color)
@@ -2707,34 +2675,34 @@ function PocoHud3Class._drawHeistStats (tab)
 	end
 	for host,_jobs in _.p(host_list) do
 		local jobs = table.deepcopy(_jobs)
-
-		while table.size(jobs) > 0 do
-			local heist = table.remove(jobs,1)
-			local jobData = tweak_data.narrative.jobs[heist]
-			local jobName
-			if jobData.wrapped_to_job then
-				jobName = tweak_data.narrative.jobs[jobData.wrapped_to_job].name_id
-			else
-				jobName = jobData.name_id
-			end
-			if jobData and jobData.job_wrapper then
-				for k,realJobs in pairs(jobData.job_wrapper) do
-					table.insert(jobs,realJobs)
+		for no, heist in _.p(job_list) do
+			if tweak_data.narrative:job_data(heist).contact:gsub('the_','') == host:gsub('the_','') then
+				local jobData = tweak_data.narrative.jobs[heist]
+				local jobName
+				if jobData.wrapped_to_job then
+					jobName = tweak_data.narrative.jobs[jobData.wrapped_to_job].name_id
+				else
+					jobName = jobData.name_id
 				end
-			end
-			if jobData.chain then
-				for day,level in pairs(jobData.chain) do
-					local lID = level.level_id
-					if lID then
-						addDay(lID,managers.localization:to_upper_text(jobName),L('_desc_heist_day',{day}))
-					else -- alt Days
-						for alt,_level in pairs(level) do
-							addDay(_level.level_id,managers.localization:to_upper_text(jobName),L('_desc_heist_dayalt',{day,alt}))
-						end
+				if jobData and jobData.job_wrapper then
+					for k,realJobs in pairs(jobData.job_wrapper) do
+						table.insert(jobs,realJobs)
 					end
 				end
-			else
-				_('no chain?',jobData.name_id)
+				if jobData.chain then
+					for day,level in pairs(jobData.chain) do
+						local lID = level.level_id
+						if lID then
+							addDay(lID,jobName,L('_desc_heist_day',{day}))
+						else -- alt Days
+							for alt,_level in pairs(level) do
+								addDay(_level.level_id,jobName,L('_desc_heist_dayalt',{day,alt}))
+							end
+						end
+					end
+				else
+					_('no chain?',jobData.name_id)
+				end
 			end
 		end
 	end
