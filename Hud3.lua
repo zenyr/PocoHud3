@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 339
-local TAG = '0.26 hotfix 8 (301a588)'
+local REV = 340
+local TAG = '0.26 hotfix 9 (c7db07a)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -140,9 +140,8 @@ function TPocoHud3:onDestroy(gameEnd)
 end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 	if unit and alive(unit) then
-		local uType = unit:base()._tweak_table or 0
-		local _arr = {russian=1,german=1,spanish=1,american=1,female_1=1,old_hoxton=1,jowi=1,dragan=1}
-		if not _arr[uType] then -- this filters PlayerDrama related events out when hosting a game
+		local isPlayer = unit:base().nick_name
+		if not isPlayer then -- this filters PlayerDrama related events out when hosting a game
 			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
 		end
 	end
@@ -1666,24 +1665,26 @@ function TPocoHud3:_hook()
 		end)
 
 		hook( PlayerStandard, '_interupt_action_interact', function( self, t, input, complete  )
-
 			-- StickyInteraction Execution
 			local lastInteractionStart, lastClick = me._lastInteractStart or 0, me._lastClick or 0
 			if not t and O:get('game','interactionClickStick') and not complete and (lastInteractionStart < lastClick) then
-				-- ignore interupt
-			else
-				Run('_interupt_action_interact', self, t, input, complete )
-				local et = self._equip_weapon_expire_t
-				if et then
-					me:RemoveBuff('interaction')
-					pcall(me.Buff,me,({
-						key='transition', good=false,
-						icon=skillIcon,
-						iconRect = { 4*64, 3*64,64,64 },
-						text='',
-						st=now(), et=et
-					}) )
+				local caller = debug.getinfo(3,'n')
+				caller = caller and caller.name
+				if caller == '_check_action_interact' then
+					return -- ignore interruption
 				end
+			end
+			Run('_interupt_action_interact', self, t, input, complete )
+			local et = self._equip_weapon_expire_t
+			if et then
+				me:RemoveBuff('interaction')
+				pcall(me.Buff,me,({
+					key='transition', good=false,
+					icon=skillIcon,
+					iconRect = { 4*64, 3*64,64,64 },
+					text='',
+					st=now(), et=et
+				}) )
 			end
 		end)
 		hook( PlayerStandard, 'set_running', function( ... )
@@ -2413,10 +2414,9 @@ function TPocoHud3:_hook()
 				me:Stat(me.pid,'interactST',now())
 				me:Stat(me.pid,'interactET',now()+total)
 			end
-
 			local lastInteractionStart, lastClick = me._lastInteractStart or 0, me._lastClick or 0
 			local sticky = O:get('game','interactionClickStick') and (lastInteractionStart < lastClick)
-			if self._interact_circle and self.__lastSticky ~= sticky then
+			if self._interact_circle and self.__lastSticky ~= sticky and me.state and me.state._interact_expire_t then
 				local img = sticky and 'guis/textures/pd2/hud_progress_invalid' or 'guis/textures/pd2/hud_progress_bg'
 
 				local anim_func = function(o)
