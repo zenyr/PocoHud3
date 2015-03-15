@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 341
-local TAG = '0.26 hotfix 10 (2118899)'
+local REV = 342
+local TAG = '0.26 hotfix 11 (c25d374)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1613,7 +1613,7 @@ function TPocoHud3:_hook()
 			local et = _.g('managers.player._temporary_upgrades.'..category ..'.'..upgrade..'.expire_time')
 			if not et then return end
 			local rect = rectDict[upgrade]
-			if rect ~= '' then
+			if rect and rect ~= '' then
 				local rect2 = rect and ({64*rect[2][1],64*rect[2][2],64,64})
 				local key = ('_'..upgrade):gsub('_(%U)',function(a) return a:upper() end)
 				key = _keys[key] or key
@@ -2236,7 +2236,7 @@ function TPocoHud3:_hook()
 		end)
 
 		hook( CopActionWalk, '_get_current_max_walk_speed', function( self, ... )
-			return Run('_get_current_max_walk_speed', self,  ...) * math.max(1,math.min( O:get('game','fasterDesyncResolve')-1, 1.5))
+			return Run('_get_current_max_walk_speed', self,  ...) * math.max(1,math.min( O:get('game','fasterDesyncResolve')-1.5, 1.5))
 			-- Faster Desync resolve for Husk cops
 		end)
 		hook( HuskPlayerMovement, '_get_max_move_speed', function( self, ... )
