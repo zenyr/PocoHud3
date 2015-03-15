@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 340
-local TAG = '0.26 hotfix 9 (c7db07a)'
+local REV = 341
+local TAG = '0.26 hotfix 10 (2118899)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -140,7 +140,7 @@ function TPocoHud3:onDestroy(gameEnd)
 end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 	if unit and alive(unit) then
-		local isPlayer = unit:base().nick_name
+		local isPlayer = unit:base().upgrade_value
 		if not isPlayer then -- this filters PlayerDrama related events out when hosting a game
 			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
 		end
@@ -959,6 +959,9 @@ function TPocoHud3:_updatePlayers(t)
 			end
 			if _show('Ping') then
 				txts[#txts+1]={ping,cl.White:with_alpha(0.5)}
+			end
+			if isMe --[[and _show('Hostages')]] then
+				txts[#txts+1]={' '..(self._nr_hostages or 0),cl.White:with_alpha(0.8)}
 			end
 			if _show('Downs') then
 				txts[#txts+1]={' '..Icon.Ghost..downs..(lives>0 and '/4' or ''),downs<3 and clGood or Color.red}
@@ -2231,6 +2234,11 @@ function TPocoHud3:_hook()
 			OnCriminalDowned(me.pid)
 			return Run('_enter', self,  ...)
 		end)
+
+		hook( CopActionWalk, '_get_current_max_walk_speed', function( self, ... )
+			return Run('_get_current_max_walk_speed', self,  ...) * math.max(1,math.min( O:get('game','fasterDesyncResolve')-1, 1.5))
+			-- Faster Desync resolve for Husk cops
+		end)
 		hook( HuskPlayerMovement, '_get_max_move_speed', function( self, ... )
 			return Run('_get_max_move_speed', self,  ...) * math.max(1,O:get('game','fasterDesyncResolve'))
 			-- because of this, husk players will catch up de-sync waaay easily, representing their position more accurate.
@@ -2416,7 +2424,7 @@ function TPocoHud3:_hook()
 			end
 			local lastInteractionStart, lastClick = me._lastInteractStart or 0, me._lastClick or 0
 			local sticky = O:get('game','interactionClickStick') and (lastInteractionStart < lastClick)
-			if self._interact_circle and self.__lastSticky ~= sticky and me.state and me.state._interact_expire_t then
+			if self._interact_circle and self.__lastSticky ~= sticky then
 				local img = sticky and 'guis/textures/pd2/hud_progress_invalid' or 'guis/textures/pd2/hud_progress_bg'
 
 				local anim_func = function(o)
@@ -2427,6 +2435,7 @@ function TPocoHud3:_hook()
 					end
 				end
 
+				self._interact_circle._bg_circle:stop()
 				self._interact_circle._bg_circle:animate(anim_func)
 
 				self.__lastSticky = sticky
@@ -2539,6 +2548,16 @@ function TPocoHud3:_hook()
 			end
 			--
 		end)
+
+		-- hostage counter
+		hook( HUDAssaultCorner, 'set_control_info', function( self ,...)
+			local data = unpack{...}
+			Run('set_control_info', self,... )
+			if data and data.nr_hostages then
+				me._nr_hostages = data.nr_hostages
+			end
+		end)
+
 	else -- if outGame
 
 	end -- End of if inGame
