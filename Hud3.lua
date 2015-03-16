@@ -1,13 +1,13 @@
 -- PocoHud3 by zenyr@zenyr.com
 if not TPocoBase then return end
 local disclaimer = [[
-feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
+feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
 
--- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
+-- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 343
-local TAG = '0.26 hotfix 12 (f767064)'
+local REV = 344
+local TAG = '0.26 hotfix 13 (8a965bd)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
