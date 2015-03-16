@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr@zenyr.com. But please understand that
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
 local _ = UNDERSCORE
-local REV = 342
-local TAG = '0.26 hotfix 11 (c25d374)'
+local REV = 343
+local TAG = '0.26 hotfix 12 (f767064)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -960,7 +960,7 @@ function TPocoHud3:_updatePlayers(t)
 			if _show('Ping') then
 				txts[#txts+1]={ping,cl.White:with_alpha(0.5)}
 			end
-			if isMe --[[and _show('Hostages')]] then
+			if isMe and _show('Hostages') then
 				txts[#txts+1]={' '..(self._nr_hostages or 0),cl.White:with_alpha(0.8)}
 			end
 			if _show('Downs') then
@@ -1861,13 +1861,16 @@ function TPocoHud3:_hook()
 
 		hook( PlayerDamage, 'change_health', function( self, change_of_health, ... )
 			local before = self:get_real_health()
+			local option = O:get('hit','gainIndicator') or 0
 			Run('change_health', self, change_of_health, ... )
-			if O:get('hit','enable') then
+			if O:get('hit','enable') and option > 1 then
 				-- Skill-originated Health regen
 				local after = self:get_real_health()
 				local delta = after - before
 				if delta > 0 then
-					managers.menu_component:post_event("menu_skill_investment")
+					if option > 2 then
+						managers.menu_component:post_event("menu_skill_investment")
+					end
 					me:SimpleFloat{key='health',x=(me.ww or 800)/5*2,y=(me.hh or 600)/4*3,time=3,anim=1,offset={0,-1 * (me.hh or 600)/2},
 						text={{'+',cl.White:with_alpha(0.6)},{_.f(delta*10),clGood}},
 						size=18, rect=0.5
@@ -2236,7 +2239,7 @@ function TPocoHud3:_hook()
 		end)
 
 		hook( CopActionWalk, '_get_current_max_walk_speed', function( self, ... )
-			return Run('_get_current_max_walk_speed', self,  ...) * math.max(1,math.min( O:get('game','fasterDesyncResolve')-1.5, 1.5))
+			return Run('_get_current_max_walk_speed', self,  ...) * math.max(1,math.min( O:get('game','fasterAIDesyncResolve'), 1.5))
 			-- Faster Desync resolve for Husk cops
 		end)
 		hook( HuskPlayerMovement, '_get_max_move_speed', function( self, ... )
@@ -2435,11 +2438,14 @@ function TPocoHud3:_hook()
 					end
 				end
 
-				self._interact_circle._bg_circle:stop()
-				self._interact_circle._bg_circle:animate(anim_func)
+				local bg = self._interact_circle._bg_circle
+				if bg and alive(bg) then
+					bg:stop()
+					bg:animate(anim_func)
+					bg:set_image(img)
+				end
 
 				self.__lastSticky = sticky
-				self._interact_circle._bg_circle:set_image(img)
 			end
 
 			Run('set_interaction_bar_width',...)
