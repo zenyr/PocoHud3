@@ -461,7 +461,7 @@
     "_vanity_corpse": "N/A,Minimum,Less,Default,More,a Lot,Considerable,Massive,Mammoth,Colossal,Ridiculous",
     "_vanity_desyncresolve": "N/A,Off,Faster,Aggressive",
     "_vanity_midstat": "Never,50,100",
-    "_vanity_resizeCrimenet": "60%,70%,80%,90%,100%",
+    "_vanity_resizeCrimenet": "60%,70%,80%,90%,100%,110%",
     "_vanity_style": "N/A,PocoHud,Vanilla,Glow",
     "_vanity_truncatenames": "N/A,Off,3,6,9,12,15,18,21",
     "_vanity_verbose": "Never,Detailed mode only,Always",

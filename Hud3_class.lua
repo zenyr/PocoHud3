@@ -89,6 +89,7 @@ local _defaultLocaleData = {
 	_msg_usedPistolMessiahChargesPlu = '[1] charges',
 	_opt_chat_desc = '{_opt_chat_desc_1}\n{_opt_chat_desc_2|White|0.5}\n{_opt_chat_desc_3|White|0.6}\n{_opt_chat_desc_4|White|0.7}\n{_opt_chat_desc_5|White|0.8}\n{_opt_chat_desc_6|White|0.9}\n{_opt_chat_desc_7|White}',
 	_opt_truncateTags_desc = '{_opt_truncateTags_desc_1} {[Poco]Hud|Tan} > {_Dot|Tan}{Hud|Tan}',
+	_vanity_resizeCrimenet = '60%,70%,80%,90%,100%,110%,120%,130%',
 }
 --- miniClass start ---
 local TBuff = class()

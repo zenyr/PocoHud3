@@ -15,6 +15,7 @@ Poco._req = function (name)
 end
 Poco._req ('poco/3rdPartyLibrary.lua')
 local inGame = CopDamage ~= nil
+local now = function (type) return type and TimerManager:game():time() or managers.player:player_timer():time() end
 if not deep_clone then return end
 -- GLOBALS --
 -- * cl
@@ -278,6 +279,7 @@ end
 -- Poco --
 function Poco:init()
 	self.addOns = {}
+	self.birthdays = {}
 	self.funcs = {}
 	self.save = {}
 	self.binds = {}
@@ -414,6 +416,7 @@ function Poco:Kill(name)
 	self.addOns[name] = nil
 	return
 end
+
 function Poco:AddOn(ancestor)
 	local name = ancestor.className
 	local addOn = self.addOns[name]
@@ -428,13 +431,18 @@ end
 function Poco:Update(t,dt)
 --	if not managers.menu_component:input_focus() then
 	for __,func in pairs(self.funcs) do
-		func(t,dt)
+		if self.birthdays[__] and (now() - self.birthdays[__] > 1) then
+			func(t,dt)
+		else
+			_('Func',__,now(),self.birthdays)
+		end
 	end
 	self:_runBinds(t,dt)
 end
 function Poco:register(key,func)
 	if not self.funcs[key] then
 		self.funcs[key] = func
+		self.birthdays[key] = now()
 	end
 end
 function Poco:unregister(key)
