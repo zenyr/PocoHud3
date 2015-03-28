@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 350
-local TAG = '0.262'
+local REV = 351
+local TAG = '0.262 hotfix 1 (32f7c14)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -129,6 +129,7 @@ function TPocoHud3:export()
 	}
 end
 function TPocoHud3:Update(t,dt)
+	if managers.vote:is_restarting() then return end
 	local r,err = pcall(self._update,self,t,dt)
 	if not r then _(err) end
 end
@@ -2254,7 +2255,8 @@ function TPocoHud3:_hook()
 		end)
 
 		hook( CopActionWalk, '_get_current_max_walk_speed', function( self, ... )
-			return Run('_get_current_max_walk_speed', self,  ...) * math.max(1,math.min( O:get('game','fasterAIDesyncResolve'), 1.5))
+			local coeff = Network:is_server() and 1 or math.max(1,math.min( O:get('game','fasterAIDesyncResolve'), 1.5))
+			return Run('_get_current_max_walk_speed', self,  ...) * coeff
 			-- Faster Desync resolve for Husk cops
 		end)
 		hook( HuskPlayerMovement, '_get_max_move_speed', function( self, ... )
