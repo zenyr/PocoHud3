@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 349
-local TAG = '0.261 hotfix 1 (6020401)'
+local REV = 350
+local TAG = '0.262'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1967,16 +1967,27 @@ function TPocoHud3:_hook()
 			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'bullet')
 			return Run('damage_bullet',...)
 		end)
-		hook( UnitNetworkHandler, 'damage_explosion', function(...)
+		hook( UnitNetworkHandler, 'damage_explosion_fire', function(...)
 			local self, subject_unit, attacker_unit, damage, i_attack_variant, death, direction, sender = unpack{...}
 
 			local realAttacker = attacker_unit
-			if alive(realAttacker) and realAttacker:base()._thrower_unit then
+			if realAttacker and alive(realAttacker) and realAttacker:base()._thrower_unit then
+				realAttacker = realAttacker:base()._thrower_unit
+			end
+
+			me:AddDmgPopByUnit(realAttacker,subject_unit,0,damage*-0.1953125,death,false,'bullet')
+			return Run('damage_explosion_fire', ... )
+		end)
+		hook( UnitNetworkHandler, 'damage_fire', function(...)
+			local self, subject_unit, attacker_unit, damage, death, direction, weapon_type, weapon_unit, sender = unpack{...}
+
+			local realAttacker = attacker_unit
+			if realAttacker and alive(realAttacker) and realAttacker:base()._thrower_unit then
 				realAttacker = realAttacker:base()._thrower_unit
 			end
 
 			me:AddDmgPopByUnit(realAttacker,subject_unit,0,damage*-0.1953125,death,false,'explosion')
-			return Run('damage_explosion', ... )
+			return Run('damage_fire', ... )
 		end)
 		hook( UnitNetworkHandler, 'damage_melee', function(...)
 			local self, subject_unit, attacker_unit, damage, damage_effect, i_body, height_offset, variant, death, sender  = unpack{...}
@@ -1984,6 +1995,7 @@ function TPocoHud3:_hook()
 			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'melee')
 			return Run('damage_melee',...)
 		end)
+
 		--CopDamage
 		hook( CopDamage, '_on_damage_received', function(self,info)
 			local result = Run('_on_damage_received',self,info)
