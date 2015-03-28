@@ -433,8 +433,6 @@ function Poco:Update(t,dt)
 	for __,func in pairs(self.funcs) do
 		if self.birthdays[__] and (now() - self.birthdays[__] > 1) then
 			func(t,dt)
-		else
-			_('Func',__,now(),self.birthdays)
 		end
 	end
 	self:_runBinds(t,dt)
@@ -459,5 +457,5 @@ function Poco:destroy()
 end
 
 Poco:init()
-
+Poco._req ('poco/Hud3.lua')
 PocoCommon = true

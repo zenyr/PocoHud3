@@ -6,8 +6,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 345
-local TAG = '0.26 hotfix 14 (defac6c)'
+local REV = 346
+local TAG = '0.26 hotfix 15 (1f70052)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1880,13 +1880,16 @@ function TPocoHud3:_hook()
 		end)
 		hook( PlayerDamage, 'restore_armor', function( self, regen_armor_bonus, ... )
 			local before = self:get_real_armor()
+			local option = O:get('hit','gainIndicator') or 0
 			Run('restore_armor', self, regen_armor_bonus, ... )
-			if O:get('hit','enable') then
+			if O:get('hit','enable') and option > 1 then
 				-- Skill-originated Shield regen
 				local after = self:get_real_armor()
 				local delta = after - before
 				if delta > 0 then
-					managers.menu_component:post_event("menu_skill_investment")
+					if option > 2 then
+						managers.menu_component:post_event("menu_skill_investment")
+					end
 					me:SimpleFloat{key='armor',x=(me.ww or 800)/5*3,y=(me.hh or 600)/4*3,time=3,anim=1,offset={0,-1 * (me.hh or 600)/2},
 						text={{'+',cl.White:with_alpha(0.6)},{_.f(delta*10),clGood}},
 						size=18, rect=0.5
