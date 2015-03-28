@@ -3125,9 +3125,18 @@ function PocoHud3Class._drawOptions(tab)
 	end
 	PocoUIButton:new(tab,{
 		onClick = function()
+			-- PocoHud3Class.TPocoHud3.Toggle()
+			-- PocoHud3 = nil -- will reload on its own
+
+			-- Poor man's Fix start
+			local dialog_data = {}
+			dialog_data.title = string.upper(L('_tab_root') .. ' : Not reloaded on purpose')
+			dialog_data.text = 'Some changes will be applied upon next session due to slight issues.\n'.. 'Sorry for inconvenience!'
+			local ok_button = {}
+			ok_button.text = managers.localization:text("dialog_ok")
+			dialog_data.button_list = {ok_button}
+			managers.system_menu:show(dialog_data)
 			me:Menu(true,true)
-			PocoHud3Class.TPocoHud3.Toggle()
-			PocoHud3 = nil -- will reload on its own
 		end,
 		x = 20, y = 10, w = 400, h=50,
 		fontSize = 30,font = FONTLARGE,
