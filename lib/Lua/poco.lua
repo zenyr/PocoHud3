@@ -26,7 +26,7 @@ if io and not PocoDir then
 	end
 	if not GetPersistScript("PocoHud3") then
 		local filename = getEither("./poco/Hud3.lua")
-		if filename then AddPersistScript("PocoHud3", filename) end
+		--if filename then AddPersistScript("PocoHud3", filename) end
 		--if filename then RegisterScript(filename, 1, "PocoHud3") end
 	end
 end
