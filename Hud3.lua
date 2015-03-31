@@ -3,11 +3,10 @@ if not TPocoBase then return end
 local disclaimer = [[
 feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
-
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 351
-local TAG = '0.262 hotfix 1 (32f7c14)'
+local REV = 352
+local TAG = '0.262 hotfix 2 (0fed46b)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -415,7 +414,7 @@ function TPocoHud3:AnnounceStat(midgame)
 	else
 		self:Chat(midgame and 'midStat' or 'endStat',table.concat(txt,'\n'))
 	end
-	if not midgame then
+	if false and not midgame then -- fuck humor.
 		self:Chat('endStatCredit','-- PocoHud³ : More info @ steam group "pocomods" --')
 	end
 end
@@ -867,7 +866,7 @@ function TPocoHud3:_updatePlayers(t)
 		-- playerBottom
 		local color = self:_color(i)
 		local txts = {}
-		if pnl and (nData or isMe) then
+		if pnl and (nData or isMe) and not self.dead then
 			local lbl = self['pnl_lbl'..i]
 			local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 			local pInd = isMe and 4 or cdata.panel_id
@@ -992,7 +991,7 @@ function TPocoHud3:_updatePlayers(t)
 		end
 		-- playerFloat
 		local nLbl = nData and nData.text
-		if alive(nLbl) and fltO.enable then
+		if alive(nLbl) and fltO.enable and not self.dead then
 			local member = self:_member(i)
 			local peer = member and member:peer()
 			local rank = peer and peer:rank()
@@ -1336,8 +1335,8 @@ function TPocoHud3:_time(sec)
 	return table.concat(r,':')
 end
 function TPocoHud3:_visibility(uPos)
-	local result = 1-math.min(0.9,managers.environment_controller._current_flashbang)
-	if not uPos then
+	local result = 1-math.min(0.9,managers.environment_controller._current_flashbang or 1)
+	if not uPos or self.dead then
 		return result
 	end
 	local minDis = 9999
@@ -2801,8 +2800,8 @@ function TPocoHud3:test()
 end
 
 function TPocoHud3:_getAngle(unit)
-	if not (unit and type(unit)=='userdata' and alive(unit)) then
-		return
+	if not (unit and type(unit)=='userdata' and alive(unit) and not self.dead) then
+		return 0
 	end
 	local uPos = unit:position()
 	local vec = self.camPos - uPos
