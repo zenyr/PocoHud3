@@ -2552,7 +2552,7 @@ end
 
 function PocoHud3Class._drawHeistStats (tab)
 	local oTabs = PocoTabs:new(me._ws,{name = 'Options',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
-	local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
+	local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, tweak_data.statistics:statistics_table()
 	local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
 	local x, y, tbl = 10, 10, {}
 
@@ -2617,7 +2617,7 @@ function PocoHud3Class._drawHeistStats (tab)
 	oTab:set_h(y)
 
 	-- [2] Per day
-	level_list, job_list, mask_list, weapon_list = managers.statistics:_get_stat_tables()
+	level_list, job_list, mask_list, weapon_list = tweak_data.statistics:statistics_table()
 	oTab = oTabs:add(L('_tab_stat_perday'))
 	pnl = oTab.pnl
 	y = 10

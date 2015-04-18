@@ -5,8 +5,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 ]]
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 353
-local TAG = '0.262 hotfix 3 (8c903e1)'
+local REV = 354
+local TAG = '0.28'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -342,7 +342,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 				local oTabs = C.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 				local oTab = oTabs:add(L('_tab_heistStatus'))
 				local r,err = pcall(C._drawHeistStats,oTab) -- yeaaaah just in case. I know. I'm cheap
-				if not r then me:err('DHS:',err) end
+				if not r then me:err('DHS:'..err) end
 
 				oTab = oTabs:add(L('_tab_upgradeSkills'))
 				if inGame then
