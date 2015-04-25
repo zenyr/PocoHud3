@@ -5,8 +5,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 ]]
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 356
-local TAG = '0.28 hotfix 2 (0e12cc9)'
+local REV = 357
+local TAG = '0.28 hotfix 3 (5c98c5c)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1304,7 +1304,7 @@ function TPocoHud3:_name(something,asRoom)
 	end
 	local member = self:_member(something)
 	member = something==0 and 'AI' or (member and member:peer():name() or 'Someone')
-
+	member = member:gsub('{','['):gsub('}',']')
 	local hDot,fDot
 	local truncated = member:gsub('^%b[]',''):gsub('^%b==',''):gsub('^%s*(.-)%s*$','%1')
 	if O:get('game','truncateTags') and utf8.len(truncated) > 0 and member ~= truncated then
