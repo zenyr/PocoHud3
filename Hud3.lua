@@ -921,6 +921,20 @@ function TPocoHud3:_updatePlayers(t)
 			if not btmO.underneath then
 				txts[#txts+1]={'\n'}
 			end
+			if _show('DetectionRisk') then
+				local suspicion
+				if isMe then
+					suspicion = managers.blackmarket:get_suspicion_offset_of_local(75)
+				else
+					local member = self:_member(i)
+					if member and alive(member:unit()) then
+						suspicion = managers.blackmarket:get_suspicion_offset_of_peer(member:peer(), 75)
+					end
+				end
+				if suspicion then
+					txts[#txts+1]={' '..Icon.Ghost..string.format("%.0f%%", suspicion),cl.CornFlowerBlue}
+				end
+			end
 			if _show('Kill') then
 				txts[#txts+1]={' '..Icon.Skull..kill,color}
 			end

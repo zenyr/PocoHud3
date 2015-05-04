@@ -93,6 +93,7 @@ local scheme = {
 		showPing = {'num',2,{0,2},'_opt_showPing_desc','Verbose'},
 		showConvertedEnemy = {'num',1,{0,2},'_opt_showConvertedEnemy_desc','Verbose'},
 		showArrow = {'bool',TRUE,nil,'_opt_showArrow_desc'},
+		showDetectionRisk = {'num',1,{0,2},'_opt_showDetectionRisk_desc','Verbose'},
 	}, popup = {	'_opt_popup_desc',
 		enable = {'bool',TRUE,nil,'_opt_enable_desc'},
 		size  = {'num',22,{10,30},'_opt_size_desc',nil,nil,1},

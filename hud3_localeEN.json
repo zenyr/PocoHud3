@@ -281,6 +281,8 @@
     "_opt_showConvertedEnemy": "SHOW CONVERTED ENEMY",
     "_opt_showConvertedEnemy_desc": "Minion health as percent if one has any",
     "_opt_showConvertedEnemy_desc2": "Try to color-code them to the master.",
+    "_opt_showDetectionRisk": "SHOW DETECTION RISK",
+    "_opt_showDetectionRisk_desc": "Show Detection Risk Percentage (e.g 3%-75%)",
     "_opt_showDistance": "SHOW DISTANCE",
     "_opt_showDistance_desc": "e.g) 25m",
     "_opt_showDowns": "SHOW DOWNS",
