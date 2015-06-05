@@ -15,7 +15,7 @@ Poco.currDir = currDir
 PocoHud3Class = nil
 Poco._req ('poco/Hud3_class.lua')
 if not PocoHud3Class then return end
-Poco._req ('/Hud3_Options.lua')
+Poco._req ('poco/Hud3_Options.lua')
 if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
 PocoHud3Class.O = O
