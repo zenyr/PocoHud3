@@ -88,6 +88,7 @@ function TPocoHud3:onInit() -- ★설정
 		buff = self._ws:panel():panel({ name = 'buff_sheet' , layer = 5}),
 		stat = self._ws:panel():panel({ name = 'stat_sheet' , layer = 9}),
 	}
+	self.custom_hud_enabled = function() if mod_collection then return mod_collection._data.custom_hud_enabled end end or false
 	self.killa = self.killa or 0
 	self.stats = self.stats or {}
 	self.hooks = {}
@@ -753,23 +754,14 @@ function TPocoHud3:_updatePlayers(t)
 	else
 		return
 	end
-	local mod_collection_enabled = false
-	local custom_hud_enabled = false
-	local custom_hud_kill_counter = false
-	if mod_collection then
-		mod_collection_enabled = true
-		custom_hud_enabled = mod_collection._data.enable_custom_hud
-	end
+
 	for i = 1,4 do
-		if custom_hud_enabled then
+		if self.custom_hud_enabled then
 			for _, panel in ipairs(managers.hud._teammate_panels) do
 				if panel._id == HUDManager.PLAYER_PANEL then
-					--log("Player")
 				elseif panel:peer_id() == nil then
-					--log("Bot")
 					panel:update_downs(-1)
 				elseif i == panel:peer_id() then
-					--log("Peer")
 					panel:update_downs(self:Stat(i, 'down'))
 				end
 			end
