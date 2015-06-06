@@ -5,8 +5,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 ]]
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 368
-local TAG = '0.28 hotfix 10 (ad8fe5f)'
+local REV = 369
+local TAG = '0.28 hotfix 11 (089df8a)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -940,6 +940,20 @@ function TPocoHud3:_updatePlayers(t)
 			end
 			if not btmO.underneath then
 				txts[#txts+1]={'\n'}
+			end
+			if _show('DetectionRisk') then
+				local suspicion
+				if isMe then
+					suspicion = managers.blackmarket:get_suspicion_offset_of_local(75)
+				else
+					local member = self:_member(i)
+					if member and alive(member:unit()) then
+						suspicion = managers.blackmarket:get_suspicion_offset_of_peer(member:peer(), 75)
+					end
+				end
+				if suspicion then
+					txts[#txts+1]={' '..Icon.Ghost..string.format("%.0f%%", suspicion),cl.CornFlowerBlue}
+				end
 			end
 			if _show('Kill') then
 				txts[#txts+1]={' '..Icon.Skull..kill,color}
