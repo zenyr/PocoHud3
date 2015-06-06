@@ -88,7 +88,10 @@ function TPocoHud3:onInit() -- ★설정
 		buff = self._ws:panel():panel({ name = 'buff_sheet' , layer = 5}),
 		stat = self._ws:panel():panel({ name = 'stat_sheet' , layer = 9}),
 	}
-	self.custom_hud_enabled = function() if mod_collection then return mod_collection._data.custom_hud_enabled end end or false
+
+	-- 'customhud' PR related
+	self.custom_hud_enabled = rawget(_G,'mod_collection') and _.g('mod_collection._data.custom_hud_enabled')
+
 	self.killa = self.killa or 0
 	self.stats = self.stats or {}
 	self.hooks = {}
@@ -756,6 +759,7 @@ function TPocoHud3:_updatePlayers(t)
 	end
 
 	for i = 1,4 do
+
 		if self.custom_hud_enabled then
 			for _, panel in ipairs(managers.hud._teammate_panels) do
 				if panel._id == HUDManager.PLAYER_PANEL then
@@ -766,6 +770,7 @@ function TPocoHud3:_updatePlayers(t)
 				end
 			end
 		end
+
 		local name = self:_name(i)
 		name = name ~= self:_name(-1) and name
 		local nData = managers.hud:_name_label_by_peer_id( i )
@@ -2824,7 +2829,7 @@ end
 
 function TPocoHud3:_getAngle(unit)
 	if not (unit and type(unit)=='userdata' and alive(unit) and not self.dead) then
-		return
+		return false
 	end
 	local uPos = unit:position()
 	local vec = self.camPos - uPos
