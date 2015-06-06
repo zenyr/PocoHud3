@@ -13,9 +13,9 @@ local me
 local currDir = PocoDir
 Poco.currDir = currDir
 PocoHud3Class = nil
-Poco._req (currDir..'Hud3_class.lua')
+Poco._req ('poco/Hud3_class.lua')
 if not PocoHud3Class then return end
-Poco._req (currDir..'Hud3_Options.lua')
+Poco._req ('poco/Hud3_Options.lua')
 if not PocoHud3Class.Option then return end
 local O = PocoHud3Class.Option:new()
 PocoHud3Class.O = O
@@ -88,6 +88,7 @@ function TPocoHud3:onInit() -- ★설정
 		buff = self._ws:panel():panel({ name = 'buff_sheet' , layer = 5}),
 		stat = self._ws:panel():panel({ name = 'stat_sheet' , layer = 9}),
 	}
+	self.custom_hud_enabled = function() if mod_collection then return mod_collection._data.custom_hud_enabled end end or false
 	self.killa = self.killa or 0
 	self.stats = self.stats or {}
 	self.hooks = {}
@@ -136,6 +137,9 @@ function TPocoHud3:onDestroy(gameEnd)
 	self:Menu(true,true) -- Force dismiss menu
 	if( alive( self._ws ) ) then
 		managers.gui_data:destroy_workspace(self._ws)
+	end
+	if( alive( self._worldws ) ) then
+		World:newgui():destroy_workspace( self._worldws )
 	end
 end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
@@ -750,7 +754,18 @@ function TPocoHud3:_updatePlayers(t)
 	else
 		return
 	end
+
 	for i = 1,4 do
+		if self.custom_hud_enabled then
+			for _, panel in ipairs(managers.hud._teammate_panels) do
+				if panel._id == HUDManager.PLAYER_PANEL then
+				elseif panel:peer_id() == nil then
+					panel:update_downs(-1)
+				elseif i == panel:peer_id() then
+					panel:update_downs(self:Stat(i, 'down'))
+				end
+			end
+		end
 		local name = self:_name(i)
 		name = name ~= self:_name(-1) and name
 		local nData = managers.hud:_name_label_by_peer_id( i )
@@ -772,7 +787,7 @@ function TPocoHud3:_updatePlayers(t)
 		elseif not pnl and name and (isMe or nData) then
 			-- makePnl
 			local __,err = pcall(function()
-					if btmO.enable and managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
+					if not custom_hud_enabled and btmO.enable and managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
 						local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 						local bPnl = managers.hud._teammate_panels[ isMe and 4 or cdata.panel_id or -1 ]
 						if bPnl and not (not isMe and bPnl == managers.hud._teammate_panels[4]) then
@@ -866,7 +881,7 @@ function TPocoHud3:_updatePlayers(t)
 		-- playerBottom
 		local color = self:_color(i)
 		local txts = {}
-		if pnl and (nData or isMe) and not self.dead then
+		if not custom_hud_enabled and pnl and (nData or isMe) and not self.dead then
 			local lbl = self['pnl_lbl'..i]
 			local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 			local pInd = isMe and 4 or cdata.panel_id
@@ -920,20 +935,6 @@ function TPocoHud3:_updatePlayers(t)
 			end
 			if not btmO.underneath then
 				txts[#txts+1]={'\n'}
-			end
-			if _show('DetectionRisk') then
-				local suspicion
-				if isMe then
-					suspicion = managers.blackmarket:get_suspicion_offset_of_local(75)
-				else
-					local member = self:_member(i)
-					if member and alive(member:unit()) then
-						suspicion = managers.blackmarket:get_suspicion_offset_of_peer(member:peer(), 75)
-					end
-				end
-				if suspicion then
-					txts[#txts+1]={' '..Icon.Ghost..string.format("%.0f%%", suspicion),cl.CornFlowerBlue}
-				end
 			end
 			if _show('Kill') then
 				txts[#txts+1]={' '..Icon.Skull..kill,color}
