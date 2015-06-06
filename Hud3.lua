@@ -5,8 +5,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 ]]
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 357
-local TAG = '0.28 hotfix 3 (5c98c5c)'
+local REV = 368
+local TAG = '0.28 hotfix 10 (ad8fe5f)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -89,7 +89,7 @@ function TPocoHud3:onInit() -- ★설정
 		stat = self._ws:panel():panel({ name = 'stat_sheet' , layer = 9}),
 	}
 
-	-- 'customhud' PR related
+	-- 'customhud' PR #22 related
 	self.custom_hud_enabled = rawget(_G,'mod_collection') and _.g('mod_collection._data.custom_hud_enabled')
 
 	self.killa = self.killa or 0
@@ -792,7 +792,7 @@ function TPocoHud3:_updatePlayers(t)
 		elseif not pnl and name and (isMe or nData) then
 			-- makePnl
 			local __,err = pcall(function()
-					if not custom_hud_enabled and btmO.enable and managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
+					if not self.custom_hud_enabled and btmO.enable and managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
 						local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 						local bPnl = managers.hud._teammate_panels[ isMe and 4 or cdata.panel_id or -1 ]
 						if bPnl and not (not isMe and bPnl == managers.hud._teammate_panels[4]) then
@@ -886,7 +886,7 @@ function TPocoHud3:_updatePlayers(t)
 		-- playerBottom
 		local color = self:_color(i)
 		local txts = {}
-		if not custom_hud_enabled and pnl and (nData or isMe) and not self.dead then
+		if not self.custom_hud_enabled and pnl and (nData or isMe) and not self.dead then
 			local lbl = self['pnl_lbl'..i]
 			local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 			local pInd = isMe and 4 or cdata.panel_id
