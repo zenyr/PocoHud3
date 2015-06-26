@@ -2796,8 +2796,7 @@ function PocoHud3Class._drawPlayer(tab)
 	local oTabs = PocoTabs:new(me._ws,{name = 'Players',x = 10, y = 10, w = tab.pnl:width()-20, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 
 	for i = 1,4 do
-		local member = me:_member(i)
-		local peer = member and member:peer()
+		local peer = me:_peer(i)
 		if peer then
 			local uid, __ = peer._user_id
 			local oTab = oTabs:add(L('_insp_player',{i,peer._name}))

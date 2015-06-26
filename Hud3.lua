@@ -5,8 +5,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 ]]
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 371
-local TAG = '0.28 hotfix 13 (f3abed5)'
+local REV = 372
+local TAG = '0.28 hotfix 14 (cf86c75)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -239,6 +239,11 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	if not r then _(err) end
 end
 --- Internal functions ---
+function TPocoHud3:pidToPeer(pid)
+	local session = managers.network:session()
+	return session and session:peer(pid)
+end
+
 function TPocoHud3:say(line,sync)
 	if line then
 		--[[local cs = _.g('managers.player:player_unit():movement()._current_state')
@@ -796,10 +801,9 @@ function TPocoHud3:_updatePlayers(t)
 						local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 						local bPnl = managers.hud._teammate_panels[ isMe and 4 or cdata.panel_id or -1 ]
 						if bPnl and not (not isMe and bPnl == managers.hud._teammate_panels[4]) then
-							local member = self:_member(i)
-							if member and alive(member:unit()) then
+							local peer = self:_peer(i)
+							if peer and alive(peer:unit()) then
 								if btmO.showRank then
-									local peer = member and member:peer()
 									local rank = isMe and managers.experience:current_rank() or (peer and peer:rank())
 									rank = rank and (rank > 0) and (self:_romanic_number(rank)..'Ї') or ''
 									local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
@@ -817,7 +821,7 @@ function TPocoHud3:_updatePlayers(t)
 								end
 								pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=btmO.size*2+1}
 								local wp = {bPnl._player_panel:world_position()}
-								pnl:set_world_position(wp[1] + btnO.offsetX ,wp[2]-pnl:h())
+								pnl:set_world_position(wp[1] + (btmO.offsetX or 0) ,wp[2]-pnl:h())
 								local fontSize = btmO.size
 								--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture='guis/textures/test_blur_df', render_template='VertexColorTexturedBlur3D', layer=-1, x=0,y=0 } )
 								self['pnl_lbl'..i] = pnl:text{rotation=360,name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
@@ -946,9 +950,9 @@ function TPocoHud3:_updatePlayers(t)
 				if isMe then
 					suspicion = managers.blackmarket:get_suspicion_offset_of_local(75)
 				else
-					local member = self:_member(i)
-					if member and alive(member:unit()) then
-						suspicion = managers.blackmarket:get_suspicion_offset_of_peer(member:peer(), 75)
+					local peer = self:_peer(i)
+					if peer and alive(peer:unit()) then
+						suspicion = managers.blackmarket:get_suspicion_offset_of_peer(peer, 75)
 					end
 				end
 				if suspicion then
@@ -1026,8 +1030,7 @@ function TPocoHud3:_updatePlayers(t)
 		-- playerFloat
 		local nLbl = nData and nData.text
 		if alive(nLbl) and fltO.enable and not self.dead then
-			local member = self:_member(i)
-			local peer = member and member:peer()
+			local peer = self:_peer(i)
 			local rank = peer and peer:rank()
 			rank = rank and (rank > 0) and (self:_romanic_number(rank)..'Ї') or ''
 			local lvl = peer and peer:level() or '?'
@@ -1273,21 +1276,21 @@ function TPocoHud3:_pos(something,head)
 	end
 	return pos
 end
-function TPocoHud3:_member(something)
+function TPocoHud3:_peer(something)
 	local t = type(something)
-	local game = _.g('managers.network:game()')
-	if not game then return end
 	if t == 'userdata' then
-		return something and alive(something) and game:member_from_unit( something )
-	elseif t == 'number' then
-		return game:member( something )
-	elseif t == 'string' then
-		return self:_member(managers.criminals:character_peer_id_by_name( something ))
+		return alive(something) and something:network():peer()
+	end
+	if t == 'number' then
+		return self:pidToPeer(something)
+	end
+	if t == 'string' then
+		return self:_peer(managers.criminals:character_peer_id_by_name( something ))
 	end
 end
 function TPocoHud3:_pid(something)
-	local member = self:_member(something)
-	return member and member:peer() and member:peer():id() or 0
+	local peer = self:_peer(something)
+	return peer and peer:id() or 0
 end
 function TPocoHud3:_color(something,fbk)
 	local fallback = fbk or cl.Purple
@@ -1312,14 +1315,14 @@ function TPocoHud3:_name(something,asRoom)
 		if asRoom then
 			return -- requested room, nothing found
 		end
-		local members = _.g('managers.network:game()._members',{})
+		local peers = _.g('managers.network:session():peers()',{})
 		local pid, closest = nil, 999999999
-		for __, member in pairs( members ) do
-			local unit = member:unit()
+		for __, peer in pairs( peers ) do
+			local unit = peer:unit()
 			if unit and alive(unit) then
 				local d = mvector3.distance_sq(something,unit:position())
 				if d < closest then
-					pid = member:peer():id()
+					pid = peer:peer():id()
 					closest = d
 				end
 			end
@@ -1336,24 +1339,24 @@ function TPocoHud3:_name(something,asRoom)
 			return conv[something] or 'AI'
 		end
 	end
-	local member = self:_member(something)
-	member = something==0 and 'AI' or (member and member:peer():name() or 'Someone')
-	member = member:gsub('{','['):gsub('}',']')
+	local peer = self:_peer(something)
+	local name = peer and peer:name() or 'Someone'
+	name = name:gsub('{','['):gsub('}',']')
 	local hDot,fDot
-	local truncated = member:gsub('^%b[]',''):gsub('^%b==',''):gsub('^%s*(.-)%s*$','%1')
-	if O:get('game','truncateTags') and utf8.len(truncated) > 0 and member ~= truncated then
-		member = truncated
+	local truncated = name:gsub('^%b[]',''):gsub('^%b==',''):gsub('^%s*(.-)%s*$','%1')
+	if O:get('game','truncateTags') and utf8.len(truncated) > 0 and name ~= truncated then
+		name = truncated
 		hDot = true
-end
+	end
 	local tLen = O:get('game','truncateNames')
 	if tLen > 1 then
 		tLen = (tLen - 1) * 3
-		if tLen < utf8.len(member) then
-			member = utf8.sub(member,1,tLen)
+		if tLen < utf8.len(name) then
+			name = utf8.sub(name,1,tLen)
 			fDot = true
 		end
 	end
-	return (hDot and Icon.Dot or '')..member..(fDot and Icon.Dot or '')
+	return (hDot and Icon.Dot or '')..name..(fDot and Icon.Dot or '')
 end
 function TPocoHud3:_time(sec)
 	local r = {}
