@@ -5,8 +5,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 ]]
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 372
-local TAG = '0.28 hotfix 14 (cf86c75)'
+local REV = 373
+local TAG = '0.28 hotfix 15 (c024a06)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1322,7 +1322,7 @@ function TPocoHud3:_name(something,asRoom)
 			if unit and alive(unit) then
 				local d = mvector3.distance_sq(something,unit:position())
 				if d < closest then
-					pid = peer:peer():id()
+					pid = peer:id()
 					closest = d
 				end
 			end
