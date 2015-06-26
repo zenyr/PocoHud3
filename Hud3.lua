@@ -5,8 +5,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 ]]
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 369
-local TAG = '0.28 hotfix 11 (089df8a)'
+local REV = 371
+local TAG = '0.28 hotfix 13 (f3abed5)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -473,10 +473,10 @@ function TPocoHud3:_update(t,dt)
 	if inGameDeep and now() - (self._lastRoom or 0) > 1 then
 		self._lastRoom = now()
 		local room = _.g('Poco.room')
-		local game = managers.network:game()
-		if game then
+		local session = managers.network:session()
+		if session then
 			for pid=1,4 do
-				local unit = self:Stat(pid,'custody') == 0 and room and game:unit_from_peer_id(pid)
+				local unit = self:Stat(pid,'custody') == 0 and room and session:peer(pid) and session:peer(pid):unit()
 				if unit and alive(unit) then
 					self:Stat(pid,'room',room:get(unit:movement():m_pos(),true))
 				end
@@ -817,7 +817,7 @@ function TPocoHud3:_updatePlayers(t)
 								end
 								pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=btmO.size*2+1}
 								local wp = {bPnl._player_panel:world_position()}
-								pnl:set_world_position(wp[1],wp[2]-pnl:h())
+								pnl:set_world_position(wp[1] + btnO.offsetX ,wp[2]-pnl:h())
 								local fontSize = btmO.size
 								--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture='guis/textures/test_blur_df', render_template='VertexColorTexturedBlur3D', layer=-1, x=0,y=0 } )
 								self['pnl_lbl'..i] = pnl:text{rotation=360,name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
@@ -1261,7 +1261,7 @@ end
 function TPocoHud3:_pos(something,head)
 	local t, unit = type(something)
 	if t == 'number' then
-		unit = managers.network:game():unit_from_peer_id(something)
+		unit = managers.network:session():peer(something):unit()
 	else
 		unit = something
 	end
