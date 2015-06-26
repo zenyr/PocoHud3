@@ -76,6 +76,7 @@ local scheme = {
 		enable = {'bool',TRUE,nil,'_opt_enable_desc'},
 		size = {'num',17,{15,30},'_opt_size_desc',nil,2,1},
 		offset = {'num',0,{-30,30},'_opt_offset_desc',nil,2,1},
+		offsetX = {'num',0,{-3000,3000},'_opt_offsetX_desc',nil,2,1},
 		underneath = {'bool',TRUE,nil,'_opt_underneath_desc',nil,nil,1},
 		uppercaseNames = {'bool',TRUE,nil,'_opt_uppercaseNames_desc',nil,nil,1},
 		showClock = {'num',2,{0,2},'_opt_showClock_desc','Verbose'},
