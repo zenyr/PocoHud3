@@ -5,8 +5,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 ]]
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 377
-local TAG = '0.29 hotfix 1 (d975923)'
+local REV = 380
+local TAG = '0.29 hotfix 4 (1753b49)'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -863,7 +863,7 @@ function TPocoHud3:_updatePlayers(t)
 												lastT = now()
 												tAngle = self:_getAngle(unit)
 											end
-											arrow:set_visible(not not tAngle)
+											arrow:set_visible(tAngle ~= 360)
 											if tAngle then
 												if math.abs(tAngle-currAngle) > 180 then
 													currAngle = currAngle + (tAngle>currAngle and 360 or -360)
@@ -2846,7 +2846,7 @@ end
 
 function TPocoHud3:_getAngle(unit)
 	if not (unit and type(unit)=='userdata' and alive(unit) and not self.dead) then
-		return false
+		return 360
 	end
 	local uPos = unit:position()
 	local vec = self.camPos - uPos
