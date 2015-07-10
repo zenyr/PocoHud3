@@ -10,6 +10,7 @@ local KitsJSONFileName = Poco.currDir..'hud3_kits.json'
 local KarmaJSONFileName = Poco.currDir..'hud3_karma.json'
 local LocJSONFileName = Poco.currDir..'hud3_locale$.json'
 local LocationJSONFilename = Poco.currDir..'hud3_rooms.json';
+local clientName = 'PocoHud3';
 
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
@@ -3129,7 +3130,7 @@ function PocoHud3Class._drawOptions(tab)
 
 			-- Poor man's Fix start
 			local dialog_data = {}
-			dialog_data.title = string.upper(L('_tab_root') .. ' : Not reloaded on purpose')
+			dialog_data.title = string.upper(clientName .. ' : Not reloaded on purpose')
 			dialog_data.text = 'Some changes will be applied upon next session due to slight issues.\n'.. 'Sorry for inconvenience!'
 			local ok_button = {}
 			ok_button.text = managers.localization:text("dialog_ok")
