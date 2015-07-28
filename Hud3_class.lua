@@ -50,6 +50,7 @@ PocoHud3Class.loadVar = function(_O,_me,_L)
 	clBad = O:get('root','colorNegative')
 end
 local _defaultLocaleData = {
+	_client_name = 'PocoHud3',
 	_about_trans_fullList = '{Dansk (DA)|Tan}\nNickyFace, DanishDude93\n{Deutsch (DE)|Tan}\nfallenpenguin, Raxdor, GIider, Hoffy,\nNowRiseAgain, Pixelpille, Sithryl,\nValkein, Zee_, baddog_11\n{Español (ES)|Tan}\nNiccy, BurnBabyBurn\n{Français (FR)|Tan}\nChopper385, Dewk Noukem, Lekousin, Shendow\n{Italiano (IT)|Tan}\nOktober, Nitronik\n{Bahasa Indonesia (ID)|Tan}\nPapin Faizal(papin97)\n{Nederlands (NL)|Tan}\nNickolas Cat, Rezqual\n{Norsk (NO)|Tan}\nikoddn\n{Polski (PL_PL)|Tan}\nMartinz, Kuziz, gmaxpl3\n{Português (PT_PT)|Tan}\nBruno \"Personagem\" Tibério, John Ryder\n{Português (PT_BR)|Tan}\njkisten\n{Русский (RU)|Tan}\ncollboy, Hellsing, troskahtoh\n{Svenska (SV_SE)|Tan}\nTheLovinator, KillYoy, kao172',
 	_about_trans_special_thanks_list = '{Overkill|White}\nfor a legendary game {& not kicking my arse off|Silver|0.5}\n{Harfatus|White}\nfor a cool injector\n{Olipro|White}\nfor keeping MOD community alive\n{v00d00 & gir489 & 90e|White}\nfor making me able to learn Lua from the humble ground\n{Arkkat|White}\nfor crashing the game for me at least 50 times since alpha stage\n{Tatsuto|White}\nfor PD2Stats.com API\n{You|Yellow}\nfor keeping me way too busy to go out at weekends {/notreally|Silver|0.5}',
 	_kit_equip_btn_hint = '{_kit_equip_btn_hint1} {_kit_equip_btn_hint2|Tan}\n{_kit_equip_btn_hint3} {_kit_equip_btn_hint4|Red} {_kit_equip_btn_hint5}',
@@ -3129,8 +3130,8 @@ function PocoHud3Class._drawOptions(tab)
 
 			-- Poor man's Fix start
 			local dialog_data = {}
-			dialog_data.title = string.upper(L('_tab_root') .. ' : Not reloaded on purpose')
-			dialog_data.text = 'Some changes will be applied upon next session due to slight issues.\n'.. 'Sorry for inconvenience!'
+			dialog_data.title = string.upper( L('_client_name') .. ' : Not reloaded on purpose')
+			dialog_data.text = 'Some changes will be applied on restart due to slight issues.\n'.. 'Sorry for inconvenience!'
 			local ok_button = {}
 			ok_button.text = managers.localization:text("dialog_ok")
 			dialog_data.button_list = {ok_button}
