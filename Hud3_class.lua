@@ -2863,7 +2863,7 @@ function PocoHud3Class._drawPlayer(tab)
 
 			objs.btnPD2Stats = PocoUIButton:new(ooTab,{
 				onClick = function(self)
-					PocoHud3Class._get(self,'http://api.pd2stats.com/cheater/v1/?id='..uid, function(success, body)
+					PocoHud3Class._get(self,'http://api.pd2stats.com/cheater/v3/?force=1&id='..uid, function(success, body)
 						if success then
 							body = body:gsub('\t([%w_]-):','\t"%1":')
 							local r, result = pcall(JSON.decode,JSON,body)
