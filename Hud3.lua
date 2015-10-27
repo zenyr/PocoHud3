@@ -147,10 +147,7 @@ function TPocoHud3:onDestroy(gameEnd)
 end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 	if unit and alive(unit) then
-		local isPlayer = unit:base() and unit:base().upgrade_value
-		if not isPlayer then -- this filters PlayerDrama related events out when hosting a game
-			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
-		end
+		self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
 	end
 end
 local _lastAttk, _lastAttkpid = 0,0
@@ -2002,7 +1999,9 @@ function TPocoHud3:_hook()
 		hook( UnitNetworkHandler, 'damage_bullet', function( ... )
 			local self,subject_unit, attacker_unit, damage, i_body, height_offset, death, sender = unpack{...}
 			local head = i_body and alive(subject_unit) and subject_unit:character_damage().is_head and subject_unit:character_damage():is_head(subject_unit:body(i_body))
-			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'bullet')
+			if not (damage == 1 and i_body == 1 and height_offset == 1) then -- Filter Drama event
+				me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'bullet')
+			end
 			return Run('damage_bullet',...)
 		end)
 		hook( UnitNetworkHandler, 'damage_explosion_fire', function(...)
