@@ -1195,7 +1195,7 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 	self._dbgTxt = _.s(self._keyList,self:lastError())
 	local txts = {}
 	if dO.showFPS then
-		txts[#txts+1] = math.floor(1/dt)..' FPS'
+		txts[#txts+1] = math.floor(1/dt)
 	end
 	if (inGameDeep and dO.showClockIngame) or (not inGameDeep and dO.showClockOutgame) then
 		if O:get('root','24HourClock') then

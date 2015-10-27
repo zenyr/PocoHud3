@@ -3,8 +3,10 @@ if type(Poco) == 'table' and Poco.destroy and not Poco.dead then
 	Poco:destroy()
 end
 Poco = {}
+Poco._mod_path = PersistScriptPath
 Poco._req = function (name)
 	local __req = function(name)
+		name = Poco._mod_path .. name
 		local f=io.open(name,"r")
 		if f~=nil then
 			io.close(f)
@@ -170,7 +172,7 @@ _ = {
 	end,
 	M = function(orig,new,copy)
 		if copy then
-			orig = table.deepcopy(orig)
+			orig = deep_clone(orig)
 		end
 		local merge_task = {}
 		 merge_task[orig] = new
@@ -224,7 +226,7 @@ _ = {
 }
 UNDERSCORE = _
 setmetatable(_,{__call = function(__,...) return UNDERSCORE.W(...) end})
-for k,v in pairs(table.deepcopy(_)) do
+for k,v in pairs(deep_clone(_)) do
 	_[k:lower()] = v
 end
 -- Utils --
