@@ -5,8 +5,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 ]]
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 383
-local TAG = '0.29 hotfix 6'
+local REV = 384
+local TAG = '0.29 hotfix 7'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -147,10 +147,7 @@ function TPocoHud3:onDestroy(gameEnd)
 end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 	if unit and alive(unit) then
-		local isPlayer = unit:base().upgrade_value
-		if not isPlayer then -- this filters PlayerDrama related events out when hosting a game
-			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
-		end
+		self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
 	end
 end
 local _lastAttk, _lastAttkpid = 0,0
@@ -168,8 +165,8 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	local isSpecial = false
 	if unit then
 		if not alive(sender) then return end -- If an attacker died/nonexist just before this, abandon.
-		local senderTweak = sender and alive(sender) and sender:base()._tweak_table
-		local unitTweak = unit and alive(unit) and unit:base()._tweak_table
+		local senderTweak = sender and alive(sender) and sender:base() and sender:base()._tweak_table
+		local unitTweak = unit and alive(unit) and unit:base() and unit:base()._tweak_table
 		isSpecial = tweak_data.character[ unitTweak ]
 		isSpecial = isSpecial and isSpecial.priority_shout
 		if isSpecial =='f34' then isSpecial = false end
@@ -1330,7 +1327,7 @@ function TPocoHud3:_name(something,asRoom)
 		end
 		return L('_msg_around',{self:_name(pid or self.pid)})
 	elseif str == 'Unit' then
-			return self:_name(something:base()._tweak_table)
+			return self:_name(something:base() and something:base()._tweak_table)
 	elseif str == 'string' then -- tweak_table name
 		local pName = managers.criminals:character_peer_id_by_name( something )
 		if pName then
@@ -2002,14 +1999,16 @@ function TPocoHud3:_hook()
 		hook( UnitNetworkHandler, 'damage_bullet', function( ... )
 			local self,subject_unit, attacker_unit, damage, i_body, height_offset, death, sender = unpack{...}
 			local head = i_body and alive(subject_unit) and subject_unit:character_damage().is_head and subject_unit:character_damage():is_head(subject_unit:body(i_body))
-			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'bullet')
+			if not (damage == 1 and i_body == 1 and height_offset == 1) then -- Filter Drama event
+				me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'bullet')
+			end
 			return Run('damage_bullet',...)
 		end)
 		hook( UnitNetworkHandler, 'damage_explosion_fire', function(...)
 			local self, subject_unit, attacker_unit, damage, i_attack_variant, death, direction, sender = unpack{...}
 
 			local realAttacker = attacker_unit
-			if realAttacker and alive(realAttacker) and realAttacker:base()._thrower_unit then
+			if realAttacker and alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
 				realAttacker = realAttacker:base()._thrower_unit
 			end
 
@@ -2020,7 +2019,7 @@ function TPocoHud3:_hook()
 			local self, subject_unit, attacker_unit, damage, death, direction, weapon_type, weapon_unit, sender = unpack{...}
 
 			local realAttacker = attacker_unit
-			if realAttacker and alive(realAttacker) and realAttacker:base()._thrower_unit then
+			if realAttacker and alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
 				realAttacker = realAttacker:base()._thrower_unit
 			end
 
@@ -2047,7 +2046,7 @@ function TPocoHud3:_hook()
 					mvector3.set(hitPos,info.col_ray.position or info.pos or info.col_ray.hit_position)
 					local head = self._unit:character_damage():is_head(info.col_ray.body)
 					local realAttacker = info.attacker_unit
-					if alive(realAttacker) and realAttacker:base()._thrower_unit then
+					if alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
 						realAttacker = realAttacker:base()._thrower_unit
 					end
 					me:AddDmgPop(realAttacker,hitPos,self._unit,0,info.damage,self._dead,head,info.variant)
@@ -2599,7 +2598,7 @@ function TPocoHud3:_hook()
 			local corpses,cnt = self._enemy_data.corpses, 0
 			for i,corpse in pairs(corpses or {}) do
 				local unit = corpse.unit
-				if alive(unit) and unit:base()._tweak_table == 'shield' then
+				if alive(unit) and unit:base() and unit:base()._tweak_table == 'shield' then
 					cnt = cnt + 0
 					if cnt > 2 or (now() - corpse.death_t > 10) then
 						unit:base():set_slot(unit, 0)
