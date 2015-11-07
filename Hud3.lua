@@ -2015,8 +2015,19 @@ function TPocoHud3:_hook()
 			me:AddDmgPopByUnit(realAttacker,subject_unit,0,damage*-0.1953125,death,false,'bullet')
 			return Run('damage_explosion_fire', ... )
 		end)
+		hook( UnitNetworkHandler, 'damage_dot', function(...)
+			local self, subject_unit, attacker_unit, damage, death, variant, hurt_animation, sender = unpack{...}
+
+			local realAttacker = attacker_unit
+			if realAttacker and alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
+				realAttacker = realAttacker:base()._thrower_unit
+			end
+
+			me:AddDmgPopByUnit(realAttacker,subject_unit,0,damage*-0.1953125,death,false,'explosion')
+			return Run('damage_dot', ... )
+		end)
 		hook( UnitNetworkHandler, 'damage_fire', function(...)
-			local self, subject_unit, attacker_unit, damage, death, direction, weapon_type, weapon_unit, sender = unpack{...}
+			local self, subject_unit, attacker_unit, damage, start_dot_dance_animation, death, direction, weapon_type, weapon_unit, sender = unpack{...}
 
 			local realAttacker = attacker_unit
 			if realAttacker and alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
@@ -2037,14 +2048,11 @@ function TPocoHud3:_hook()
 		hook( CopDamage, '_on_damage_received', function(self,info)
 			local result = Run('_on_damage_received',self,info)
 			local hitPos = Vector3()
-			if not info.col_ray then
-				if self._unit then
-				 -- me:AddDmgPopByUnit(nil,self._unit,0,info.damage,self._dead)
-				end
-			else
-				if info.col_ray.position or info.pos or info.col_ray.hit_position then
-					mvector3.set(hitPos,info.col_ray.position or info.pos or info.col_ray.hit_position)
-					local head = self._unit:character_damage():is_head(info.col_ray.body)
+			if info.col_ray or info.variant == 'poison' then
+				local col_ray = info.col_ray or {}
+				mvector3.set(hitPos,col_ray.position or info.pos or col_ray.hit_position or me:_pos(self._unit))
+				if hitPos then
+					local head = self._unit:character_damage():is_head(col_ray.body)
 					local realAttacker = info.attacker_unit
 					if alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
 						realAttacker = realAttacker:base()._thrower_unit
