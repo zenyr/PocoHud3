@@ -3,10 +3,10 @@ if not TPocoBase then return end
 local disclaimer = [[
 feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
--- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
+
 local _ = UNDERSCORE
-local REV = 384
-local TAG = '0.29 hotfix 7'
+local REV = 386
+local TAG = '0.30'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
