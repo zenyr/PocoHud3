@@ -2632,7 +2632,7 @@ function PocoHud3Class._drawHeistStats (tab)
 	local levels = _.g('managers.statistics._global.sessions.levels') or {}
 	-- search JobsChain
 	local addDay = function(val,prefix,suffix)
-		if not level_list[table.get_key(level_list,val)] then return end
+		if not level_list[table.get_key(level_list,val)] or not tweak_data.levels[val] then return end
 		if table.get_key(level_list,val) then
 			level_list[table.get_key(level_list,val)] = nil
 		end
@@ -2683,7 +2683,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		local jobs = table.deepcopy(_jobs)
 		for no, heist in _.p(job_list) do
 			local jobData = tweak_data.narrative:job_data(heist)
-			
+
 			if jobData and jobData.contact:gsub('the_','') == host:gsub('the_','') then
 				local jobData = tweak_data.narrative.jobs[heist]
 				local jobName
