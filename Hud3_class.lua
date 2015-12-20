@@ -6,11 +6,13 @@ local clGood =  cl.YellowGreen
 local clBad =  cl.Gold
 local isNil = function(a) return a == nil end
 local inGame = CopDamage ~= nil
-local SavePath = rawget(_G,'SavePath') or string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")..'../../poco/'
+local SavePath = rawget(_G,'SavePath') or string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")
+local ModPath = rawget(_G,'ModPath') or string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")
+_('SP:'..tostring(SavePath)..' MP:'..tostring(ModPath) )
 local KitsJSONFileName = SavePath..'hud3_kits.json'
 local KarmaJSONFileName = SavePath..'hud3_karma.json'
-local LocJSONFileName = SavePath..'hud3_locale$.json'
-local LocationJSONFilename = SavePath..'hud3_rooms.json';
+local LocJSONFileName = ModPath..'hud3_locale$.json'
+local LocationJSONFilename = ModPath..'hud3_rooms.json'
 
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
@@ -4030,7 +4032,7 @@ function PocoHud3Class._drawJukebox(tab)
 
 
 	local _addItems = function(oTab,inGame)
-		local y = 10;
+		local y = 10
 		local track_list,track_locked
 		if inGame then
 			track_list,track_locked = managers.music:jukebox_music_tracks()

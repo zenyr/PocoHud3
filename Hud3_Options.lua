@@ -190,7 +190,7 @@ local _vanity = {
 	language = {EN='English', DA='Dansk', DE='Deutsch', ES='Español', FR='Français',ID = 'Bahasa Indonesia', IT='Italiano',NL='Nederlands',NO='Norsk',PL='Polski',PT='Português (PT)',PT_BR='Português (BR)', RU='Русский', SV_SE='Svenska'},
 }
 ----------------------------------------------------
-local SavePath = rawget(_G,'SavePath') or string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")..'../../poco/'
+local SavePath = rawget(_G,'SavePath') or string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")
 local JSONFileName = SavePath..'hud3_config.json'
 local isNil = function(a)
 	return a == nil
