@@ -116,7 +116,7 @@ local scheme = {
 		dominated  = {'num',1,{0,4},'_opt_dominated_desc','ChatSend',nil,4},
 		converted  = {'num',1,{0,4},'_opt_converted_desc','ChatSend',nil,4},
 		minionLost  = {'num',1,{0,4},'_opt_minionLost_desc','ChatSend',nil,4},
-		minionShot  = {'num',1,{0,4},'_opt_minionShot_desc','ChatSend',nil,4},
+		minionShot  = {'num',4,{0,4},'_opt_minionShot_desc','ChatSend',nil,4},
 		hostageChanged  = {'num',2,{0,4},'_opt_hostageChanged_desc','ChatSend',nil,4},
 		custody  = {'num',2,{0,4},'_opt_custody_desc','ChatSend',nil,4},
 		downed  = {'num',1,{0,4},'_opt_downed_desc','ChatSend',nil,4},
@@ -187,7 +187,7 @@ local _vanity = {
 	cantedSight = '_vanity_cantedsight',
 	truncateNames = '_vanity_truncatenames',
 	resizeCrimenet = '_vanity_resizeCrimenet',
-	language = {EN='English', DA='Dansk', DE='Deutsch', ES='Español', FR='Français',ID = 'Bahasa Indonesia', IT='Italiano',NL='Nederlands',NO='Norsk',PL='Polski',PT='Português (PT)',PT_BR='Português (BR)', RU='Русский', SV_SE='Svenska'},
+	language = {EN='English', DA='Dansk', DE='Deutsch', ES='Español', FR='Français',ID = 'Bahasa Indonesia', IT='Italiano',NL='Nederlands',NO='Norsk',PL='Polski',PT='Português (PT)',PT_BR='Português (BR)', RU='Русский', SV_SE='Svenska', KO='한국어(KOR)'},
 }
 ----------------------------------------------------
 local SavePath = rawget(_G,'SavePath') or string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")

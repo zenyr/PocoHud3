@@ -290,7 +290,7 @@
     "_opt_showECM": "ПОКАЗЫВАТЬ ECM",
     "_opt_showECM_desc": "Длительность 'Генератора помех' // 'ECM'",
     "_opt_showFeedback": "ПОКАЗЫВАТЬ \"ПОМЕХИ ЕСМ\"",
-    "_opt_showFeedback_desc": "Длительность умения 'Аккустическая петля' // ' ECM Feedback'",
+    "_opt_showFeedback_desc": "Длительность умения 'Помехи ECM' // ' ECM Feedback'",
     "_opt_showFirstAid": "ПОКАЗЫВАТЬ \"АПТЕЧКИ ПЕРВОЙ ПОМОЩИ\"",
     "_opt_showFirstAid_desc": "Показывать длительность положительного эффекта 'Скорая помощь' // 'Quick fix'",
     "_opt_showFPS": "ПОКАЗЫВАТЬ FPS",
