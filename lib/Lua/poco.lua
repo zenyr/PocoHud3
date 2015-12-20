@@ -5,8 +5,7 @@
 --RegisterScript("poco/common.luac", 1, "UNDERSCORE")
 --RegisterScript("poco/common.luac", 1, "PocoHud3")
 
-if io and not PocoDir then
-	PocoDir = string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")..'../../poco/'
+if io then
 	local getEither = function (name)
 		local __req = function(name)
 			local f= io.open(name,"r")
@@ -15,7 +14,6 @@ if io and not PocoDir then
 				io.stdout:write('Found:'..name..'\n');
 				return name
 			end
-			last = name
 		end
 		return __req(name) or __req(name..'c');
 	end

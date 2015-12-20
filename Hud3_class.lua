@@ -6,10 +6,11 @@ local clGood =  cl.YellowGreen
 local clBad =  cl.Gold
 local isNil = function(a) return a == nil end
 local inGame = CopDamage ~= nil
-local KitsJSONFileName = Poco.currDir..'hud3_kits.json'
-local KarmaJSONFileName = Poco.currDir..'hud3_karma.json'
-local LocJSONFileName = Poco.currDir..'hud3_locale$.json'
-local LocationJSONFilename = Poco.currDir..'hud3_rooms.json';
+local SavePath = rawget(_G,'SavePath') or string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")..'../../poco/'
+local KitsJSONFileName = SavePath..'hud3_kits.json'
+local KarmaJSONFileName = SavePath..'hud3_karma.json'
+local LocJSONFileName = SavePath..'hud3_locale$.json'
+local LocationJSONFilename = SavePath..'hud3_rooms.json';
 
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,

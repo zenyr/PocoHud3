@@ -10,8 +10,6 @@ local TAG = '0.30 hotfix 2'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
-local currDir = PocoDir
-Poco.currDir = currDir
 PocoHud3Class = nil
 Poco._req ('poco/Hud3_class.lua')
 if not PocoHud3Class then return end
