@@ -6,7 +6,7 @@ local clGood =  cl.YellowGreen
 local clBad =  cl.Gold
 local isNil = function(a) return a == nil end
 local inGame = CopDamage ~= nil
-local ModPath = string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")
+local ModPath = rawget(_G,'ModPath') and string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1") or PocoDir
 local SavePath = rawget(_G,'SavePath') or ModPath
 local KitsJSONFileName = SavePath..'hud3_kits.json'
 local KarmaJSONFileName = SavePath..'hud3_karma.json'
