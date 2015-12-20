@@ -60,6 +60,9 @@ local scheme = {
 		showFirstAid = {'bool',TRUE,nil,'_opt_showFirstAid_desc'},
 		showLifeLeech = {'bool',TRUE,nil,'_opt_showLifeLeech_desc'},
 		showCloseCombat = {'bool',TRUE,nil,'_opt_showCloseCombat_desc'},
+		showKillshot = {'bool',FALSE,nil,'_opt_showKillshot_desc'},
+		showGamblerAmmo = {'bool',TRUE,nil,'_opt_showGambler_desc'},
+		showGamblerHealth = {'bool',TRUE,nil,'_opt_showGambler_desc'},
 
 		noSprintDelay  = {'bool',TRUE,nil,'_opt_noSprintDelay_desc',nil,nil,4},
 		hideInteractionCircle  = {'bool',FALSE,nil,'_opt_hideInteractionCircle_desc',nil,nil,4},
