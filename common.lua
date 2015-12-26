@@ -15,6 +15,7 @@ Poco._req = function (name)
 end
 Poco._req ('poco/3rdPartyLibrary.lua')
 local inGame = CopDamage ~= nil
+local now = function (type) return type and TimerManager:game():time() or managers.player:player_timer():time() end
 if not deep_clone then return end
 -- GLOBALS --
 -- * cl
@@ -90,7 +91,12 @@ _ = {
 		for curr,delim in string.gmatch (path, "([%a_]+)([^%a_]*)") do
 			local isFunc = string.find(delim,'%(')
 			if isFunc then
-				from = from[curr](from)
+				if from and (type(from) == 'table' or type(from) == 'userdata') and from[curr] then
+					from = from[curr](from)
+				else
+					from = nil
+					break
+				end
 			else
 				from = from[curr]
 			end
@@ -200,7 +206,7 @@ _ = {
 			return compare - t
 		end
 	end,
-	W = function(...)io.stderr:write(_.S(...)..'\n')end,
+	W = function(...)io.stdout:write(_.S(...)..'\n')end,
 	P = function (t, f) -- pairs but sorted
 		local a = {}
 		for n in pairs(t or {}) do table.insert(a, n) end
@@ -278,6 +284,7 @@ end
 -- Poco --
 function Poco:init()
 	self.addOns = {}
+	self.birthdays = {}
 	self.funcs = {}
 	self.save = {}
 	self.binds = {}
@@ -329,6 +336,7 @@ end
 function Poco:_runBinds(t,dt)
 	if not (
 		(managers.menu_component._blackmarket_gui and managers.menu_component._blackmarket_gui._renaming_item) or
+		(managers.menu_component._skilltree_gui and managers.menu_component._skilltree_gui._renaming_skill_switch) or
 		(managers.hud and managers.hud._chat_focus) or
 		(managers.menu_component._game_chat_gui and managers.menu_component._game_chat_gui:input_focus()) or
 		(self._ignoreT and self._ignoreT > TimerManager:game():time())
@@ -413,6 +421,7 @@ function Poco:Kill(name)
 	self.addOns[name] = nil
 	return
 end
+
 function Poco:AddOn(ancestor)
 	local name = ancestor.className
 	local addOn = self.addOns[name]
@@ -427,13 +436,16 @@ end
 function Poco:Update(t,dt)
 --	if not managers.menu_component:input_focus() then
 	for __,func in pairs(self.funcs) do
-		func(t,dt)
+		if self.birthdays[__] and (now() - self.birthdays[__] > 1) then
+			func(t,dt)
+		end
 	end
 	self:_runBinds(t,dt)
 end
 function Poco:register(key,func)
 	if not self.funcs[key] then
 		self.funcs[key] = func
+		self.birthdays[key] = now()
 	end
 end
 function Poco:unregister(key)
@@ -450,5 +462,5 @@ function Poco:destroy()
 end
 
 Poco:init()
-
+Poco._req ('poco/Hud3.lua')
 PocoCommon = true

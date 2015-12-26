@@ -1,13 +1,12 @@
 -- PocoHud3 by zenyr@zenyr.com
 if not TPocoBase then return end
 local disclaimer = [[
-feel free to ask me through my mail: zenyr@zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
+feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand that I'm quite clumsy, cannot guarantee I'll reply what you want..
 ]]
-
--- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision older than released luac files.
+-- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 305
-local TAG = 'v0.23 hotfix 9 (92c4485)'
+local REV = 390
+local TAG = '0.31 repack'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -42,6 +41,7 @@ local _BAGS = {
 
 local _BROADCASTHDR, _BROADCASTHDR_HIDDEN = Icon.Div,Icon.Ghost
 local skillIcon = 'guis/textures/pd2/skilltree/icons_atlas'
+local perkIcon = 'guis/textures/pd2/specialization/icons_atlas'
 local now = function (type) return type and TimerManager:game():time() or managers.player:player_timer():time() end
 local _conv = {
 	city_swat	=	L('_mob_city_swat'),
@@ -87,6 +87,10 @@ function TPocoHud3:onInit() -- ★설정
 		buff = self._ws:panel():panel({ name = 'buff_sheet' , layer = 5}),
 		stat = self._ws:panel():panel({ name = 'stat_sheet' , layer = 9}),
 	}
+
+	-- 'customhud' PR #22 related
+	self.custom_hud_enabled = rawget(_G,'mod_collection') and _.g('mod_collection._data.custom_hud_enabled')
+
 	self.killa = self.killa or 0
 	self.stats = self.stats or {}
 	self.hooks = {}
@@ -127,6 +131,7 @@ function TPocoHud3:export()
 	}
 end
 function TPocoHud3:Update(t,dt)
+	if managers.vote:is_restarting() then return end
 	local r,err = pcall(self._update,self,t,dt)
 	if not r then _(err) end
 end
@@ -141,11 +146,7 @@ function TPocoHud3:onDestroy(gameEnd)
 end
 function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 	if unit and alive(unit) then
-		local uType = unit:base()._tweak_table or 0
-		local _arr = {russian=1,german=1,spanish=1,american=1,female_1=1,old_hoxton=1,jowi=1}
-		if not _arr[uType] then -- this filters PlayerDrama related events out when hosting a game
-			self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
-		end
+		self:AddDmgPop(sender,self:_pos(unit),unit,offset,damage,death,head,dmgType)
 	end
 end
 local _lastAttk, _lastAttkpid = 0,0
@@ -163,8 +164,8 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	local isSpecial = false
 	if unit then
 		if not alive(sender) then return end -- If an attacker died/nonexist just before this, abandon.
-		local senderTweak = sender and alive(sender) and sender:base()._tweak_table
-		local unitTweak = unit and alive(unit) and unit:base()._tweak_table
+		local senderTweak = sender and alive(sender) and sender:base() and sender:base()._tweak_table
+		local unitTweak = unit and alive(unit) and unit:base() and unit:base()._tweak_table
 		isSpecial = tweak_data.character[ unitTweak ]
 		isSpecial = isSpecial and isSpecial.priority_shout
 		if isSpecial =='f34' then isSpecial = false end
@@ -234,6 +235,11 @@ function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType
 	if not r then _(err) end
 end
 --- Internal functions ---
+function TPocoHud3:pidToPeer(pid)
+	local session = managers.network:session()
+	return session and session:peer(pid)
+end
+
 function TPocoHud3:say(line,sync)
 	if line then
 		--[[local cs = _.g('managers.player:player_unit():movement()._current_state')
@@ -260,7 +266,7 @@ end
 function TPocoHud3:toggleRose(show)
 	if self._noRose then return end
 	local C = PocoHud3Class
-	local canOpen = inGameDeep and (not self._lastSay or now()-self._lastSay > tweak_data.player.movement_state.interaction_delay)
+	local canOpen = inGameDeep and (not self._lastSay or now()-self._lastSay > tweak_data.player.movement_state.interaction_delay / 2)
 	local r,err = pcall(function()
 		local menu = self.menuGui
 		if menu and not self._guiFading then -- hide
@@ -283,7 +289,7 @@ function TPocoHud3:toggleRose(show)
 			local tab = gui:add('Rose')
 			C._drawRose(tab)
 		elseif not canOpen and show then
-			managers.menu:post_event('menu_error')
+			-- managers.menu:post_event('menu_error')
 		end
 	end)
 	if not r then
@@ -344,7 +350,7 @@ function TPocoHud3:Menu(dismiss,skipAnim)
 				local oTabs = C.PocoTabs:new(self._ws,{name = 'stats',x = 10, y = 10, w = 970, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 				local oTab = oTabs:add(L('_tab_heistStatus'))
 				local r,err = pcall(C._drawHeistStats,oTab) -- yeaaaah just in case. I know. I'm cheap
-				if not r then me:err('DHS:',err) end
+				if not r then me:err('DHS:'..tostring(err) ) end
 
 				oTab = oTabs:add(L('_tab_upgradeSkills'))
 				if inGame then
@@ -416,7 +422,7 @@ function TPocoHud3:AnnounceStat(midgame)
 	else
 		self:Chat(midgame and 'midStat' or 'endStat',table.concat(txt,'\n'))
 	end
-	if not midgame then
+	if false and not midgame then -- fuck humor.
 		self:Chat('endStatCredit','-- PocoHud³ : More info @ steam group "pocomods" --')
 	end
 end
@@ -427,13 +433,15 @@ function TPocoHud3:_slowUpdate(t,dt)
 	if inGame then
 		local peers = _.g('managers.network:session():peers()',{})
 		for pid,peer in pairs( peers ) do
-			self:Stat(pid,'ping',math.floor(Network:qos( peer:rpc() ).ping))
+			if peer and peer:rpc() then
+				self:Stat(pid,'ping',math.floor(Network:qos( peer:rpc() ).ping))
+			end
 		end
 		self.pid = _.g('managers.network:session():local_peer():id()')
 	end
 end
 function TPocoHud3:_update(t,dt)
-	if not PocoHud3Class then return end;
+	if not (PocoHud3Class and not self.dead) then return end
 	inGameDeep = inGame and BaseNetworkHandler._verify_gamestate(BaseNetworkHandler._gamestate_filter.any_ingame_playing)
 	if self.inGameDeep ~= inGameDeep then
 		if inGameDeep then
@@ -466,10 +474,13 @@ function TPocoHud3:_update(t,dt)
 	if inGameDeep and now() - (self._lastRoom or 0) > 1 then
 		self._lastRoom = now()
 		local room = _.g('Poco.room')
-		for pid=1,4 do
-			local unit = self:Stat(pid,'custody') == 0 and room and managers.network:game():unit_from_peer_id(pid)
-			if unit and alive(unit) then
-				self:Stat(pid,'room',room:get(unit:movement():m_pos(),true))
+		local session = managers.network:session()
+		if session then
+			for pid=1,4 do
+				local unit = self:Stat(pid,'custody') == 0 and room and session:peer(pid) and session:peer(pid):unit()
+				if unit and alive(unit) then
+					self:Stat(pid,'room',room:get(unit:movement():m_pos(),true))
+				end
 			end
 		end
 	end
@@ -502,7 +513,7 @@ function TPocoHud3:HitDirection(col_ray,data)
 		end
 	end
 	if not mobPos then -- still no?... set to player position
-		mobPos = managers.player:player_unit():position()
+		mobPos = _.g('managers.player:player_unit():position()')
 	end
 	if mobPos then
 		table.insert(self.hits,PocoHud3Class.THitDirection:new(self,{mobPos=mobPos,shield=data.shield,dmg=data.dmg,time=data.time,rate=data.rate}))
@@ -527,7 +538,7 @@ function TPocoHud3:Chat(category,text,system)
 	if catInd >= 3 and not canSend and not O:get('chat','fallbackToMe')then
 		canRead = false
 	end
-	local tStr = _.g('managers.hud._hud_heist_timer._timer_text:text()')
+	local tStr = _.g('managers.hud._hud_heist_timer._timer_text:text()', '')
 	if canRead or canSend then
 		_.c(tStr..(canSend and '' or _BROADCASTHDR_HIDDEN), text , canSend and self:_color(self.pid) or nil)
 		if canSend then
@@ -566,7 +577,7 @@ function TPocoHud3:Buff(data) -- {key='',icon=''||{},text={{},{}},st,et}
 	end
 end
 
-function TPocoHud3:SimpleFloat(data) -- {key,x,y,time,text,size,val,anim,offset,icon}
+function TPocoHud3:SimpleFloat(data) -- {key,x,y,time,text,size,val,anim,offset,icon,rect}
 	local key = data.key
 	if key and self.sFloats[key] then
 		self.sFloats[key]:hide()
@@ -576,7 +587,7 @@ function TPocoHud3:SimpleFloat(data) -- {key,x,y,time,text,size,val,anim,offset,
 	if key then
 		self.sFloats[key] = pnl
 	end
-	pnl:rect{color=cl.Black,layer=-1,alpha=0.9}
+	pnl:rect{color=cl.Black,layer=-1,alpha=data.rect or 0.9}
 	local offset = data.offset or {0,0}
 	local anim = data.anim
 	local __, lbl = _.l({pnl=pnl,x=5,y=5, font=FONT, color=cl.White, font_size=data.size},data.text,true)
@@ -691,6 +702,22 @@ function TPocoHud3:_checkBuff(t)
 			self:RemoveBuff('stamina')
 		end
 	end
+	-- KillSkills
+	local plrManager = managers.player
+	local t = Application:time()
+	local killshotT = plrManager._on_killshot_t
+	if (killshotT and killshotT > t) then
+		local left = killshotT - t
+		local total = tweak_data.upgrades.on_killshot_cooldown
+		self:Buff({
+			key= 'killshot', good=false,
+			icon= perkIcon,
+			iconRect = { 3*64, 5*64, 64, 64 },
+			st=1-left/total, et=1
+		})
+	else
+		self:RemoveBuff('killshot')
+	end
 	-- Suppression
 	local supp = _.g('managers.player:player_unit():character_damage():effective_suppression_ratio()')
 	if supp and supp > 0 then
@@ -720,14 +747,47 @@ function TPocoHud3:_checkBuff(t)
 	end
 end
 
+local _roman = {
+	{'M',1000}, {'CM',900}, {'D',500}, {'CD',400}, {'C',100}, {'XC',90}, {'L',50}, {'XL',40}, {'X',10}, {'IX',9}, {'V',5}, {'IV',4}, {'I',1}
+}
+function TPocoHud3:_romanic_number(num)
+	local result = '';
+	if O:get('game','romanInfamy') then
+		while(num > 0) do
+			for i, val in pairs(_roman) do
+				if(num >= val[2]) then
+					num = num - val[2];
+					result = result .. val[1];
+					break;
+				end
+			end
+		end
+	else
+		result = tostring(num)
+	end
+	return result;
+end
+
 function TPocoHud3:_updatePlayers(t)
 	if t-(self._lastUP or 0) > 0.05 and inGameDeep then
 		self._lastUP = t
 	else
 		return
 	end
-	local ranks = {'I','II','III','IV','V','VI','VII','VIII','IX','X','X+'}
+
 	for i = 1,4 do
+
+		if self.custom_hud_enabled then
+			for _, panel in ipairs(managers.hud._teammate_panels) do
+				if panel._id == HUDManager.PLAYER_PANEL then
+				elseif panel:peer_id() == nil then
+					panel:update_downs(-1)
+				elseif i == panel:peer_id() then
+					panel:update_downs(self:Stat(i, 'down'))
+				end
+			end
+		end
+
 		local name = self:_name(i)
 		name = name ~= self:_name(-1) and name
 		local nData = managers.hud:_name_label_by_peer_id( i )
@@ -749,16 +809,15 @@ function TPocoHud3:_updatePlayers(t)
 		elseif not pnl and name and (isMe or nData) then
 			-- makePnl
 			local __,err = pcall(function()
-					if btmO.enable and managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
+					if not self.custom_hud_enabled and btmO.enable and managers.criminals:character_unit_by_name( managers.criminals:character_name_by_peer_id(i) ) then
 						local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 						local bPnl = managers.hud._teammate_panels[ isMe and 4 or cdata.panel_id or -1 ]
 						if bPnl and not (not isMe and bPnl == managers.hud._teammate_panels[4]) then
-							local member = self:_member(i)
-							if member and alive(member:unit()) then
+							local peer = self:_peer(i)
+							if peer and alive(peer:unit()) then
 								if btmO.showRank then
-									local peer = member and member:peer()
-									local rank = isMe and managers.experience:current_rank() or peer and peer:rank() or ''
-									rank = ranks[rank] and (ranks[rank]..'Ї') or ''
+									local rank = isMe and managers.experience:current_rank() or (peer and peer:rank())
+									rank = rank and (rank > 0) and (self:_romanic_number(rank)..'Ї') or ''
 									local lvl = isMe and managers.experience:current_level() or peer and peer:level() or ''
 									local defaultLbl = bPnl._panel:child( 'name' )
 									local nameBg =  bPnl._panel:child( 'name_bg' )
@@ -774,7 +833,7 @@ function TPocoHud3:_updatePlayers(t)
 								end
 								pnl = self.pnl.stat:panel{x = 0,y=0, w=240,h=btmO.size*2+1}
 								local wp = {bPnl._player_panel:world_position()}
-								pnl:set_world_position(wp[1],wp[2]-pnl:h())
+								pnl:set_world_position(wp[1] + (btmO.offsetX or 0) ,wp[2]-pnl:h())
 								local fontSize = btmO.size
 								--self['pnl_blur'..i] = pnl:bitmap( { name='blur', texture='guis/textures/test_blur_df', render_template='VertexColorTexturedBlur3D', layer=-1, x=0,y=0 } )
 								self['pnl_lbl'..i] = pnl:text{rotation=360,name='lbl',align='right', text='-', font=FONT, font_size = fontSize, color = cl.Red, x=1,y=0, layer=2, blend_mode = 'normal'}
@@ -816,7 +875,8 @@ function TPocoHud3:_updatePlayers(t)
 												lastT = now()
 												tAngle = self:_getAngle(unit)
 											end
-											arrow:set_visible(not not tAngle)
+											if self.dead then break end
+											arrow:set_visible(tAngle ~= 360)
 											if tAngle then
 												if math.abs(tAngle-currAngle) > 180 then
 													currAngle = currAngle + (tAngle>currAngle and 360 or -360)
@@ -843,7 +903,7 @@ function TPocoHud3:_updatePlayers(t)
 		-- playerBottom
 		local color = self:_color(i)
 		local txts = {}
-		if pnl and (nData or isMe) then
+		if not self.custom_hud_enabled and pnl and (nData or isMe) and not self.dead then
 			local lbl = self['pnl_lbl'..i]
 			local cdata = managers.criminals:character_data_by_peer_id( i ) or {}
 			local pInd = isMe and 4 or cdata.panel_id
@@ -872,7 +932,7 @@ function TPocoHud3:_updatePlayers(t)
 			local dist_sq = unitPos and mvector3.distance_sq(unitPos,self.camPos) or 0
 			local rally_skill_data = _.g('managers.player:player_unit():movement():rally_skill_data()')
 			local canBoost = rally_skill_data and rally_skill_data.long_dis_revive and rally_skill_data.range_sq > dist_sq
-			local ping = self:Stat(i,'ping')>0 and ' '..self:Stat(i,'ping')..'ms' or ''
+			local ping = ' '..(self:Stat(i,'ping')>0 and self:Stat(i,'ping')..'ms' or '')
 			local lives =	isMe and managers.player:upgrade_value( 'player', 'additional_lives', 0) or 0
 			local interT = self:Stat(i,'interactET')
 			local room = self:Stat(i,'room')
@@ -897,6 +957,20 @@ function TPocoHud3:_updatePlayers(t)
 			end
 			if not btmO.underneath then
 				txts[#txts+1]={'\n'}
+			end
+			if _show('DetectionRisk') then
+				local suspicion
+				if isMe then
+					suspicion = managers.blackmarket:get_suspicion_offset_of_local(75)
+				else
+					local peer = self:_peer(i)
+					if peer and alive(peer:unit()) then
+						suspicion = managers.blackmarket:get_suspicion_offset_of_peer(peer, 75)
+					end
+				end
+				if suspicion then
+					txts[#txts+1]={' '..Icon.Ghost..string.format("%.0f%%", suspicion),cl.CornFlowerBlue}
+				end
 			end
 			if _show('Kill') then
 				txts[#txts+1]={' '..Icon.Skull..kill,color}
@@ -937,6 +1011,9 @@ function TPocoHud3:_updatePlayers(t)
 			if _show('Ping') then
 				txts[#txts+1]={ping,cl.White:with_alpha(0.5)}
 			end
+			if isMe and _show('Hostages') then
+				txts[#txts+1]={' '..(self._nr_hostages or 0),cl.White:with_alpha(0.8)}
+			end
 			if _show('Downs') then
 				txts[#txts+1]={' '..Icon.Ghost..downs..(lives>0 and '/4' or ''),downs<3 and clGood or Color.red}
 			end
@@ -948,7 +1025,7 @@ function TPocoHud3:_updatePlayers(t)
 				end
 			end
 			txts[#txts+1] = {' ',cl.White}
-			local btm = self.hh - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
+			local btm = (self.hh or 0) - (btmO.underneath and 1 or ( (equip and 140 or 115) - (isMe and 0 or 38)) ) + (btmO.offset or 0)
 			if alive(pnl) then
 				pnl:set_bottom(btm)
 			end
@@ -965,11 +1042,10 @@ function TPocoHud3:_updatePlayers(t)
 		end
 		-- playerFloat
 		local nLbl = nData and nData.text
-		if alive(nLbl) and fltO.enable then
-			local member = self:_member(i)
-			local peer = member and member:peer()
-			local rank = peer and peer:rank() or ''
-			rank = ranks[rank] and (ranks[rank]..'Ї') or ''
+		if alive(nLbl) and fltO.enable and not self.dead then
+			local peer = self:_peer(i)
+			local rank = peer and peer:rank()
+			rank = rank and (rank > 0) and (self:_romanic_number(rank)..'Ї') or ''
 			local lvl = peer and peer:level() or '?'
 			local unit = nData and nData.movement._unit
 			local distance = unit and alive(unit) and mvector3.distance(unit:position(),self.camPos) or 0
@@ -1131,7 +1207,7 @@ function TPocoHud3:_upd_dbgLbl(t,dt)
 	self._dbgTxt = _.s(self._keyList,self:lastError())
 	local txts = {}
 	if dO.showFPS then
-		txts[#txts+1] = math.floor(1/dt)
+		txts[#txts+1] = math.floor(1/dt)..' FPS'
 	end
 	if (inGameDeep and dO.showClockIngame) or (not inGameDeep and dO.showClockOutgame) then
 		if O:get('root','24HourClock') then
@@ -1201,7 +1277,7 @@ end
 function TPocoHud3:_pos(something,head)
 	local t, unit = type(something)
 	if t == 'number' then
-		unit = managers.network:game():unit_from_peer_id(something)
+		unit = managers.network:session():peer(something):unit()
 	else
 		unit = something
 	end
@@ -1213,21 +1289,21 @@ function TPocoHud3:_pos(something,head)
 	end
 	return pos
 end
-function TPocoHud3:_member(something)
+function TPocoHud3:_peer(something)
 	local t = type(something)
-	local game = _.g('managers.network:game()')
-	if not game then return end
 	if t == 'userdata' then
-		return something and alive(something) and game:member_from_unit( something )
-	elseif t == 'number' then
-		return game:member( something )
-	elseif t == 'string' then
-		return self:_member(managers.criminals:character_peer_id_by_name( something ))
+		return alive(something) and something:network():peer()
+	end
+	if t == 'number' then
+		return self:pidToPeer(something)
+	end
+	if t == 'string' then
+		return self:_peer(managers.criminals:character_peer_id_by_name( something ))
 	end
 end
 function TPocoHud3:_pid(something)
-	local member = self:_member(something)
-	return member and member:peer() and member:peer():id() or 0
+	local peer = self:_peer(something)
+	return peer and peer:id() or 0
 end
 function TPocoHud3:_color(something,fbk)
 	local fallback = fbk or cl.Purple
@@ -1252,21 +1328,21 @@ function TPocoHud3:_name(something,asRoom)
 		if asRoom then
 			return -- requested room, nothing found
 		end
-		local members = _.g('managers.network:game()._members',{})
+		local peers = _.g('managers.network:session():peers()',{})
 		local pid, closest = nil, 999999999
-		for __, member in pairs( members ) do
-			local unit = member:unit()
+		for __, peer in pairs( peers ) do
+			local unit = peer:unit()
 			if unit and alive(unit) then
 				local d = mvector3.distance_sq(something,unit:position())
 				if d < closest then
-					pid = member:peer():id()
+					pid = peer:id()
 					closest = d
 				end
 			end
 		end
 		return L('_msg_around',{self:_name(pid or self.pid)})
 	elseif str == 'Unit' then
-			return self:_name(something:base()._tweak_table)
+			return self:_name(something:base() and something:base()._tweak_table)
 	elseif str == 'string' then -- tweak_table name
 		local pName = managers.criminals:character_peer_id_by_name( something )
 		if pName then
@@ -1276,24 +1352,24 @@ function TPocoHud3:_name(something,asRoom)
 			return conv[something] or 'AI'
 		end
 	end
-	local member = self:_member(something)
-	member = something==0 and 'AI' or (member and member:peer():name() or 'Someone')
-
+	local peer = self:_peer(something)
+	local name = peer and peer:name() or 'Someone'
+	name = name:gsub('{','['):gsub('}',']')
 	local hDot,fDot
-	local truncated = member:gsub('^%b[]',''):gsub('^%b==',''):gsub('^%s*(.-)%s*$','%1')
-	if O:get('game','truncateTags') and utf8.len(truncated) > 0 and member ~= truncated then
-		member = truncated
+	local truncated = name:gsub('^%b[]',''):gsub('^%b==',''):gsub('^%s*(.-)%s*$','%1')
+	if O:get('game','truncateTags') and utf8.len(truncated) > 0 and name ~= truncated then
+		name = truncated
 		hDot = true
-end
+	end
 	local tLen = O:get('game','truncateNames')
 	if tLen > 1 then
 		tLen = (tLen - 1) * 3
-		if tLen < utf8.len(member) then
-			member = utf8.sub(member,1,tLen)
+		if tLen < utf8.len(name) then
+			name = utf8.sub(name,1,tLen)
 			fDot = true
 		end
 	end
-	return (hDot and Icon.Dot or '')..member..(fDot and Icon.Dot or '')
+	return (hDot and Icon.Dot or '')..name..(fDot and Icon.Dot or '')
 end
 function TPocoHud3:_time(sec)
 	local r = {}
@@ -1309,8 +1385,8 @@ function TPocoHud3:_time(sec)
 	return table.concat(r,':')
 end
 function TPocoHud3:_visibility(uPos)
-	local result = 1-math.min(0.9,managers.environment_controller._current_flashbang)
-	if not uPos then
+	local result = 1-math.min(0.9,managers.environment_controller._current_flashbang or 1)
+	if not uPos or self.dead then
 		return result
 	end
 	local minDis = 9999
@@ -1374,10 +1450,25 @@ function TPocoHud3:_hook()
 	end
 	--
 	if inGame then
+		-- Kill PocoHud on restart
+		hook( GamePlayCentralManager, 'restart_the_game', function( self ,...)
+			me:onDestroy(gameEnd)
+			me.Toggle()
+			Run('restart_the_game', self,... )
+		end)
+
 		--PlayerStandard
 		hook( PlayerStandard, '_get_input', function( self ,...)
 			return me.menuGui and {} or Run('_get_input', self,... )
 		end)
+		hook( PlayerStandard, '_determine_move_direction', function( self ,...)
+			Run('_determine_move_direction', self,... )
+			if O:get('root','pocoRoseHalt') and me.menuGui then
+				self._move_dir = nil
+				self._normal_move_dir = nil
+			end
+		end)
+
 		--[[hook( PlayerStandard, '_update_check_actions', function( self ,...)
 			if not me.menuGui then
 				Run('_update_check_actions', self,... )
@@ -1442,6 +1533,19 @@ function TPocoHud3:_hook()
 			end
 		end)
 		hook( PlayerStandard, '_check_action_primary_attack', function( self, t, ... )
+			local input = unpack{...}
+
+			-- StickyInteraction trigger
+			local lastInteractionStart, lastClick = me._lastInteractStart or 0, me._lastClick or 0
+			if input.btn_steelsight_press and O:get('game','interactionClickStick') and self:_interacting() then
+				if lastInteractionStart < lastClick then
+					me._lastClick = 0
+					self:_interupt_action_interact()
+				else
+					me._lastClick = t
+				end
+			end
+
 			local result = Run('_check_action_primary_attack', self, t, ...)
 				-- capture TriggerHappy
 				local weap_base = self._equipped_unit:base()
@@ -1462,6 +1566,28 @@ function TPocoHud3:_hook()
 				end
 			return result
 		end)
+
+		hook( PlayerStandard, '_do_melee_damage', function( self, t, ... )
+			local result = Run('_do_melee_damage', self, t, ...)
+
+			-- capture Close Combat
+			if managers.player:has_category_upgrade("melee", "stacking_hit_damage_multiplier") then
+				local stack = self._state_data.stacking_dmg_mul.melee
+				if stack and stack[1] and t < stack[1] then
+					local mul = 1 + managers.player:upgrade_value("melee", "stacking_hit_damage_multiplier") * stack[2]
+					me:Buff({
+						key='triggerHappy', good=true,
+						icon=skillIcon, iconRect = {4*64, 0*64, 64, 64},
+						text=_.f(mul)..'x',
+						st=t, et=stack[1]
+					})
+				else
+					me:RemoveBuff('triggerHappy')
+				end
+			end
+			return result
+		end)
+
 
 		hook( FPCameraPlayerBase, 'clbk_stance_entered', function( ... )
 			local self, new_shoulder_stance, new_head_stance, new_vel_overshot, new_fov, new_shakers, stance_mod, duration_multiplier, duration = unpack{...}
@@ -1506,38 +1632,48 @@ function TPocoHud3:_hook()
 			}) )
 		end)
 		local rectDict = {}
+		-- rectDict.inner-skill-name = {Label, {iconX,iconY}, isPerkIcon, isDebuff }
 		rectDict.combat_medic_damage_multiplier = {L('_buff_combatMedicDamageShort'), { 5, 7 }}
 		rectDict.no_ammo_cost = {L('_buff_bulletStormShort'),{ 4, 5 }}
 		rectDict.berserker_damage_multiplier = {L('_buff_swanSongShort'),{ 5, 12 }}
 
 		rectDict.dmg_multiplier_outnumbered = {L('_buff_underdogShort'),{2,1}}
 		rectDict.dmg_dampener_outnumbered = ''-- {'Def+',{2,1}} -- Dupe
+		rectDict.dmg_dampener_outnumbered_strong = ''-- {'Def+',{2,1}} -- Dupe
 		rectDict.overkill_damage_multiplier = {L('_buff_overkillShort'),{3,2}}
 		rectDict.passive_revive_damage_reduction = {L('_buff_painkillerShort'), { 0, 10 }}
-		
-		rectDict.first_aid_damage_reduction = {L('_buff_first_aid_damage_reduction_upgrade'),{1,11}}
 
+		rectDict.first_aid_damage_reduction = {L('_buff_first_aid_damage_reduction_upgrade'),{1,11}}
+		rectDict.melee_life_leech = {L('_buff_lifeLeechShort'),{7,4},true,true}
+		rectDict.dmg_dampener_close_contact = {L('_buff_first_aid_damage_reduction_upgrade'),{5,4},true}
+		rectDict.loose_ammo_give_team = {L('_buff_gambler_ammo'),{5,5},true}
+		rectDict.loose_ammo_restore_health = {L('_buff_gambler_health'),{4,5},true}
+
+		local _keys = { -- Better names for Option pnls
+			BerserkerDamageMultiplier = 'SwanSong',
+			PassiveReviveDamageReduction = 'Painkiller',
+			FirstAidDamageReduction = 'FirstAid',
+			DmgMultiplierOutnumbered = 'Underdog',
+			CombatMedicDamageMultiplier = 'CombatMedic',
+			OverkillDamageMultiplier = 'Overkill',
+			NoAmmoCost = 'Bulletstorm',
+			MeleeLifeLeech = 'LifeLeech',
+			DmgDampenerCloseContact = 'CloseCombat', -- infiltrator
+			LooseAmmoRestoreHealth = 'GamblerAmmo',
+			LooseAmmoGiveTeam = 'GamblerHealth',
+		}
 		hook( PlayerManager, 'activate_temporary_upgrade', function( self, category, upgrade )
 			Run('activate_temporary_upgrade',  self, category, upgrade )
 			local et = _.g('managers.player._temporary_upgrades.'..category ..'.'..upgrade..'.expire_time')
 			if not et then return end
 			local rect = rectDict[upgrade]
-			if rect ~= '' then
+			if rect and rect ~= '' then
 				local rect2 = rect and ({64*rect[2][1],64*rect[2][2],64,64})
-				local _keys = { -- Better names for Option pnls
-					BerserkerDamageMultiplier = 'SwanSong',
-					PassiveReviveDamageReduction = 'Painkiller',
-					FirstAidDamageReduction = 'FirstAid',
-					DmgMultiplierOutnumbered = 'Underdog',
-					CombatMedicDamageMultiplier = 'CombatMedic',
-					OverkillDamageMultiplier = 'Overkill',
-					NoAmmoCost = 'Bulletstorm',
-				}
 				local key = ('_'..upgrade):gsub('_(%U)',function(a) return a:upper() end)
 				key = _keys[key] or key
 				pcall(me.Buff,me,({
-					key=key, good=true,
-					icon=rect2 and skillIcon or 'guis/textures/pd2/lock_incompatible', iconRect = rect2,
+					key=key, good=not rect[4],
+					icon=(rect2 and (rect[3] and 'guis/textures/pd2/specialization/icons_atlas' or skillIcon)) or 'guis/textures/pd2/lock_incompatible', iconRect = rect2,
 					text=rect and rect[1] or upgrade,
 					st=now(), et=et
 				}) )
@@ -1551,6 +1687,7 @@ function TPocoHud3:_hook()
 			if rect ~= '' then
 				local rect2 = rect and ({64*rect[2][1],64*rect[2][2],64,64})
 				local key = ('_'..upgrade):gsub('_(%U)',function(a) return a:upper() end)
+				key = _keys[key] or key
 				pcall(me.Buff,me,({
 					key=key, good=true,
 					icon=rect2 and skillIcon or 'guis/textures/pd2/lock_incompatible', iconRect = rect2,
@@ -1583,7 +1720,17 @@ function TPocoHud3:_hook()
 			end
 			return r
 		end)
-		hook( PlayerStandard, '_interupt_action_interact', function( self,t, input, complete  )
+
+		hook( PlayerStandard, '_interupt_action_interact', function( self, t, input, complete  )
+			-- StickyInteraction Execution
+			local lastInteractionStart, lastClick = me._lastInteractStart or 0, me._lastClick or 0
+			if not t and O:get('game','interactionClickStick') and not complete and (lastInteractionStart < lastClick) then
+				local caller = debug.getinfo(3,'n')
+				caller = caller and caller.name
+				if caller == '_check_action_interact' then
+					return -- ignore interruption
+				end
+			end
 			Run('_interupt_action_interact', self, t, input, complete )
 			local et = self._equip_weapon_expire_t
 			if et then
@@ -1635,6 +1782,13 @@ function TPocoHud3:_hook()
 				}) )
 			end
 		end)
+
+		hook( PlayerStandard, '_start_action_interact', function( self, ...  )
+			Run('_start_action_interact', self, ...)
+			local t, input, timer, interact_object = unpack{...}
+			me._lastInteractStart = t
+		end)
+
 		hook( PlayerStandard, '_start_action_reload', function( self,t  )
 			Run('_start_action_reload', self, t )
 			_matchStance(true)
@@ -1758,6 +1912,46 @@ function TPocoHud3:_hook()
 			me._lastAttkUnit = attacker_unit
 			return Run('_look_for_friendly_fire', self, attacker_unit)
 		end)
+
+		hook( PlayerDamage, 'change_health', function( self, change_of_health, ... )
+			local before = self:get_real_health()
+			local option = O:get('hit','gainIndicator') or 0
+			Run('change_health', self, change_of_health, ... )
+			if O:get('hit','enable') and option > 1 then
+				-- Skill-originated Health regen
+				local after = self:get_real_health()
+				local delta = after - before
+				if delta > 0 then
+					if option > 2 then
+						managers.menu_component:post_event("menu_skill_investment")
+					end
+					me:SimpleFloat{key='health',x=(me.ww or 800)/5*2,y=(me.hh or 600)/4*3,time=3,anim=1,offset={0,-1 * (me.hh or 600)/2},
+						text={{'+',cl.White:with_alpha(0.6)},{_.f(delta*10),clGood}},
+						size=18, rect=0.5
+					}
+				end
+			end
+		end)
+		hook( PlayerDamage, 'restore_armor', function( self, regen_armor_bonus, ... )
+			local before = self:get_real_armor()
+			local option = O:get('hit','gainIndicator') or 0
+			Run('restore_armor', self, regen_armor_bonus, ... )
+			if O:get('hit','enable') and option > 1 then
+				-- Skill-originated Shield regen
+				local after = self:get_real_armor()
+				local delta = after - before
+				if delta > 0 then
+					if option > 2 then
+						managers.menu_component:post_event("menu_skill_investment")
+					end
+					me:SimpleFloat{key='armor',x=(me.ww or 800)/5*3,y=(me.hh or 600)/4*3,time=3,anim=1,offset={0,-1 * (me.hh or 600)/2},
+						text={{'+',cl.White:with_alpha(0.6)},{_.f(delta*10),clGood}},
+						size=18, rect=0.5
+					}
+				end
+			end
+		end)
+
 		if O:get('hit','enable') then
 			hook( PlayerDamage, '_hit_direction', function( self, col_ray )
 				managers.environment_controller._hit_some = math.min(managers.environment_controller._hit_some + managers.environment_controller._hit_amount, 1)
@@ -1824,19 +2018,43 @@ function TPocoHud3:_hook()
 		hook( UnitNetworkHandler, 'damage_bullet', function( ... )
 			local self,subject_unit, attacker_unit, damage, i_body, height_offset, death, sender = unpack{...}
 			local head = i_body and alive(subject_unit) and subject_unit:character_damage().is_head and subject_unit:character_damage():is_head(subject_unit:body(i_body))
-			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'bullet')
+			if not (damage == 1 and i_body == 1 and height_offset == 1) then -- Filter Drama event
+				me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'bullet')
+			end
 			return Run('damage_bullet',...)
 		end)
-		hook( UnitNetworkHandler, 'damage_explosion', function(...)
+		hook( UnitNetworkHandler, 'damage_explosion_fire', function(...)
 			local self, subject_unit, attacker_unit, damage, i_attack_variant, death, direction, sender = unpack{...}
 
 			local realAttacker = attacker_unit
-			if alive(realAttacker) and realAttacker:base()._thrower_unit then
+			if realAttacker and alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
+				realAttacker = realAttacker:base()._thrower_unit
+			end
+
+			me:AddDmgPopByUnit(realAttacker,subject_unit,0,damage*-0.1953125,death,false,'bullet')
+			return Run('damage_explosion_fire', ... )
+		end)
+		hook( UnitNetworkHandler, 'damage_dot', function(...)
+			local self, subject_unit, attacker_unit, damage, death, variant, hurt_animation, sender = unpack{...}
+
+			local realAttacker = attacker_unit
+			if realAttacker and alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
 				realAttacker = realAttacker:base()._thrower_unit
 			end
 
 			me:AddDmgPopByUnit(realAttacker,subject_unit,0,damage*-0.1953125,death,false,'explosion')
-			return Run('damage_explosion', ... )
+			return Run('damage_dot', ... )
+		end)
+		hook( UnitNetworkHandler, 'damage_fire', function(...)
+			local self, subject_unit, attacker_unit, damage, start_dot_dance_animation, death, direction, weapon_type, weapon_unit, sender = unpack{...}
+
+			local realAttacker = attacker_unit
+			if realAttacker and alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
+				realAttacker = realAttacker:base()._thrower_unit
+			end
+
+			me:AddDmgPopByUnit(realAttacker,subject_unit,0,damage*-0.1953125,death,false,'explosion')
+			return Run('damage_fire', ... )
 		end)
 		hook( UnitNetworkHandler, 'damage_melee', function(...)
 			local self, subject_unit, attacker_unit, damage, damage_effect, i_body, height_offset, variant, death, sender  = unpack{...}
@@ -1844,20 +2062,18 @@ function TPocoHud3:_hook()
 			me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'melee')
 			return Run('damage_melee',...)
 		end)
+
 		--CopDamage
 		hook( CopDamage, '_on_damage_received', function(self,info)
 			local result = Run('_on_damage_received',self,info)
 			local hitPos = Vector3()
-			if not info.col_ray then
-				if self._unit then
-				 -- me:AddDmgPopByUnit(nil,self._unit,0,info.damage,self._dead)
-				end
-			else
-				if info.col_ray.position or info.pos or info.col_ray.hit_position then
-					mvector3.set(hitPos,info.col_ray.position or info.pos or info.col_ray.hit_position)
-					local head = self._unit:character_damage():is_head(info.col_ray.body)
+			if info.col_ray or info.variant == 'poison' then
+				local col_ray = info.col_ray or {}
+				mvector3.set(hitPos,col_ray.position or info.pos or col_ray.hit_position or me:_pos(self._unit))
+				if hitPos then
+					local head = self._unit:character_damage():is_head(col_ray.body)
 					local realAttacker = info.attacker_unit
-					if alive(realAttacker) and realAttacker:base()._thrower_unit then
+					if alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
 						realAttacker = realAttacker:base()._thrower_unit
 					end
 					me:AddDmgPop(realAttacker,hitPos,self._unit,0,info.damage,self._dead,head,info.variant)
@@ -1869,16 +2085,16 @@ function TPocoHud3:_hook()
 		hook( CopMovement, 'action_request', function( ...  )
 			local self, action_desc = unpack{...}
 			local dmgTime = O:get('popup','damageDecay')
-			if action_desc.variant == 'hands_up' and O:get('popup','handsUp') then
+			if action_desc.variant == 'hands_up' and O:get('popup','handsUp') and O:get('popup','enable') then
 				me:Popup({pos=me:_pos(self._unit),text={{'Hands-Up',cl.White}},stay=false,et=now()+dmgTime})
-			elseif action_desc.variant == 'tied' and O:get('popup','dominated') then
+			elseif action_desc.variant == 'tied' and O:get('popup','dominated') and O:get('popup','enable') then
 				if not managers.enemy:is_civilian( self._unit ) then
 					me:Popup({pos=me:_pos(self._unit),text={{'Intimidated',cl.White}},stay=false,et=now()+dmgTime})
 					me:Chat('dominated',L('_msg_captured',{me:_name(self._unit),me:_name(me:_pos(self._unit))}))
 				end
 			end
 			if action_desc.type=='act' and action_desc.variant then
---				me:Popup({pos=me:_pos(self._unit),text={{action_desc.variant,Color.white}},stay=true,et=now()+dmgTime})
+				--me:Popup({pos=me:_pos(self._unit),text={{action_desc.variant,Color.white}},stay=true,et=now()+dmgTime})
 			end
 			return Run('action_request', ... )
 		end)
@@ -2100,6 +2316,12 @@ function TPocoHud3:_hook()
 			OnCriminalDowned(me.pid)
 			return Run('_enter', self,  ...)
 		end)
+
+		hook( CopActionWalk, '_get_current_max_walk_speed', function( self, ... )
+			local coeff = Network:is_server() and 1 or math.max(1,math.min( O:get('game','fasterAIDesyncResolve'), 1.5))
+			return Run('_get_current_max_walk_speed', self,  ...) * coeff
+			-- Faster Desync resolve for Husk cops
+		end)
 		hook( HuskPlayerMovement, '_get_max_move_speed', function( self, ... )
 			return Run('_get_max_move_speed', self,  ...) * math.max(1,O:get('game','fasterDesyncResolve'))
 			-- because of this, husk players will catch up de-sync waaay easily, representing their position more accurate.
@@ -2232,7 +2454,7 @@ function TPocoHud3:_hook()
 			end
 			if minionClr then
 				for __, material in ipairs( self._materials or {}) do
-						material:set_variable( idstr_contour_color, Vector3(minionClr.r,minionClr.g,minionClr.b)/4)
+						material:set_variable( idstr_contour_color, Vector3(minionClr.r,minionClr.g,minionClr.b))
 				end
 			end
 			end
@@ -2256,7 +2478,7 @@ function TPocoHud3:_hook()
 			local self, id, clbk, execute_t = unpack{...}
 			local isWhisper = managers.groupai:state():whisper_mode()
 
-			if id:find('freeze_rag') and not isWhisper then
+			if id and id:find('freeze_rag') and not isWhisper then
 				local t = (O:get('game','corpseRagdollTimeout') or 3) - 3
 				execute_t = execute_t + t
 			end
@@ -2283,6 +2505,29 @@ function TPocoHud3:_hook()
 				me:Stat(me.pid,'interactST',now())
 				me:Stat(me.pid,'interactET',now()+total)
 			end
+			local lastInteractionStart, lastClick = me._lastInteractStart or 0, me._lastClick or 0
+			local sticky = O:get('game','interactionClickStick') and (lastInteractionStart < lastClick)
+			if self._interact_circle and self.__lastSticky ~= sticky then
+				local img = sticky and 'guis/textures/pd2/hud_progress_invalid' or 'guis/textures/pd2/hud_progress_bg'
+
+				local anim_func = function(o)
+					while alive(o) and sticky do
+						over(0.75, function(p)
+							o:set_alpha(math.sin(p * 180) * 0.5 )
+						end)
+					end
+				end
+
+				local bg = self._interact_circle._bg_circle
+				if bg and alive(bg) then
+					bg:stop()
+					bg:animate(anim_func)
+					bg:set_image(img)
+				end
+
+				self.__lastSticky = sticky
+			end
+
 			Run('set_interaction_bar_width',...)
 		end)
 		hook( HUDInteraction, 'hide_interaction_bar', function( ... ) -- Local
@@ -2380,7 +2625,7 @@ function TPocoHud3:_hook()
 			local corpses,cnt = self._enemy_data.corpses, 0
 			for i,corpse in pairs(corpses or {}) do
 				local unit = corpse.unit
-				if alive(unit) and unit:base()._tweak_table == 'shield' then
+				if alive(unit) and unit:base() and unit:base()._tweak_table == 'shield' then
 					cnt = cnt + 0
 					if cnt > 2 or (now() - corpse.death_t > 10) then
 						unit:base():set_slot(unit, 0)
@@ -2389,9 +2634,38 @@ function TPocoHud3:_hook()
 			end
 			--
 		end)
+
+		-- hostage counter
+		hook( HUDAssaultCorner, 'set_control_info', function( self ,...)
+			local data = unpack{...}
+			Run('set_control_info', self,... )
+			if data and data.nr_hostages then
+				me._nr_hostages = data.nr_hostages
+			end
+		end)
+
+		hook( IngameWaitingForPlayersState, 'update***', function( self ,...)
+			local t, dt = unpack{...}
+			Run('update***', self,... )
+			if self._skip_data then
+				self._skip_data.total = 0.2
+			end
+		end)
+
 	else -- if outGame
 
 	end -- End of if inGame
+
+	-- Global Romanic Rank
+	hook( ExperienceManager , 'rank_string', function( ... )
+		local self, rank = unpack{...}
+		if O:get('game','romanInfamy') then
+			return me:_romanic_number(rank)
+		else
+			return rank
+		end
+	end)
+
 	-- Kick menu
 	if O:get('game','showRankInKickMenu') then
 		hook( KickPlayer, 'modify_node', function( ... )
@@ -2460,7 +2734,7 @@ function TPocoHud3:_hook()
 	if inGame then
 		hook( FPCameraPlayerBase, '_update_rot', function( ... )
 			if me.menuGui then
-				return true
+				return false
 			else
 				return Run('_update_rot', ...)
 			end
@@ -2545,7 +2819,7 @@ function TPocoHud3:_hook()
 			if O('game','sortCrimenet') then
 				local self,data = unpack{...}
 				local diff = (data and data.difficulty_id or 2) - 2
-				local diffX = 1800 / 10 * (diff * 2)
+				local diffX = 1800 / 10 * (diff * 2) + 200
 				local locations = self:_get_contact_locations()
 				local sorted = {}
 				for k,dot in pairs(locations[1].dots) do
@@ -2598,8 +2872,8 @@ function TPocoHud3:test()
 end
 
 function TPocoHud3:_getAngle(unit)
-	if not (unit and type(unit)=='userdata' and alive(unit)) then
-		return
+	if not (unit and type(unit)=='userdata' and alive(unit) and not self.dead) then
+		return 360
 	end
 	local uPos = unit:position()
 	local vec = self.camPos - uPos

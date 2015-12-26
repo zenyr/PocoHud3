@@ -3,6 +3,8 @@ PocoHud3
 
 Payday2 Interface enhancer MOD
 
+[![forthebadge](http://forthebadge.com/images/badges/just-plain-nasty.svg)](http://forthebadge.com)
+
 * This MOD is not affiliated with OVERKILL (hopefully, yet).
 
 * This repository is to disclose my source code, for DEVELOPERS.

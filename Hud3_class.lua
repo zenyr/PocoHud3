@@ -6,10 +6,12 @@ local clGood =  cl.YellowGreen
 local clBad =  cl.Gold
 local isNil = function(a) return a == nil end
 local inGame = CopDamage ~= nil
-local KitsJSONFileName = 'poco\\hud3_kits.json'
-local KarmaJSONFileName = 'poco\\hud3_karma.json'
-local LocJSONFileName = 'poco\\hud3_locale$.json'
-local LocationJSONFilename = 'poco\\hud3_rooms.json';
+local ModPath = rawget(_G,'ModPath') and string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1") or PocoDir
+local SavePath = rawget(_G,'SavePath') or ModPath
+local KitsJSONFileName = SavePath..'hud3_kits.json'
+local KarmaJSONFileName = SavePath..'hud3_karma.json'
+local LocJSONFileName = ModPath..'hud3_locale$.json'
+local LocationJSONFilename = ModPath..'hud3_rooms.json'
 
 local Icon = {
 	A=57344, B=57345,	X=57346, Y=57347, Back=57348, Start=57349,
@@ -50,7 +52,8 @@ PocoHud3Class.loadVar = function(_O,_me,_L)
 	clBad = O:get('root','colorNegative')
 end
 local _defaultLocaleData = {
-	_about_trans_fullList = '{Dansk (DA)|Tan}\nNickyFace, DanishDude93\n{Deutsch (DE)|Tan}\nfallenpenguin, Raxdor, GIider, Hoffy,\nNowRiseAgain, Pixelpille, Sithryl,\nValkein, Zee_, baddog_11\n{Español (ES)|Tan}\nNiccy, BurnBabyBurn\n{Français (FR)|Tan}\nChopper385, Dewk Noukem, Lekousin, Shendow\n{Italiano (IT)|Tan}\nOktober, Nitronik\n{Bahasa Indonesia (ID)|Tan}\nPapin Faizal(papin97)\n{Nederlands (NL)|Tan}\nNickolas Cat, Rezqual\n{Norsk (NO)|Tan}\nikoddn\n{Polski (PL_PL)|Tan}\nMartinz, Kuziz, gmaxpl3\n{Português (PT_PT)|Tan}\nBruno \"Personagem\" Tibério, John Ryder\n{Português (PT_BR)|Tan}\njkisten\n{Русский (RU)|Tan}\ncollboy, Hellsing, troskahtoh\n{Svenska (SV_SE)|Tan}\nheLovinator, KillYoy, kao172',
+	_client_name = 'PocoHud3',
+	_about_trans_fullList = '{Dansk (DA)|Tan}\nNickyFace, DanishDude93\n{Deutsch (DE)|Tan}\nfallenpenguin, Raxdor, GIider, Hoffy,\nNowRiseAgain, Pixelpille, Sithryl,\nValkein, Zee_, baddog_11\n{Español (ES)|Tan}\nNiccy, BurnBabyBurn\n{Français (FR)|Tan}\nChopper385, Dewk Noukem, Lekousin, Shendow\n{Italiano (IT)|Tan}\nOktober, Nitronik\n{Bahasa Indonesia (ID)|Tan}\nPapin Faizal(papin97)\n{Nederlands (NL)|Tan}\nNickolas Cat, Rezqual\n{Norsk (NO)|Tan}\nikoddn\n{Polski (PL_PL)|Tan}\nMartinz, Kuziz, gmaxpl3\n{Português (PT_PT)|Tan}\nBruno \"Personagem\" Tibério, John Ryder\n{Português (PT_BR)|Tan}\njkisten\n{Русский (RU)|Tan}\ncollboy, Hellsing, troskahtoh\n{Svenska (SV_SE)|Tan}\nTheLovinator, KillYoy, kao172',
 	_about_trans_special_thanks_list = '{Overkill|White}\nfor a legendary game {& not kicking my arse off|Silver|0.5}\n{Harfatus|White}\nfor a cool injector\n{Olipro|White}\nfor keeping MOD community alive\n{v00d00 & gir489 & 90e|White}\nfor making me able to learn Lua from the humble ground\n{Arkkat|White}\nfor crashing the game for me at least 50 times since alpha stage\n{Tatsuto|White}\nfor PD2Stats.com API\n{You|Yellow}\nfor keeping me way too busy to go out at weekends {/notreally|Silver|0.5}',
 	_kit_equip_btn_hint = '{_kit_equip_btn_hint1} {_kit_equip_btn_hint2|Tan}\n{_kit_equip_btn_hint3} {_kit_equip_btn_hint4|Red} {_kit_equip_btn_hint5}',
 	_kit_key_edit_hint = '{_kit_key_edit_hint1}  {_kit_key_edit_hint2|Yellow} {_kit_key_edit_hint3}\n{_kit_key_edit_hint4|Silver}\n{_kit_key_edit_hint5|Red}',
@@ -89,6 +92,7 @@ local _defaultLocaleData = {
 	_msg_usedPistolMessiahChargesPlu = '[1] charges',
 	_opt_chat_desc = '{_opt_chat_desc_1}\n{_opt_chat_desc_2|White|0.5}\n{_opt_chat_desc_3|White|0.6}\n{_opt_chat_desc_4|White|0.7}\n{_opt_chat_desc_5|White|0.8}\n{_opt_chat_desc_6|White|0.9}\n{_opt_chat_desc_7|White}',
 	_opt_truncateTags_desc = '{_opt_truncateTags_desc_1} {[Poco]Hud|Tan} > {_Dot|Tan}{Hud|Tan}',
+	_vanity_resizeCrimenet = '60%,70%,80%,90%,100%,110%,120%,130%',
 }
 --- miniClass start ---
 local TBuff = class()
@@ -118,7 +122,7 @@ function TBuff:_make()
 	self.created = true
 	if simple then
 		local simpleRadius = buffO.simpleBusySize
-		local pnl = self.ppnl:panel({x = self.owner.ww/2-simpleRadius,y=self.owner.hh/2-simpleRadius, w=simpleRadius*2,h=simpleRadius*2})
+		local pnl = self.ppnl:panel({x = (self.owner.ww or 0)/2-simpleRadius,y=(self.owner.hh or 0)/2-simpleRadius, w=simpleRadius*2,h=simpleRadius*2})
 		self.pnl = pnl
 		local texture = data.good and 'guis/textures/pd2/hud_progress_active' or 'guis/textures/pd2/hud_progress_invalid'
 		self.pie = CircleBitmapGuiObject:new( pnl, { use_bg = false, x=0,y=0,image = texture, radius = simpleRadius, sides = 64, current = 20, total = 64, blend_mode = 'add', layer = 0} )
@@ -140,7 +144,7 @@ function TBuff:_make()
 	else
 		local pnl = self.ppnl:panel({x = 0,y=0, w=100,h=100})
 		self.pnl = pnl
-		self.lbl = pnl:text{text='', font=FONT, font_size = size/4, color = data.color or data.good and clGood or clBad, x=1,y=1, layer=2, blend_mode = 'normal'}
+		self.lbl = pnl:text{text='', font=FONT, font_size = size/4, color = data.color or data.good and clGood or clBad, x=1,y=1, layer=2, blend_mode = 'normal', rotation = 360}
 		self.bg = pnl:bitmap( { name='bg', texture= 'guis/textures/pd2/hud_tabs',texture_rect=  { 105, 34, 19, 19 }, color= cl.Black:with_alpha(0.2), layer=0, x=0,y=0 } )
 		self.bmp = data.icon and pnl:bitmap( { name='icon', texture=data.icon, texture_rect=data.iconRect, blend_mode = 'add', layer=1, x=0,y=0, color=data.good and clGood or clBad } ) or nil
 		if glowy then
@@ -233,10 +237,11 @@ function TBuff:draw(t,x,y)
 end
 function TBuff:_fade(pnl, done_cb, seconds)
 	local pnl = self.pnl
+	if not pnl then return end
 	pnl:set_visible( true )
 	pnl:set_alpha( 1 )
 	local t = seconds
-	while t > 0 do
+	while alive(pnl) and t > 0 do
 		if not self.dead then
 			self.dying = false
 			break
@@ -543,7 +548,7 @@ function TFloat:draw(t)
 				end
 			elseif dGUI then
 				dGUI._maxx = math.max( dGUI._maxx or 0, dGUI._timer or 0)
-				if not (dGUI._ws and dGUI._ws:visible()) or dGUI._floored_last_timer <= 0 then
+				if not (dGUI._ws and dGUI._ws:visible()) or (dGUI._floored_last_timer <= 0) or (dGUI.is_visible and not dGUI:is_visible()) then
 					return self:destroy(1)
 				else
 					self:renew()
@@ -673,12 +678,13 @@ function THitDirection:init(owner,data)
 	self.bmp = bmp
 	bmp:set_center(100,100)
 	if Opt.number then
+		local text = _.f(data.dmg*-10)
 		local nSize = Opt.numberSize
 		local font = Opt.numberDefaultFont and FONT or ALTFONT
 		local lbl = pnl:text{
 			x = 1,y = 1,font = font, font_size = nSize,
 			w = nSize*3, h = nSize,
-			text = '-'.._.f(data.dmg*10),
+			text = text,
 			color = color,
 			align = 'center',
 			layer = 1
@@ -688,7 +694,7 @@ function THitDirection:init(owner,data)
 		lbl = pnl:text{
 			x = 1,y = 1,font = font, font_size = nSize,
 			w = nSize*3, h = nSize,
-			text = '-'.._.f(data.dmg*10),
+			text = text,
 			color = cl.Black:with_alpha(0.2),
 			align = 'center',
 			layer = 1
@@ -698,7 +704,7 @@ function THitDirection:init(owner,data)
 		lbl = pnl:text{
 			x = 1,y = 1,font = font, font_size = nSize,
 			w = nSize*3, h = nSize,
-			text = '-'.._.f(data.dmg*10),
+			text = text,
 			color = cl.Black:with_alpha(0.2),
 			align = 'center',
 			layer = 1
@@ -720,7 +726,7 @@ function THitDirection:draw(pnl, done_cb, seconds)
 	pnl:set_visible( true )
 	self.bmp:set_alpha( 1 )
 	local t = seconds
-	while t > 0 do
+	while alive(pnl) and t > 0 do
 		if self.owner.dead then
 			break
 		end
@@ -2311,7 +2317,7 @@ function PocoMenu:_fade(pnl, out, done_cb, seconds)
 	if self.alt and not out then
 		managers.mouse_pointer:set_mouse_world_position(pnl:w()/2, pnl:h()/2)
 	end
-	while t > 0 do
+	while alive(pnl) and t > 0 do
 		local dt = coroutine.yield()
 		t = t - dt
 		local r = t/seconds
@@ -2549,7 +2555,7 @@ end
 
 function PocoHud3Class._drawHeistStats (tab)
 	local oTabs = PocoTabs:new(me._ws,{name = 'Options',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
-	local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, managers.statistics:_get_stat_tables()
+	local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, tweak_data.statistics:statistics_table()
 	local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
 	local x, y, tbl = 10, 10, {}
 
@@ -2561,18 +2567,23 @@ function PocoHud3Class._drawHeistStats (tab)
 	local _rowCnt = 0
 	tbl[#tbl+1] = {{L('_word_broker'),cl.BlanchedAlmond},L('_word_job'),{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},L('_word_heat')}
 	local addJob = function(host,heist)
-		local jobData = tweak_data.narrative.jobs[heist]
-		if jobData.wrapped_to_job then
+		local jobData = tweak_data.narrative:job_data(heist)
+		if not jobData then
+			return
+		end
+		if jobData and jobData.wrapped_to_job then
 			jobData = tweak_data.narrative.jobs[jobData.wrapped_to_job]
 		end
 		local job_string =managers.localization:to_upper_text(jobData.name_id or heist) or heist
+		job_string = job_string .. (string.find(heist, '_night') and ' '..L('_tab_stat_night') or '')
 		local pro = jobData.professional
 		if pro then
 			job_string = {job_string, cl.Red}
 		end
 		local rowObj = {host:upper(),job_string}
 		for i, name in ipairs( risks ) do
-			local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
+			--local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
+			local c = managers.statistics._global.sessions.jobs[(heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_completed'):gsub('_wrapper','')] or 0
 			local f = managers.statistics._global.sessions.jobs[(heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_started'):gsub('_wrapper','')] or 0
 			if i > 1 or not pro then
 				table.insert(rowObj, {{c, c<1 and cl.Salmon or cl.White:with_alpha(0.8)},{' / '..f,cl.White:with_alpha(0.4)}})
@@ -2586,11 +2597,15 @@ function PocoHud3Class._drawHeistStats (tab)
 		tbl[#tbl+1] = rowObj
 	end
 	for host,jobs in _.p(host_list) do
-		for no,heist in _.p(jobs) do
-			if table.get_key(job_list,heist) then
+		for no,heist in _.p(job_list) do
+			local jobData = tweak_data.narrative:job_data(heist)
+			if jobData and jobData.contact:gsub('the_','') == host:gsub('the_','') then
+				--[[if table.get_key(job_list,heist) then
+					job_list[table.get_key(job_list,heist)] = nil
+				end]]
 				job_list[table.get_key(job_list,heist)] = nil
+				addJob(host:gsub('the_',''),heist)
 			end
-			addJob(host,heist)
 		end
 	end
 	for no,heist in pairs(job_list) do
@@ -2609,6 +2624,7 @@ function PocoHud3Class._drawHeistStats (tab)
 	oTab:set_h(y)
 
 	-- [2] Per day
+	level_list, job_list, mask_list, weapon_list = tweak_data.statistics:statistics_table()
 	oTab = oTabs:add(L('_tab_stat_perday'))
 	pnl = oTab.pnl
 	y = 10
@@ -2618,7 +2634,7 @@ function PocoHud3Class._drawHeistStats (tab)
 	local levels = _.g('managers.statistics._global.sessions.levels') or {}
 	-- search JobsChain
 	local addDay = function(val,prefix,suffix)
-		if not level_list[table.get_key(level_list,val)] then return end
+		if not level_list[table.get_key(level_list,val)] or not tweak_data.levels[val] then return end
 		if table.get_key(level_list,val) then
 			level_list[table.get_key(level_list,val)] = nil
 		end
@@ -2626,8 +2642,12 @@ function PocoHud3Class._drawHeistStats (tab)
 		if not level then return end
 		local isAlt = val:match('_night$') or val:match('_day$')
 		local name = managers.localization:to_upper_text(tweak_data.levels[val].name_id)
-		if name == prefix then
-			prefix = {Icon.Ghost,cl.Gray}
+		if type(prefix) == 'string' then
+			if (prefix:find(val) or managers.localization:to_upper_text(prefix) == name ) and not val:find('_%d') then
+				prefix = {Icon.Ghost,cl.Gray}
+			else
+				prefix = managers.localization:to_upper_text(prefix)
+			end
 		end
 		name = name .. (isAlt and ' '..L('_tab_stat'..isAlt) or '')
 		local _c = function(n,color)
@@ -2663,34 +2683,36 @@ function PocoHud3Class._drawHeistStats (tab)
 	end
 	for host,_jobs in _.p(host_list) do
 		local jobs = table.deepcopy(_jobs)
+		for no, heist in _.p(job_list) do
+			local jobData = tweak_data.narrative:job_data(heist)
 
-		while table.size(jobs) > 0 do
-			local heist = table.remove(jobs,1)
-			local jobData = tweak_data.narrative.jobs[heist]
-			local jobName
-			if jobData.wrapped_to_job then
-				jobName = tweak_data.narrative.jobs[jobData.wrapped_to_job].name_id
-			else
-				jobName = jobData.name_id
-			end
-			if jobData and jobData.job_wrapper then
-				for k,realJobs in pairs(jobData.job_wrapper) do
-					table.insert(jobs,realJobs)
+			if jobData and jobData.contact:gsub('the_','') == host:gsub('the_','') then
+				local jobData = tweak_data.narrative.jobs[heist]
+				local jobName
+				if jobData.wrapped_to_job then
+					jobName = tweak_data.narrative.jobs[jobData.wrapped_to_job].name_id
+				else
+					jobName = jobData.name_id
 				end
-			end
-			if jobData.chain then
-				for day,level in pairs(jobData.chain) do
-					local lID = level.level_id
-					if lID then
-						addDay(lID,managers.localization:to_upper_text(jobName),L('_desc_heist_day',{day}))
-					else -- alt Days
-						for alt,_level in pairs(level) do
-							addDay(_level.level_id,managers.localization:to_upper_text(jobName),L('_desc_heist_dayalt',{day,alt}))
-						end
+				if jobData and jobData.job_wrapper then
+					for k,realJobs in pairs(jobData.job_wrapper) do
+						table.insert(jobs,realJobs)
 					end
 				end
-			else
-				_('no chain?',jobData.name_id)
+				if jobData.chain then
+					for day,level in pairs(jobData.chain) do
+						local lID = level.level_id
+						if lID then
+							addDay(lID,jobName,L('_desc_heist_day',{day}))
+						else -- alt Days
+							for alt,_level in pairs(level) do
+								addDay(_level.level_id,jobName,L('_desc_heist_dayalt',{day,alt}))
+							end
+						end
+					end
+				else
+					_('no chain?',jobData.name_id)
+				end
 			end
 		end
 	end
@@ -2783,8 +2805,7 @@ function PocoHud3Class._drawPlayer(tab)
 	local oTabs = PocoTabs:new(me._ws,{name = 'Players',x = 10, y = 10, w = tab.pnl:width()-20, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 
 	for i = 1,4 do
-		local member = me:_member(i)
-		local peer = member and member:peer()
+		local peer = me:_peer(i)
 		if peer then
 			local uid, __ = peer._user_id
 			local oTab = oTabs:add(L('_insp_player',{i,peer._name}))
@@ -2844,7 +2865,7 @@ function PocoHud3Class._drawPlayer(tab)
 
 			objs.btnPD2Stats = PocoUIButton:new(ooTab,{
 				onClick = function(self)
-					PocoHud3Class._get(self,'http://api.pd2stats.com/cheater/v1/?id='..uid, function(success, body)
+					PocoHud3Class._get(self,'http://api.pd2stats.com/cheater/v3/?force=1&id='..uid, function(success, body)
 						if success then
 							body = body:gsub('\t([%w_]-):','\t"%1":')
 							local r, result = pcall(JSON.decode,JSON,body)
@@ -3112,6 +3133,15 @@ function PocoHud3Class._drawOptions(tab)
 	end
 	PocoUIButton:new(tab,{
 		onClick = function()
+
+			-- -- Poor man's Fix start
+			-- local dialog_data = {}
+			-- dialog_data.title = string.upper( L('_client_name') .. ' : Not reloaded on purpose')
+			-- dialog_data.text = 'Some changes will be applied on restart due to slight issues.\n'.. 'Sorry for inconvenience!'
+			-- local ok_button = {}
+			-- ok_button.text = managers.localization:text("dialog_ok")
+			-- dialog_data.button_list = {ok_button}
+			-- managers.system_menu:show(dialog_data)
 			me:Menu(true,true)
 			PocoHud3Class.TPocoHud3.Toggle()
 			PocoHud3 = nil -- will reload on its own
@@ -4001,7 +4031,7 @@ function PocoHud3Class._drawJukebox(tab)
 
 
 	local _addItems = function(oTab,inGame)
-		local y = 10;
+		local y = 10
 		local track_list,track_locked
 		if inGame then
 			track_list,track_locked = managers.music:jukebox_music_tracks()
