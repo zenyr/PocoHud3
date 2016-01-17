@@ -27,7 +27,8 @@ _ = {
 	F = function (n,k) -- ff
 		k = k or 2
 		if type(n) == 'number' then
-			local r = string.format('%.'..k..'g', n):sub(1,k+2)
+			n = (n > 0 and math.floor(n * 100) or math.ceil(n * 100)) / 100
+			local r = string.format('%.'..k..'g', n)
 			return r:find('e') and tostring(math.floor(n)) or r
 		elseif type(n) == 'table' then
 			return _.i(n):gsub('\n','')
