@@ -384,6 +384,8 @@ local _drillNames = {
 	hold_analyze_evidence = 'Evidence Analysis', -- Hoxton Breakout
 	digitalgui = 'Timelock',
 	huge_lance = 'The Beast',
+	gen_int_saw = 'Saw', -- Generic saw
+	apartment_saw = 'Saw', -- Saw
 }
 local _drillHosts = {
 	['d2e9092f3a57cefc'] = 'a mini safe',
