@@ -5,8 +5,8 @@ feel free to ask me through my mail: zenyr(at)zenyr.com. But please understand t
 ]]
 -- Note: Due to quirky PreCommit hook, revision number would *appear to* be 1 revision before than "released" luac files.
 local _ = UNDERSCORE
-local REV = 392
-local TAG = '0.32'
+local REV = 393
+local TAG = '0.32 rev1'
 local inGame = CopDamage ~= nil
 local inGameDeep
 local me
@@ -1292,7 +1292,7 @@ end
 function TPocoHud3:_peer(something)
 	local t = type(something)
 	if t == 'userdata' then
-		return alive(something) and alive(something:network()) and something:network():peer()
+		return alive(something) and something:network() and something:network():peer()
 	end
 	if t == 'number' then
 		return self:pidToPeer(something)
