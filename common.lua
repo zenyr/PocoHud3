@@ -4,11 +4,14 @@ if type(Poco) == 'table' and Poco.destroy and not Poco.dead then
 end
 Poco = {}
 Poco._req = function (name)
+	local ModPath = rawget(_G,'ModPath') and (string.gsub(string.gsub(debug.getinfo(1).short_src,'\\','/'), "^(.+/)[^/]+$", "%1")..'../')  or ''
 	local __req = function(name)
-		local f=io.open(name,"r")
+		local f=io.open(ModPath..name,"r")
 		if f~=nil then
 			io.close(f)
-			return dofile(name)
+			return dofile(ModPath..name)
+		else
+			io.stderr:write('Err: Failed to load '..ModPath..name);
 		end
 	end
 	return __req(name) or __req(name..'c')
