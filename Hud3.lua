@@ -1082,7 +1082,7 @@ function TPocoHud3:_processMsg(channel,name,message,color)
 	local isMine = pid == self.pid
 	local isPrioritized = pid < (self.pid or 0)
 	local isPoco = channel == 8
-	if not self._muted and isPrioritized and message and message:find(_BROADCASTHDR) then
+	if not self._muted and isPrioritized and message and tostring(message):find(_BROADCASTHDR) then
 		_.c(_BROADCASTHDR_HIDDEN,'PocoHud broadcast Muted.')
 		self._muted = true
 	end
