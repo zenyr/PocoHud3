@@ -6,7 +6,7 @@ Payday2 Interface enhancer MOD
 [![forthebadge](http://forthebadge.com/images/badges/just-plain-nasty.svg)](http://forthebadge.com)
 
 * This MOD is not directly affiliated with OVERKILL, though, accepted. 
-  * But as of Crimefest 2015 I and almir had some talk in Seattle.
+  * But as of PDCon 2015 I and almir had some talk in Seattle.
   * We will contact each other when something goes wrong.
     * _at least I will_
 
