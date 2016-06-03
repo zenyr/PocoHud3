@@ -1553,7 +1553,7 @@ function TPocoHud3:_hook()
 				if managers.player:has_category_upgrade(weapon_category, "stacking_hit_damage_multiplier") then
 					local stack = self._state_data and self._state_data.stacking_dmg_mul and self._state_data.stacking_dmg_mul[weapon_category]
 					if stack and stack[1] and t < stack[1] then
-						local mul = 1 + managers.player:upgrade_value(weapon_category, "stacking_hit_damage_multiplier") * stack[2]
+						local mul = 1 + ((managers.player:upgrade_value(weapon_category, "stacking_hit_damage_multiplier").damage_bonus - 1) * stack[2])
 						me:Buff({
 							key='triggerHappy', good=true,
 							icon=skillIcon, iconRect = {7*64, 11*64, 64, 64},
