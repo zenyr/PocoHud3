@@ -1434,7 +1434,7 @@ function TPocoHud3:_hook()
 		end
 	end
 	local hook = function(Obj,key,newFunc)
-		local realKey = key:gsub('*','')
+		local realKey = key:gsub('%*%a*','')
 		if Obj and not self.hooks[key] then
 			self.hooks[key] = {Obj,Obj[realKey]}
 			Obj[realKey] = function(...)
@@ -1547,24 +1547,29 @@ function TPocoHud3:_hook()
 			end
 
 			local result = Run('_check_action_primary_attack', self, t, ...)
-				-- capture TriggerHappy
-				local weap_base = self._equipped_unit:base()
-				local weapon_category = weap_base:weapon_tweak_data().category
-				if managers.player:has_category_upgrade(weapon_category, "stacking_hit_damage_multiplier") then
-					local stack = self._state_data and self._state_data.stacking_dmg_mul and self._state_data.stacking_dmg_mul[weapon_category]
-					if stack and stack[1] and t < stack[1] then
-						local mul = 1 + ((managers.player:upgrade_value(weapon_category, "stacking_hit_damage_multiplier").damage_bonus - 1) * stack[2])
-						me:Buff({
-							key='triggerHappy', good=true,
-							icon=skillIcon, iconRect = {7*64, 11*64, 64, 64},
-							text=_.f(mul)..'x',
-							st=t, et=stack[1]
-						})
-					else
-						me:RemoveBuff('triggerHappy')
-					end
+			-- capture TriggerHappy
+			local weap_base = self._equipped_unit:base()
+			local weapon_category = weap_base:weapon_tweak_data().category
+			if managers.player:has_category_upgrade(weapon_category, "stacking_hit_damage_multiplier") then
+				local stack = self._state_data and self._state_data.stacking_dmg_mul and self._state_data.stacking_dmg_mul[weapon_category]
+				local thMaxTime = (me.__triggerHappyMaxTime or (stack and stack[1]) or 0)
+				if thMaxTime and (t < thMaxTime) then
+					local mul = managers.player:get_property("trigger_happy", 1)
+					me:Buff({
+						key='triggerHappy', good=true,
+						icon=skillIcon, iconRect = {7*64, 11*64, 64, 64},
+						text=_.f(mul)..'x',
+						st=t, et=me.__triggerHappyMaxTime or stack[1]
+					})
 				end
+			end
 			return result
+		end)
+
+		hook( PlayerAction.TriggerHappy, 'Function*TrgHpy', function(player_manager, damage_bonus, max_stacks, max_time)
+			-- feeds in TriggerHappy max-time
+			me.__triggerHappyMaxTime = max_time
+			return Run('Function*TrgHpy', player_manager, damage_bonus, max_stacks, max_time)
 		end)
 
 		hook( PlayerStandard, '_do_melee_damage', function( self, t, ... )
