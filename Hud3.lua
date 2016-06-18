@@ -2021,7 +2021,7 @@ function TPocoHud3:_hook()
 			return Run('send_to_peer',...)
 		end)
 		hook( UnitNetworkHandler, 'damage_bullet', function( ... )
-			local self,subject_unit, attacker_unit, damage, i_body, height_offset, death, sender = unpack{...}
+			local self,subject_unit, attacker_unit, damage, i_body, height_offset, variant, death, sender = unpack{...}
 			local head = i_body and alive(subject_unit) and subject_unit:character_damage().is_head and subject_unit:character_damage():is_head(subject_unit:body(i_body))
 			if not (damage == 1 and i_body == 1 and height_offset == 1) then -- Filter Drama event
 				me:AddDmgPopByUnit(attacker_unit,subject_unit,height_offset,damage*-0.1953125,death,head,'bullet')
