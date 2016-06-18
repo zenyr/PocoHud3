@@ -2235,7 +2235,7 @@ function TPocoHud3:_hook()
 			end
 			if pid then
 				local bPercent = me:Stat(pid,'health')
-				local percent = (pid==me.pid and data.current/data.total or data.current)*100 or 0
+				local percent = (data.current / data.total) * 100 or 0
 				if percent ~= 0 and bPercent == 0 then
 					me:Stat(pid,'custody',0)
 					me:Stat(pid,'_refreshBtm',1) -- Refresh btm when out of custody
