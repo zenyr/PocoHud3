@@ -2810,10 +2810,15 @@ function TPocoHud3:_hook()
 			if O('game','gridCrimenet') then
 				local self = unpack{...}
 				local newDots = {}
-				local xx,yy = 10,10
+				local xx,yy = 12,10
 				for i=1,xx do -- 224~1666 1442
 					for j=1,yy do -- 165~945 780
-						table.insert(newDots,{ 100+1642*i/xx, 100+680*(i % 2 == 0 and j or j - 0.5)/yy })
+						local newX = 100+ 1642*i/xx
+						local newY = 100+ 680*(i % 2 == 0 and j or j - 0.5)/yy
+						if  (i >= 3) or ( j < 7 ) then
+							-- avoiding fixed points
+							table.insert(newDots,{ newX, newY })
+						end
 					end
 				end
 				self._locations[1][1].dots = newDots
@@ -2824,7 +2829,7 @@ function TPocoHud3:_hook()
 			if O('game','sortCrimenet') then
 				local self,data = unpack{...}
 				local diff = (data and data.difficulty_id or 2) - 2
-				local diffX = 1800 / 10 * (diff * 2) + 200
+				local diffX = 236 + ( 1700 / 7 ) * diff
 				local locations = self:_get_contact_locations()
 				local sorted = {}
 				for k,dot in pairs(locations[1].dots) do
