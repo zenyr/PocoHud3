@@ -2558,7 +2558,8 @@ end
 function PocoHud3Class._drawHeistStats (tab)
 	local oTabs = PocoTabs:new(me._ws,{name = 'Options',x = 10, y = 10, w = 950, th = 30, fontSize = 18, h = tab.pnl:height()-20, pTab = tab})
 	local host_list, level_list, job_list, mask_list, weapon_list = tweak_data.achievement.job_list, tweak_data.statistics:statistics_table()
-	local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
+	-- local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_murder_squad'}
+	local risks = { 'risk_pd', 'risk_swat', 'risk_fbi', 'risk_death_squad', 'risk_easy_wish', 'risk_murder_squad', 'risk_sm_wish' }
 	local x, y, tbl = 10, 10, {}
 
 	-- [1] Per Heist
@@ -2567,7 +2568,19 @@ function PocoHud3Class._drawHeistStats (tab)
 	local w, h, ww, hh = 0,0, pnl:size()
 	local font,fontSize = tweak_data.menu.pd2_small_font, tweak_data.menu.pd2_small_font_size*0.98
 	local _rowCnt = 0
-	tbl[#tbl+1] = {{L('_word_broker'),cl.BlanchedAlmond},L('_word_job'),{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},{Icon.Skull,cl.PaleGoldenrod},{Icon.Skull..Icon.Skull,cl.LavenderBlush},{string.rep(Icon.Skull,3),cl.Wheat},{string.rep(Icon.Skull,4),cl.Tomato},L('_word_heat')}
+	tbl[#tbl+1] = {
+		{L('_word_broker'),cl.BlanchedAlmond},
+		L('_word_job'),
+		'',
+		{Icon.Skull,cl.PaleGreen:with_alpha(0.3)},
+		{Icon.Skull,cl.PaleGoldenrod},
+		{Icon.Skull..Icon.Skull,cl.LavenderBlush},
+		{string.rep(Icon.Skull,3),cl.Wheat},
+		{string.rep(Icon.Skull,4),cl.Chocolate},
+		{string.rep(Icon.Skull,5),cl.Tomato},
+		{string.rep(Icon.Skull,6),cl.Crimson},
+		L('_word_heat')
+	}
 	local addJob = function(host,heist)
 		local jobData = tweak_data.narrative:job_data(heist)
 		if not jobData then
@@ -2582,7 +2595,7 @@ function PocoHud3Class._drawHeistStats (tab)
 		if pro then
 			job_string = {job_string, cl.Red}
 		end
-		local rowObj = {host:upper(),job_string}
+		local rowObj = {host:upper(),job_string, ''}
 		for i, name in ipairs( risks ) do
 			--local c = managers.statistics:completed_job( heist, tweak_data:index_to_difficulty( i + 1 ) )
 			local c = managers.statistics._global.sessions.jobs[(heist .. '_' .. tweak_data:index_to_difficulty( i + 1 ) .. '_completed'):gsub('_wrapper','')] or 0
