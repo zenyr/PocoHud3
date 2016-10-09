@@ -78,8 +78,10 @@ _ = {
 	end,
 	O = function (...) -- File
 		local f = io.open("poco\\output.txt", "a")
-		f:write(_.S(...).."\n")
-		f:close()
+		if f then
+			f:write(_.S(...).."\n")
+			f:close()
+		end
 	end,
 	R = function (mask) -- RayTest
 		-- local _maskDefault = World:make_slot_mask( 2, 8, 11, 12, 14, 16, 18, 21, 22, 25, 26, 33, 34, 35 )
@@ -210,7 +212,13 @@ _ = {
 			return compare - t
 		end
 	end,
-	W = function(...)io.stdout:write(_.S(...)..'\n')end,
+	W = function(...)
+		if (_.g('log')) then
+			log(_.S(...))
+		else
+			io.stdout:write(_.S(...)..'\n')
+		end
+	end,
 	P = function (t, f) -- pairs but sorted
 		local a = {}
 		for n in pairs(t or {}) do table.insert(a, n) end
