@@ -2077,10 +2077,17 @@ function TPocoHud3:_hook()
 				if hitPos then
 					local head = self._unit:character_damage():is_head(col_ray.body)
 					local realAttacker = info.attacker_unit
-					if alive(realAttacker) and realAttacker:base() and realAttacker:base()._thrower_unit then
-						realAttacker = realAttacker:base()._thrower_unit
+					if alive(realAttacker) and realAttacker:base() then
+						if realAttacker:base().thrower_unit then
+							realAttacker = realAttacker:base():thrower_unit()
+						elseif realAttacker:base().sentry_gun then
+							realAttacker = realAttacker:base():get_owner()
+						end
 					end
-					me:AddDmgPop(realAttacker,hitPos,self._unit,0,info.damage,self._dead,head,info.variant)
+					local damage = info.damage
+					if type(damage) == 'number' then
+						me:AddDmgPop(realAttacker,hitPos,self._unit,0,info.damage,self._dead,head,info.variant)
+					end
 				end
 			end
 			return result
