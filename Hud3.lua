@@ -508,7 +508,7 @@ function TPocoHud3:HitDirection(col_ray,data)
 		local mobUnit = data.weapon_unit or data.attacker_unit
 		if mobUnit and alive(mobUnit) then
 			mobPos = mobUnit:position()
-		else
+		elseif data then
 			mobPos = data.hit_pos or data.position
 		end
 	end
