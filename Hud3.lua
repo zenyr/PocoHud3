@@ -151,8 +151,8 @@ function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 end
 local _lastAttk, _lastAttkpid = 0,0
 function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType)
-	local Opt = O:get('popup')
-	if self.dead then return end
+	local Opt = O:get('popup')	
+	if self.dead or type(damage) ~= 'number' then return end
 	local pid = self:_pid(sender)
 
 	local isPercent = damage < 0
