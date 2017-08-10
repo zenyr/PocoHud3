@@ -4148,7 +4148,7 @@ function Localizer:init()
 end
 
 function Localizer:get(key,context)
-	local val = _defaultLocaleData[key] or self.data[key] or self._data[key] or PocoHud3Class.Icon[key:gsub('_','')]
+	local val = self.data[key] or _defaultLocaleData[key] or self._data[key] or PocoHud3Class.Icon[key:gsub('_','')]
 	if val and type(context)=='table' then
 		for k,v in pairs(context) do
 			val = val:gsub('%['..k..'%]',v)
