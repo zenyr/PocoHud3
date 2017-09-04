@@ -509,7 +509,7 @@ function TFloat:draw(t)
 				table.insert(txts,{managers.localization:text(tweak_data.carry[cCarry._carry_id].name_id) or 'Bag',color})
 			else
 				local isWhisper = managers.groupai:state():whisper_mode()
-				local pager = isWhisper and unit:interaction()._pager
+				local pager = isWhisper and unit:interaction() and unit:interaction()._pager
 				if pager then
 					local eT,tT = now()-pager, unit:interaction()._pagerT or 12
 					local r = eT/tT
