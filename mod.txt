@@ -1,0 +1,17 @@
+{
+	"name" : "PocoHud3 for BLT2",
+	"description" : "Payday 2 Interface Enhancer Mod",
+	"author" : "zenyr",
+	"contact" : "zenyr(at)zenyr.com",
+	"version" : "v0.3x (r4xx)",
+	"updates" : [
+		{
+			"revision" : 50,
+			"identifier" : "pocohud3"
+		}
+	],
+	"persist_scripts" : [
+		{ "global" : "UNDERSCORE", "script_path" : "poco/common.lua" },
+		{ "global" : "PocoHud3", "script_path" : "poco/Hud3.lua" }
+	]
+}
