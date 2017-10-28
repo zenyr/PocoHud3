@@ -151,7 +151,7 @@ function TPocoHud3:AddDmgPopByUnit(sender,unit,offset,damage,death,head,dmgType)
 end
 local _lastAttk, _lastAttkpid = 0,0
 function TPocoHud3:AddDmgPop(sender,hitPos,unit,offset,damage,death,head,dmgType)
-	local Opt = O:get('popup')	
+	local Opt = O:get('popup')
 	if self.dead or type(damage) ~= 'number' then return end
 	local pid = self:_pid(sender)
 
@@ -1979,7 +1979,7 @@ function TPocoHud3:_hook()
 				local valid = self:get_real_armor() > 0
 				local result = Run('_calc_armor_damage', self, attack_data)
 				if valid then
-					_hitDirection(self,result,attack_data,true,self:get_real_armor() / self:_total_armor() )
+					_hitDirection(self,result,attack_data,true,self:get_real_armor() / self:_max_armor() )
 				end
 				return result
 			end)
